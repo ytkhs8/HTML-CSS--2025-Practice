@@ -1,0 +1,48 @@
+@charset 'UTF-8';
+
+/*
+GENERAL STYLING
+======================================== */
+html {
+    font-size: 100%;
+}
+body {
+    color: #555;
+    font-family: sans-serif;
+}
+
+/*
+COMMON
+======================================== */
+p,
+td {
+    line-height: 1.7;
+}
+
+/* Layout */
+.wrapper {
+    max-width: 1200px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 0 1rem;
+}
+
+/*
+HOME
+======================================== */
+.home-hero {
+    background: url('../images/bg-hero.jpg') no-repeat right top / 70vw auto;
+    padding: 5.5rem 1rem 3rem;
+}
+.home-hero h2 {
+    font-family: 'Sawarabi Mincho', sans-serif;
+    font-size: 1.5rem;
+    margin: 8vw 0 12vw;
+    background: rgba(255,255,255, .8);
+    padding: 1rem;
+    display: inline-block;
+}
+.home-hero p {
+    font-size: 1.125rem;
+    margin-bottom: 2rem;
+}
