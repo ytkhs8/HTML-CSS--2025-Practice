@@ -26,6 +26,7 @@ td {
     margin: 0 auto;
     padding: 0 1rem;
 }
+<<<<<<< HEAD
 main {
     max-width: 900px;
     width: 94%;
@@ -147,6 +148,8 @@ header .wrapper {
 .main-nav .current {
     background: #f8f6f2;
 }
+=======
+>>>>>>> e4bfb8e1f7ee9695f23436501b4698c333f8a258
 
 /*
 HOME
@@ -166,6 +169,7 @@ HOME
 .home-hero p {
     font-size: 1.125rem;
     margin-bottom: 2rem;
+<<<<<<< HEAD
 }
 
 /* Contents */
@@ -501,4 +505,6 @@ label {
 .footer-nav a:hover {
     color: #fff;
 }
+=======
+>>>>>>> e4bfb8e1f7ee9695f23436501b4698c333f8a258
 }
