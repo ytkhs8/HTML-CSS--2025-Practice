@@ -25,8 +25,8 @@ html {
     scroll-behavior: smooth;
 }
 body {
-	  color: var(--grey);
-	  font-family: sans-serif;
+    color: var(--grey);
+    font-family: sans-serif;
 }
 
 /*
@@ -160,7 +160,9 @@ ABOUT
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
-
+}
+#about p {
+    margin-bottom: 2rem;
 }
 
 /*
@@ -192,6 +194,37 @@ NEWS
 }
 .news-content {
     padding-bottom: 1rem;
+}
+
+/*
+SPEAKERS
+================================================ */
+#speakers {
+    padding: 4rem 1rem;
+}
+.speakers-list {
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: flex-start;
+    margin-bottom: 2rem;
+}
+.speakers-text {
+    margin-left: 1rem;
+}
+#speakers h2 {
+  background: linear-gradient(var(--light-blue), var(--blue));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-fill-color: transparent;
+}
+#speakers h3 {
+    font-size: 1.5rem;
+    margin-bottom: .5rem;
+}
+#speakers img {
+    border-radius: 50%;
+    width: 20%;
 }
 
 /*
@@ -228,6 +261,20 @@ TICKET
     width: 100%;
     padding: 1rem;
     margin-top: 1rem;
+}
+
+/*
+FOOTER
+================================================ */
+.footer {
+    border-top: 1px solid rgba(255,255,255,0.5);
+    padding-top: 2rem;
+    text-align: center;
+    font-size: .875rem;
+    color: var(--white);
+}
+.footer a {
+    text-decoration: underline;
 }
 
 /*
