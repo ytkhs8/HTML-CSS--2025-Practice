@@ -1,94 +1,117 @@
 <!DOCTYPE html>
 <html lang="ja">
-    <head>
-        <meta charset="UTF-8">
-        <title>Image Compare - 画像比較スライダー</title>
-        <meta name="description" content="画像比較スライダーのデモページです。" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<head>
+    <meta charset="UTF-8">
+    <title>Image Compare - 画像比較スライダー</title>
+    <meta name="description" content="画像比較スライダーのページです。" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <!-- CSS -->
-        <link rel="stylesheet" href="https://unpkg.com/destyle.css@1.0.5/destyle.css" />
-        <link href="https://fonts.googleapis.com/css?family=Sawarabi+Mincho&display=swap" rel="stylesheet" />
-        <link rel="stylesheet" href="css/compare.css" />
-    </head>
+    <link rel="stylesheet" href="css/compare.css" />
 
-    <body>
-        <header>
-            <div class="header-left">
-                <img src="A_flat,_digital_illustration_icon_features_a_compa.png" alt="Image Compare Icon" class="app-icon">
-                <span class="app-title">Image Compare</span>
+    <!-- face-api.js CDN -->
+    <script defer src="https://cdn.jsdelivr.net/npm/face-api.js"></script>
+</head>
+
+<body>
+    <header>
+        <div class="header-left">
+            <img src="images/A_flat,_digital_illustration_icon_features_a_compa.png" alt="Image Compare Icon" class="app-icon">
+            <span class="app-title">Image Compare</span>
+        </div>
+        <button class="hamburger" id="hamburger-btn" aria-label="メニューを開く">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+        <nav class="side-menu" id="side-menu">
+            <ul>
+                <li><a href="#" data-page="gallery">ギャラリー</a></li>
+                <li><a href="#" data-page="info">利用案内・注意事項</a></li>
+                <li><a href="#" data-page="about">開発者紹介</a></li>
+                <li><a href="#" data-page="contact">要望・バグ報告</a></li>
+            </ul>
+        </nav>
+        <div class="overlay" id="menu-overlay"></div>
+    </header>
+
+    <main>
+        <section id="home" class="page active">
+            <h1>画像比較スライダー</h1>
+            <form id="compare-form" autocomplete="off">
+                <div class="upload-area">
+                    <label class="big-upload">
+                        <input type="file" id="before-img" accept="image/*" hidden>
+                        <span>
+                            <img src="https://cdn-icons-png.flaticon.com/128/1828/1828925.png" alt="" class="upload-icon">
+                            ビフォー画像を選択
+                        </span>
+                    </label>
+                    <label class="big-upload">
+                        <input type="file" id="after-img" accept="image/*" hidden>
+                        <span>
+                            <img src="https://cdn-icons-png.flaticon.com/128/1828/1828925.png" alt="" class="upload-icon">
+                            アフター画像を選択
+                        </span>
+                    </label>
+                </div>
+                <div class="face-only-option">
+                    <label>
+                        <input type="checkbox" id="face-only">
+                        顔だけ比較モード
+                    </label>
+                </div>
+                <button type="button" id="reset-btn">リセット</button>
+            </form>
+            <div class="slider-container" id="slider-container" style="display:none;">
+                <div class="compare-slider">
+                    <img id="img-before" src="" alt="Before Image">
+                    <div class="img-overlay">
+                        <img id="img-after" src="" alt="After Image">
+                    </div>
+                    <div class="slider-handle" id="slider-handle"></div>
+                </div>
             </div>
-            <button class="hamburger" id="hamburger-btn" aria-label="メニューを開く">
-                <span></span>
-                <span></span>
-                <span></span>
-            </button>
-            <nav class="side-menu" id="side-menu">
-                <ul>
-                    <li><a href="#" data-page="gallery">ギャラリー</a></li>
-                    <li><a href="#" data-page="info">利用案内・注意事項</a></li>
-                    <li><a href="#" data-page="about">開発者紹介</a></li>
-                    <li><a href="#" data-page="contact">要望・バグ報告</a></li>
-                </ul>
-            </nav>
-            <div class="overlay" id="menu-overlay"></div>
-        </header>
-
-        <main>
-            <section id="home" class="page active">
-                <h1>画像比較スライダー</h1>
-                <form id="compare-form">
-                    <label>ビフォー画像 <input type="file" id="before-img" accept="image/*"></label>
-                    <label>アフター画像 <input type="file" id="after-img" accept="image/*"></label>
-                </form>
-                <div class="slider-container" id="slider-container" style="display:none;">
-                    <div class="compare-slider">
-                        <img id="img-before" src="" alt="Before Image">
-                        <div class="img-overlay">
-                            <img id="img-after" src="" alt="After Image">
-                        </div>
-                        <div class="slider-handle" id="slider-handle"></div>
-                    </div>
+            <div id="face-loading" style="display: none;">顔検出モデル読み込み中...</div>
+            <div id="face-error" style="display: none;color:crimson;margin-top:8px;">顔が見つかりませんでした。通常比較になります。</div>
+        </section>
+        <section id="gallery" class="page">
+            <h2>ギャラリー</h2>
+            <p>過去の比較例を掲載します。</p>
+            <div class="gallery-grid">
+                <div class="gallery-item">
+                    <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=80" alt="Before">
+                    <img src="https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=crop&w=400&q=80" alt="After">
                 </div>
-            </section>
-            <section id="gallery" class="page">
-                <h2>ギャラリー</h2>
-                <p>過去の比較例を掲載します（ダミー画像でOK）。</p>
-                <div class="gallery-grid">
-                    <div class="gallery-item">
-                        <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=80" alt="Before">
-                        <img src="https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=crop&w=400&q=80" alt="After">
-                    </div>
-                </div>
-            </section>
-            <section id="info" class="page">
-                <h2>利用案内・注意事項</h2>
-                <ul>
-                    <li>対応画像フォーマット：JPEG, PNG, WebP</li>
-                    <li>推奨サイズ：長辺2000px以内</li>
-                    <li>アップロードされた画像はサーバに保存されません</li>
-                    <li>画像の悪用・転載は一切行いません</li>
-                    <li>不具合・ご要望は「要望・バグ報告」よりご連絡ください</li>
-                </ul>
-            </section>
-            <section id="about" class="page">
-                <h2>開発者について</h2>
-                <p>東京都在住の駆け出しエンジニアYuukiが、学習の一環で制作しています。<br>
-                JavaやReactなど幅広くWeb技術を学び、ポートフォリオとして公開中です。</p>
-            </section>
-            <section id="contact" class="page">
-                <h2>要望・バグ報告</h2>
-                <form id="contact-form">
-                    <label>お名前（任意）<input type="text" name="name"></label>
-                    <label>内容<textarea name="message" required></textarea></label>
-                    <button type="submit">送信</button>
-                </form>
-                <div id="contact-success" style="display:none;">ご意見ありがとうございます！</div>
-            </section>
-        </main>
+            </div>
+        </section>
+        <section id="info" class="page">
+            <h2>利用案内・注意事項</h2>
+            <ul>
+                <li>対応画像フォーマット：JPEG, PNG, WebP</li>
+                <li>推奨サイズ：長辺2000px以内</li>
+                <li>アップロードされた画像はサーバに保存されません</li>
+                <li>画像の悪用・転載は一切行いません</li>
+                <li>不具合・ご要望は「要望・バグ報告」よりご連絡ください</li>
+            </ul>
+        </section>
+        <section id="about" class="page">
+            <h2>開発者について</h2>
+            <p>東京都在住の駆け出しエンジニアYuukiが、学習の一環で制作しています。<br>
+            JavaやReactなど幅広くWeb技術を学び、ポートフォリオとして公開中です。</p>
+        </section>
+        <section id="contact" class="page">
+            <h2>要望・バグ報告</h2>
+            <form id="contact-form">
+                <label>お名前（任意）<input type="text" name="name"></label>
+                <label>内容<textarea name="message" required></textarea></label>
+                <button type="submit">送信</button>
+            </form>
+            <div id="contact-success" style="display:none;">ご意見ありがとうございます！</div>
+        </section>
+    </main>
 
 <!-- JavaScript -->
-        <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
-        <script defer src="js/compare.js"></script>
-    </body>
+    <script defer src="js/compare.js"></script>
+</body>
 </html>

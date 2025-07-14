@@ -186,7 +186,7 @@ main {
   transition: background 0.18s;
 }
 .slider-handle::after {
-  content: '\\21C6'; /* 矢印アイコン */
+  content: '\21C6'; /* 矢印アイコン */
   color: #4097ee;
   font-size: 2rem;
 }
