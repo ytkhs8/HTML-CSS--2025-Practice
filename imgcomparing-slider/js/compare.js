@@ -18,7 +18,7 @@ sideMenu.querySelectorAll('a').forEach(link => {
   link.addEventListener('click', e => {
     e.preventDefault();
     const pageId = link.dataset.page;
-    document.querySelector('.page.acctive').classList.remove('active');
+    document.querySelector('.page.active').classList.remove('active');
     document.getElementById(pageId).classList.add('active');
     sideMenu.classList.remove('open');
     overlay.classList.remove('active');
