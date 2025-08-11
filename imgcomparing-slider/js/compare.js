@@ -49,7 +49,7 @@ const faceError = document.getElementById('face-error');
 let beforeLoaded = false, afterLoaded = false;
 
 // face-api モデルパス
-const FACE_MODEL_PATH = 'https://cdn.jsdelivr.net/npm/face-api.js/models';
+const FACE_MODEL_PATH = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@0.22.2/weights';
 
 // face-api モデル初回ロードフラグ
 let faceApiReady = false;
