@@ -1,3 +1,11 @@
+import {
+  FACE_MODEL_PATH,
+  TINY_OPTS,
+  loadFaceApiModels,
+  prepareFacesForSlider,
+  composeHalfFace
+} from './faceUtils.js';
+
 // --- ハンバーガーメニュー＆SPAページ切替 ---
 const hamburger = document.getElementById('hamburger-btn');
 const sideMenu = document.getElementById('side-menu');
@@ -49,13 +57,8 @@ const faceError = document.getElementById('face-error');
 
 let beforeLoaded = false, afterLoaded = false;
 
-// face-api モデルパス
-const FACE_MODEL_PATH = './models';
-
 // face-api モデル初回ロードフラグ
 let faceApiReady = false;
-// TinyFaceDetector の検出精度を上げるオプション（Safariでの検出失敗対策）
-const TINY_OPTS = new faceapi.TinyFaceDetectorOptions({ inputSize: 416, scoreThreshold: 0.4 });
 
 // ファイルinputと画像表示リセット
 function resetSlider() {
@@ -79,21 +82,6 @@ function resetSlider() {
 }
 resetBtn.addEventListener('click', resetSlider);
 
-// face-api.js 初期化
-async function loadFaceApiModels() {
-  if (faceApiReady) return;
-  try {
-    faceLoading.style.display = 'block';
-    console.log('[model] loading from:', FACE_MODEL_PATH);
-    await faceapi.nets.tinyFaceDetector.loadFromUri(FACE_MODEL_PATH);
-    console.log('[model] tinyFaceDetector isLoaded', faceapi.nets.tinyFaceDetector.isLoaded);
-    faceApiReady = true;
-  } catch (e) {
-    console.error('[model] load error:', e);
-  } finally {
-    faceLoading.style.display = 'none';
-  }
-  }
 
 // 顔検出で顔だけ切り出してDataURL化
 async function extractFace(file) {
@@ -189,58 +177,6 @@ async function getFaceCanvasFromFile(file, targetWidth = 400) {
 }
 
 
-// Before左半分 + After右半分 を合成してDataURLを返す
-async function composeHalfFace(beforeFile, afterFile) {
-  const targetFaceWidth = 420; // 出力の顔幅を統一
-  const beforeFace = await getFaceCanvasFromFile(beforeFile, targetFaceWidth);
-  const afterFace = await getFaceCanvasFromFile(afterFile, targetFaceWidth);
-  console.log('[composeHalfFace] beforeFace=', !!beforeFace, 'afterFace=', !!afterFace);
-  if (!beforeFace || !afterFace) return null;
-
-  // 2つの顔キャンバスを同じ高さにそろえる
-  const h = Math.min(beforeFace.height, afterFace.height);
-  const w = Math.min(beforeFace.width, afterFace.width);
-
-  // 左半分/右半分の幅（偶数化して境界をきれいに）
-  const half = Math.floor(w / 2) * 1;
-
-  console.log('[composeHalfFace] out size:', w, 'x', h, 'half=', half);
-
-  // 出力キャンバス
-  const out = document.createElement('canvas');
-  out.width = w;
-  out.height = h;
-  const ctx = out.getContext('2d');
-  ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = 'high';
-
-  // 左半分：Before
-  ctx.drawImage(
-    beforeFace,
-    0, 0, half, h,  // src (左半分)
-    0, 0, half, h   // dst
-  );
-
-  // 右半分：After
-  ctx.drawImage(
-    afterFace,
-    w - half, 0, half, h, // src (右半分)
-    w - half, 0, half, h  // dst
-  );
-
-   document.body.appendChild(out.cloneNode(false)); // 一時表示（確認したら削除OK）
-
-  // 中央境界の目立ちを少し和らげる（任意のグラデーション）
-  const grad = ctx.createLinearGradient(half - 6, 0, half + 6, 0);
-  grad.addColorStop(0, 'rgba(255, 255, 255, 0)');
-  grad.addColorStop(0.5, 'rgba(255, 255, 255, 0.35)');
-  grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
-  ctx.fillStyle = grad;
-  ctx.fillRect(half - 6, 0, 12, h);
-
-  return out.toDataURL('image/png');
-}
-
 // ファイルアップロード共通
 let beforeFileRef = null;
 let afterFileRef = null;
@@ -272,36 +208,31 @@ function handleImage(input, imgEl, flagName) {
       return;
     }
 
-    // 顔モードON：両方そろってから半顔合成
+    // 顔モード ON：両方そろってから顔トリミング2枚をスライダーへ
     if (beforeFileRef && afterFileRef) {
       try {
         faceLoading.style.display = 'block';
-        const dataUrl = await composeHalfFace(beforeFileRef, afterFileRef);
+        const faces = await prepareFacesForSlider(beforeFileRef, afterFileRef, 420);
         faceLoading.style.display = 'none';
 
-        if (dataUrl) {
-          // 合成を表示、スライダーは隠す
-          document.getElementById('half-face-img').src = dataUrl;
-          document.getElementById('half-face-result').style.display = 'block';
-          sliderContainer.style.display = 'none';
+        if (faces) {
+          imgBefore.src = faces.before;
+          imgAfter.src = faces.after;
+
+          overlayDiv.style.width = '50%';
+          sliderHandle.style.left = '50%';
+
+          sliderContainer.style.display = 'block';
+          document.getElementById('half-face-result').style.display = 'none';
+
+          // 表示位置へスクロール
+          setTimeout(() => {
+            const y = sliderContainer.getBoundingClientRect().top + window.scrollY - 90;
+            window.scrollTo({ top: y, behavior: 'smooth' });
+          }, 0);
         } else {
           faceError.style.display = 'block';
-          // 検出に失敗した場合は、通常スライダーを表示してユーザーに体験を維持
-          const havePreview = Boolean(imgBefore.src) && Boolean(imgAfter.src);
-          if (havePreview) {
-            document.getElementById('half-face-result').style.display = 'none';
-            sliderContainer.style.display = 'block';
-          }
-          // フォールバック：通常スライダー表示（読み込んだ方だけ先にプレビュー）
-          const reader = new FileReader();
-          reader.onload = ev => imgEl.src = ev.target.result;
-          reader.readAsDataURL(file);
-          if (flagName === 'before') beforeLoaded = true;
-          if (flagName === 'after') afterLoaded = true;
-          if (beforeLoaded && afterLoaded) {
-            sliderContainer.style.display = 'block';
-            document.getElementById('half-face-result').style.display = 'none';
-          }
+          // 失敗時は通常スライダーへフォールバック
         }
       } catch (err) {
         faceLoading.style.display = 'none';
@@ -309,53 +240,44 @@ function handleImage(input, imgEl, flagName) {
         faceError.style.display = 'block';
       }
     } else {
-      // まだ片方だけなら一旦プレビューも可
+      // 片方のみ選択時の暫定プレビュー
       const reader = new FileReader();
-      reader.onload = (ev) => { imgEl.src = ev.target.result; };
+      reader.onload = ev => { imgEl.src = ev.target.result; };
       reader.readAsDataURL(file);
     }
   });
 }
 
-// 顔モードをON/OFFした瞬間に、既に2枚選択済みなら表示を切り替え
-
+// 顔モードのON/OFF切替（既に2枚あれば即時反映）
 faceCheckbox.addEventListener('change', async () => {
   faceError.style.display = 'none';
-  console.log('[face-only toggle] checked=', faceCheckbox.checked, 'beforeLoaded=', beforeLoaded, 'afterLoaded=', afterLoaded, 'hasBeforeRef=', !!beforeFileRef, 'hasAfterRef=', !!afterFileRef);
   if (faceCheckbox.checked && beforeFileRef && afterFileRef) {
     faceLoading.style.display = 'block';
-    const dataUrl = await composeHalfFace(beforeFileRef, afterFileRef);
+    const faces = await prepareFacesForSliderAligned(beforeFileRef, afterFileRef, 420, 520);
     faceLoading.style.display = 'none';
-    if (dataUrl) {
-      document.getElementById('half-face-img').src = dataUrl;
-      document.getElementById('half-face-result').style.display = 'block';
-      sliderContainer.style.display = 'none';
-
-      half.style.visibility = 'visible';
-      half.style.opacity = '1';
-
-      // ★ここでスクロールを実行する
+    if (faces) {
+      imgBefore.src = faces.before;
+      imgAfter.src = faces.after;
+      overlayDiv.style.width = '50%';
+      sliderHandle.style.left = '50%';
+      sliderContainer.style.display = 'block';
+      document.getElementById('half-face-result').style.display = 'none';
       setTimeout(() => {
-        const y = half.getBoundingClientRect().top + window.scrollY - 90;
+        const y = sliderContainer.getBoundingClientRect().top + window.scrollY - 90;
         window.scrollTo({ top: y, behavior: 'smooth' });
       }, 0);
-      
       return;
     }
     faceError.style.display = 'block';
-    // 検出に失敗した場合は、通常スライダーを表示してユーザーに体験を維持
-    const havePreview = Boolean(imgBefore.src) && Boolean(imgAfter.src);
-    if (havePreview) {
-      document.getElementById('half-face-result').style.display = 'none';
-      sliderContainer.style.display = 'block';
-    }
   }
-  // OFF時はスライダー表示へ戻す（2枚揃っていれば）
+
+  // OFF：通常スライダー表示へ
   if (!faceCheckbox.checked && beforeLoaded && afterLoaded) {
     document.getElementById('half-face-result').style.display = 'none';
     sliderContainer.style.display = 'block';
   }
 });
+
 
 handleImage(beforeInput, imgBefore, 'before');
 handleImage(afterInput, imgAfter, 'after');
