@@ -1,3 +1,41 @@
+## 📝 Motivation
+
+While learning front-end development through textbooks, I realized that simply copying the code examples did not help me internalize the concepts.  
+To truly learn, I wanted to **build something on my own using HTML, CSS, and JavaScript** — while also leveraging AI code generation as a coding assistant.  
+
+This way, I could **practice reading and understanding auto-generated code** in parallel with studying technical books, bridging theory and hands-on learning.  
+As a result, I decided to develop this **Image Compare Slider**, a project that can be fully implemented with core front-end technologies.
+
+---
+
+## 🎯 Purpose
+
+Although image comparison sliders already exist, most of them are designed for landscapes, objects, or full-body photos.  
+Surprisingly, I found that there were very few sliders that could **focus specifically on faces**, automatically align them, and then allow fair Before/After comparison.  
+
+Therefore, I decided to develop this application as both a **learning project** and a **practical tool** that highlights facial differences more accurately.  
+Another reason was that the app can be deployed on a simple static web server — making it an excellent opportunity to practice **AWS hosting without heavy backend complexity**.  
+
+---
+
+## 🌍 Use Cases
+
+This Image Compare Slider can be applied to a wide range of comparisons, such as landscapes, objects, portraits, facial changes, and various before/after results.
+
+- **Landscapes:**  
+  Compare the transformation of a city over time, differences in lifestyles between eras, or improvements in photo resolution.
+- **Objects:**  
+  Contrast an iPhone 3G with an iPhone 17 Pro, examine the evolution of the Coca-Cola logo, or showcase a chameleon’s color change.
+- **Portraits:**  
+  Show before/after weight loss progress, a child’s growth over time, or the difference between everyday appearance and cosplay.
+- **Faces:**  
+  Compare facial appearance before and after weight loss, makeup, massage treatments, or cosmetic surgery.  
+  Display differences between childhood and adulthood in the same person.
+- **Results / Products:**  
+  Showcase a cleaned vs. messy space, compare study achievements (artwork, calligraphy, web design), or highlight stain removal on clothing.
+
+---
+
 # Image Compare Slider (Face Alignment Edition)
 
 A web application that allows users to compare **Before / After** images using a smooth slider.  
@@ -56,6 +94,30 @@ imgcomparing-slider/
    - `face_landmark_68_model-shard1`
 3. Run with Live Server (VS Code) or any static file server.
 4. Open `http://localhost:5500/imgcomparing-slider/` (Live Server default may vary).
+
+---
+
+## 🖼 Demo Images
+
+To help first-time users quickly try the application, demo image sets are provided:
+
+1. **General comparison demo** — two sample images for landscape/object comparison  
+2. **Face-only demo** — two sample facial images prepared specifically for face-alignment mode  
+
+These demo resources allow anyone to immediately understand how the application works without preparing their own images first.
+
+---
+
+## How to use
+
+1.	Open the application in your browser.
+2.	Use the image upload buttons to select the two images you want to compare.
+	•	For example, upload landscape-before.jpg and landscape-after.jpg to see a cityscape comparison.
+	•	You can also try device-before.jpg and device-after.jpg for product evolution.
+	•	Or test face-before.jpg and face-after.jpg to experience the face-only alignment mode.
+3.	Once uploaded, the slider will appear automatically.
+	•	In face-only mode, the app will detect and align facial landmarks so both images match in scale and position.
+4.	Drag the slider left or right to reveal differences between the two images.
 
 ---
 
