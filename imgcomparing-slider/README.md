@@ -53,6 +53,8 @@ It leverages **face-api.js** to detect facial landmarks and aligns faces (rotati
   Drag to smoothly reveal differences between two images.
 - **Local-first & privacy-friendly**  
   All processing happens directly in the browser. **No server uploads or data storage**.
+- **Internationalization (i18n)**
+  Built-in JP/EN toggle with persistence across pages (localStorage)
 
 ---
 
@@ -145,10 +147,13 @@ These demo resources allow anyone to immediately understand how the application 
 
 - [ ] Improve mobile UI (larger touch areas, slider handle)
 - [ ] Landmark detection fallback (auto switch to non-aligned mode on failure)
+- [ ] Client+Server UI Improvements ([Milestone](https://github.com/ytkhs8/HTML-CSS--2025-Practice/imgcomparing-slider/Client+ServerUIImprovements/1))
+- [ ] User Accounts & Data Persistence
 - [ ] Cloud alignment option (e.g., Google Vision API) with explicit user consent
 - [ ] Export aligned comparison results (side-by-side or half-face composite)
 - [ ] Accessibility support (keyboard slider control, ARIA labels)
-- [ ] Multi-language support (English & Japanese)
+- [ x ] Multi-language support (English & Japanese)
+- [ ] Phase 2: Add user accounts and persistent data storage ([Issue #12](link-to-issue))
 
 ---
 
@@ -159,6 +164,15 @@ These demo resources allow anyone to immediately understand how the application 
 - Links: [Portfolio](#) | [LinkedIn](#) | [Twitter](#)
 
 ---
+
+## 📌 Development Practices
+
+This project follows the **Conventional Commits** specification for commit messages.  
+By using `feat:`, `fix:`, `refactor:`, `docs:`, and other standardized prefixes, the commit history stays clear and meaningful.  
+This practice is widely adopted in international tech companies and demonstrates consistent version control discipline.
+
+---
+
 
 ## 📄 License
 

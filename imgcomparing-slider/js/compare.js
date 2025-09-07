@@ -7,31 +7,58 @@ import {
 } from './faceUtils.js';
 
 // --- ハンバーガーメニュー＆SPAページ切替 ---
-const hamburger = document.getElementById('hamburger-btn');
+// 要素参照
+const hamburgerBtn = document.getElementById('hamburger-btn');
 const sideMenu = document.getElementById('side-menu');
-const overlay = document.getElementById('menu-overlay');
+const menuOverlay = document.getElementById('menu-overlay');
 const pages = document.querySelectorAll('.page');
 
-hamburger.addEventListener('click', () => {
-  sideMenu.classList.toggle('open');
-  overlay.classList.toggle('active');
-});
-
-overlay.addEventListener('click', () => {
+// --- ハンバーガーメニュー開閉（アクセシブル & スクロールロック） ---
+function openMenu(){
+  sideMenu.classList.add('open');
+  menuOverlay.classList.add('show');
+  hamburgerBtn.classList.add('is-open');
+  hamburgerBtn.setAttribute('aria-expanded', 'true');
+  document.body.classList.add('menu-open'); // 背景スクロール禁止
+}
+function closeMenu(){
   sideMenu.classList.remove('open');
-  overlay.classList.remove('active');
+  menuOverlay.classList.remove('show');
+  hamburgerBtn.classList.remove('is-open');
+  hamburgerBtn.setAttribute('aria-expanded', 'false');
+  document.body.classList.remove('menu-open'); // 背景スクロール解除
+}
+function toggleMenu(){
+  if (sideMenu.classList.contains('open')) closeMenu();
+  else openMenu();
+}
+
+// クリックで開閉
+hamburgerBtn?.addEventListener('click', toggleMenu);
+
+// オーバーレイをクリックで閉じる
+menuOverlay?.addEventListener('click', closeMenu);
+
+// サイドメニューのリンクでページ切替して閉じる（SPA）
+sideMenu?.addEventListener('click', (e) => {
+  const link = e.target.closest('a');
+  if (!link) return;
+
+  e.preventDefault();
+  const pageId = link.dataset.page;
+  if (pageId) {
+    document.querySelector('.page.active')?.classList.remove('active');
+    document.getElementById(pageId)?.classList.add('active');
+    window.scrollTo(0, 0);
+  }
+  closeMenu();
 });
 
-sideMenu.querySelectorAll('a').forEach(link => {
-  link.addEventListener('click', e => {
-    e.preventDefault();
-    const pageId = link.dataset.page;
-    document.querySelector('.page.active').classList.remove('active');
-    document.getElementById(pageId).classList.add('active');
-    sideMenu.classList.remove('open');
-    overlay.classList.remove('active');
-    window.scrollTo(0, 0);
-  });
+// ESCキーで閉じる
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && sideMenu.classList.contains('open')) {
+    closeMenu();
+  }
 });
 
 // --- SPAトップに戻る ---
@@ -334,3 +361,139 @@ if (contactForm){
     }, 3000);
   });
 }
+
+// ==== Internationalization (default EN + JP toggle with persistence) ====
+(function(){
+  const DICT = {
+    en: {
+      // header & menu
+      'header.title': 'Image Compare Slider',
+      'menu.gallery': 'Gallery',
+      'menu.info': 'Guide & Notes',
+      'menu.about': 'About the Developer',
+      'menu.contact': 'Requests & Bug Reports',
+
+      // home
+      'home.title': 'Image Compare Slider',
+      'upload.before': 'Choose Before Image',
+      'upload.after': 'Choose After Image',
+      'face.only': 'Face-only comparison (detect, align, and compare faces)',
+      'btn.reset': 'Reset',
+      'caption.halfface': 'Left: Before / Right: After',
+      'msg.loading': 'Loading face detection models…',
+      'msg.noFace': 'No face detected. Falling back to normal comparison.',
+
+      // gallery
+      'gallery.title': 'Gallery',
+      'gallery.desc': 'Showcasing previous comparison examples.',
+
+      // info
+      'info.title': 'Guide & Notes',
+      'info.format': 'Supported formats: JPEG, PNG, WebP',
+      'info.size': 'Recommended size: Longest edge within 2000px',
+      'info.storage': 'Uploaded images are not stored on the server',
+      'info.usage': 'We do not misuse or redistribute your images',
+      'info.contact': 'For issues or requests, use "Requests & Bug Reports"',
+
+      // about
+      'about.title': 'About the Developer',
+      'about.desc': 'Yuuki, a Tokyo-based junior engineer, built this as part of learning.\nExploring web tech including Java and React, and publishing as a portfolio.',
+
+      // contact
+      'contact.title': 'Requests & Bug Reports',
+      'contact.name': 'Name (optional)',
+      'contact.message': 'Message',
+      'contact.submit': 'Send',
+      'contact.success': 'Thank you for your feedback!'
+    },
+    ja: {
+      // header & menu
+      'header.title': '画像比較スライダー',
+      'menu.gallery': 'ギャラリー',
+      'menu.info': '利用案内・注意事項',
+      'menu.about': '開発者紹介',
+      'menu.contact': '要望・バグ報告',
+
+      // home
+      'home.title': '画像比較スライダー',
+      'upload.before': 'ビフォー画像を選択',
+      'upload.after': 'アフター画像を選択',
+      'face.only': '顔だけ比較（顔を検出・整列して比較）',
+      'btn.reset': 'リセット',
+      'caption.halfface': '左：Before / 右：After',
+      'msg.loading': '顔検出モデル読み込み中…',
+      'msg.noFace': '顔が見つかりませんでした。通常比較になります。',
+
+      // gallery
+      'gallery.title': 'ギャラリー',
+      'gallery.desc': '過去の比較例を掲載します。',
+
+      // info
+      'info.title': '利用案内・注意事項',
+      'info.format': '対応画像フォーマット：JPEG, PNG, WebP',
+      'info.size': '推奨サイズ：長辺2000px以内',
+      'info.storage': 'アップロードされた画像はサーバに保存されません',
+      'info.usage': '画像の悪用・転載は一切行いません',
+      'info.contact': '不具合・ご要望は「要望・バグ報告」よりご連絡ください',
+
+      // about
+      'about.title': '開発者について',
+      'about.desc': '東京都在住の駆け出しエンジニアYuukiが、学習の一環で制作しています。\nJavaやReactなど幅広くWeb技術を学び、ポートフォリオとして公開中です。',
+
+      // contact
+      'contact.title': '要望・バグ報告',
+      'contact.name': 'お名前（任意）',
+      'contact.message': '内容',
+      'contact.submit': '送信',
+      'contact.success': 'ご意見ありがとうございます！'
+    }
+  };
+
+  let currentLang = localStorage.getItem('lang') || 'en';
+
+  function applyI18n(lang){
+    // data-i18n 一括適用
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      const txt = DICT[lang] && DICT[lang][key];
+      if (typeof txt === 'string') {
+        // 改行をサポート（\n → <br>）
+        if (txt.includes('\n')) {
+          el.innerHTML = txt.split('\n').map(s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')).join('<br>');
+        } else {
+          el.textContent = txt;
+        }
+      }
+    });
+
+    // html lang属性
+    document.documentElement.setAttribute('lang', lang);
+    // トグルのラベルを反転
+    const toggle = document.getElementById('lang-toggle');
+    if (toggle){
+      const next = (lang === 'en') ? 'JP' : 'EN';
+      toggle.textContent = next;
+      toggle.setAttribute('aria-label', lang === 'en' ? '日本語に切り替える' : 'Switch to English');
+    }
+
+    // 永続化
+    localStorage.setItem('lang', lang);
+    currentLang = lang;
+  }
+
+  // 初期適用
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => applyI18n(currentLang));
+  } else {
+    applyI18n(currentLang);
+  }
+
+  // トグルボタン
+  const toggleBtn = document.getElementById('lang-toggle');
+  if (toggleBtn){
+    toggleBtn.addEventListener('click', () => {
+      const next = (currentLang === 'en') ? 'ja' : 'en';
+      applyI18n(next);
+    });
+  }
+})();

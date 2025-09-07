@@ -14,22 +14,25 @@
 </head>
 
 <body>
-    <header>
+    <header class="header">
         <div class="header-left">
             <img src="images/A_flat-style_digital_illustration_features_an_icon.png" alt="Image Compare Icon" class="app-icon">
-            <span class="app-title">Image Compare</span>
+            <div class="app-title" data-i18n="header.title">Image Compare</div>
         </div>
-        <button class="hamburger" id="hamburger-btn" aria-label="メニューを開く">
+        <div class="header-right">
+        <button id="lang-toggle" class="lang-toggle" aria-label="Toggle language">JP</button>
+        <button class="hamburger" id="hamburger-btn" aria-label="メニューを開く" aria-controls="side-menu" aria-expanded="false">
             <span></span>
             <span></span>
             <span></span>
         </button>
+        </div>
         <nav class="side-menu" id="side-menu">
             <ul>
-                <li><a href="#" data-page="gallery">ギャラリー</a></li>
-                <li><a href="#" data-page="info">利用案内・注意事項</a></li>
-                <li><a href="#" data-page="about">開発者紹介</a></li>
-                <li><a href="#" data-page="contact">要望・バグ報告</a></li>
+                <li><a href="#" data-page="gallery" data-i18n="menu.gallery">ギャラリー</a></li>
+                <li><a href="#" data-page="info" data-i18n="menu.info">利用案内・注意事項</a></li>
+                <li><a href="#" data-page="about" data-i18n="menu.about">開発者紹介</a></li>
+                <li><a href="#" data-page="contact" data-i18n="menu.contact">要望・バグ報告</a></li>
             </ul>
         </nav>
         <div class="overlay" id="menu-overlay"></div>
@@ -37,19 +40,19 @@
 
     <main>
         <section id="home" class="page active">
-            <h1>画像比較スライダー</h1>
+            <h1 data-i18n="home.title">画像比較スライダー</h1>
             <form id="compare-form" autocomplete="off">
                 <div class="upload-area">
                     <label class="big-upload">
                         <input type="file" id="before-img" accept="image/*" hidden>
-                        <span>
+                        <span data-i18n="upload.before">
                             <img src="https://cdn-icons-png.flaticon.com/128/1828/1828925.png" alt="" class="upload-icon">
                             ビフォー画像を選択
                         </span>
                     </label>
                     <label class="big-upload">
                         <input type="file" id="after-img" accept="image/*" hidden>
-                        <span>
+                        <span data-i18n="upload.after">
                             <img src="https://cdn-icons-png.flaticon.com/128/1828/1828925.png" alt="" class="upload-icon">
                             アフター画像を選択
                         </span>
@@ -58,15 +61,15 @@
                 <div class="face-only-option">
                     <label>
                         <input type="checkbox" id="face-only">
-                        顔だけ比較モード
+                        <span data-i18n="face.only">顔だけ比較モード</span>
                     </label>
                 </div>
-                <button type="button" id="reset-btn">リセット</button>
+                <button type="button" id="reset-btn" data-i18n="btn.reset">リセット</button>
             </form>
 
             <div id="half-face-result" class="half-face" style="display:none;">
                     <img id="half-face-img" alt="Half Face Composite">
-                    <div class="half-face-caption">左：Before / 右：After</div>
+                    <div class="half-face-caption" data-i18n="caption.halfface">左：Before / 右：After</div>
             </div>
 
             <div class="slider-container" id="slider-container" style="display:none;">
@@ -78,12 +81,12 @@
                     <div class="slider-handle" id="slider-handle"></div>
                 </div>
             </div>
-            <div id="face-loading" style="display: none;">顔検出モデル読み込み中...</div>
-            <div id="face-error" style="display: none;color:crimson;margin-top:8px;">顔が見つかりませんでした。通常比較になります。</div>
+            <div id="face-loading" style="display: none;" data-i18n="msg.loading">顔検出モデル読み込み中...</div>
+            <div id="face-error" style="display: none;color:crimson;margin-top:8px;" data-i18n="msg.noFace">顔が見つかりませんでした。通常比較になります。</div>
         </section>
         <section id="gallery" class="page">
-            <h2>ギャラリー</h2>
-            <p>過去の比較例を掲載します。</p>
+            <h2 data-i18n="gallery.title">ギャラリー</h2>
+            <p data-i18n="gallery.desc">過去の比較例を掲載します。</p>
             <div class="gallery-grid">
                 <div class="gallery-item">
                     <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=80" alt="Before">
@@ -92,28 +95,28 @@
             </div>
         </section>
         <section id="info" class="page">
-            <h2>利用案内・注意事項</h2>
+            <h2 data-i18n="info.title">利用案内・注意事項</h2>
             <ul>
-                <li>対応画像フォーマット：JPEG, PNG, WebP</li>
-                <li>推奨サイズ：長辺2000px以内</li>
-                <li>アップロードされた画像はサーバに保存されません</li>
-                <li>画像の悪用・転載は一切行いません</li>
-                <li>不具合・ご要望は「要望・バグ報告」よりご連絡ください</li>
+                <li data-i18n="info.format">対応画像フォーマット：JPEG, PNG, WebP</li>
+                <li data-i18n="info.size">推奨サイズ：長辺2000px以内</li>
+                <li data-i18n="info.storage">アップロードされた画像はサーバに保存されません</li>
+                <li data-i18n="info.usage">画像の悪用・転載は一切行いません</li>
+                <li data-i18n="info.contact">不具合・ご要望は「要望・バグ報告」よりご連絡ください</li>
             </ul>
         </section>
         <section id="about" class="page">
-            <h2>開発者について</h2>
-            <p>東京都在住の駆け出しエンジニアYuukiが、学習の一環で制作しています。<br>
+            <h2 data-i18n="about.title">開発者について</h2>
+            <p data-i18n="about.desc">東京都在住の駆け出しエンジニアYuukiが、学習の一環で制作しています。<br>
             JavaやReactなど幅広くWeb技術を学び、ポートフォリオとして公開中です。</p>
         </section>
         <section id="contact" class="page">
-            <h2>要望・バグ報告</h2>
+            <h2 data-i18n="contact.title">要望・バグ報告</h2>
             <form id="contact-form">
-                <label>お名前（任意）<input type="text" name="name"></label>
-                <label>内容<textarea name="message" required></textarea></label>
-                <button type="submit">送信</button>
+                <label data-i18n="contact.name">お名前（任意）<input type="text" name="name"></label>
+                <label data-i18n="contact.message">内容<textarea name="message" required></textarea></label>
+                <button type="submit" data-i18n="contact.submit">送信</button>
             </form>
-            <div id="contact-success" style="display:none;">ご意見ありがとうございます！</div>
+            <div id="contact-success" style="display:none;" data-i18n="contact.success">ご意見ありがとうございます！</div>
         </section>
     </main>
 
