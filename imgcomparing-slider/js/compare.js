@@ -449,41 +449,84 @@ if (contactForm){
     }
   };
 
-  let currentLang = localStorage.getItem('lang') || 'en';
 
-  function applyI18n(lang){
-    // data-i18n 一括適用
-    document.querySelectorAll('[data-i18n]').forEach(el => {
-      const key = el.getAttribute('data-i18n');
-      const txt = DICT[lang] && DICT[lang][key];
-      if (typeof txt === 'string') {
-        // 改行をサポート（\n → <br>）
-        if (txt.includes('\n')) {
-          el.innerHTML = txt.split('\n').map(s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')).join('<br>');
+    // 現在の言語（永続化）
+    let currentLang = (function(){
+      try {
+        return localStorage.getItem('lang') || 'en'; }
+        catch(e){ return 'en'; }
+      })();
+
+    // テキスト反映（XSS安全・改行OK）
+    function renderText(node, str) {
+      if (!node || typeof str !== 'string') return;
+      if (str.indexOf('\n') >= 0) {
+        const safe = str.split('\n').map(function (s) {
+          return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }).join('<br>');
+        node.innerHTML = safe;
         } else {
-          el.textContent = txt;
+          node.textContent = str;
         }
-      }
-    });
+    }
 
-    // html lang属性
-    document.documentElement.setAttribute('lang', lang);
+    // 子要素（input/textarea等）を壊さない i18n 適用
+    function applyI18n(lang) {
+      const dict = DICT[lang] || {};
+      const nodes = document.querySelectorAll('[data-i18n]');
+      for (let i = 0; i < nodes.length; i++) {
+        const el = nodes[i];
+        const key = el.getAttribute('data-i18n');
+        const txt = dict[key];
+        if (typeof txt !== 'string') continue;
+
+        let target = null;
+
+        // 1) 自身が i18n スロット
+        if (el.classList && el.classList.contains('i18n-text')) {
+          target = el;
+        } else {
+          // 2) 子に .i18n-text がある
+          const span = el.querySelector ? el.querySelector('.i18n-text') : null;
+          if (span) {
+            target = span;
+          } else {
+            // 3) フォーム部品を含む → 先頭に .i18n-text を作る
+            const hasFormChild = el.querySelector ? el.querySelector('input, textarea, select, button') : null;
+            if (hasFormChild) {
+              const head = document.createElement('span');
+              head.className = 'i18n-text';
+              if (el.firstChild) el.insertBefore(head, el.firstChild);
+              else el.appendChild(head);
+              target = head;
+            } else {
+              // 4) 純テキスト要素
+              target = el;
+            }
+          }
+        }
+        renderText(target, txt);
+      }
+
+      // html lang属性
+      document.documentElement.setAttribute('lang', lang);
+
     // トグルのラベルを反転
-    const toggle = document.getElementById('lang-toggle');
-    if (toggle){
-      const next = (lang === 'en') ? 'JP' : 'EN';
-      toggle.textContent = next;
-      toggle.setAttribute('aria-label', lang === 'en' ? '日本語に切り替える' : 'Switch to English');
+      const toggle = document.getElementById('lang-toggle');
+      if (toggle){
+        const next = (lang === 'en') ? 'JP' : 'EN';
+        toggle.textContent = next;
+        toggle.setAttribute('aria-label', lang === 'en' ? '日本語に切り替える' : 'Switch to English');
     }
 
     // 永続化
-    localStorage.setItem('lang', lang);
+    try { localStorage.setItem('lang', lang); } catch(e){}
     currentLang = lang;
   }
 
   // 初期適用
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => applyI18n(currentLang));
+    document.addEventListener('DOMContentLoaded', function(){ applyI18n(currentLang); });
   } else {
     applyI18n(currentLang);
   }
@@ -491,7 +534,7 @@ if (contactForm){
   // トグルボタン
   const toggleBtn = document.getElementById('lang-toggle');
   if (toggleBtn){
-    toggleBtn.addEventListener('click', () => {
+    toggleBtn.addEventListener('click', function(){
       const next = (currentLang === 'en') ? 'ja' : 'en';
       applyI18n(next);
     });
