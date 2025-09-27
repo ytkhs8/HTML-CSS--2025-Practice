@@ -14,13 +14,15 @@ body {
   top: 0;
   z-index: 1000;
   display: flex;
+  --header-h: 120px;
+  height: var(--header-h);
   align-items: center;
   justify-content: space-between; /* keep hamburger at top-right */
   background: #fff;
   border-bottom: 1px solid #eee;
-  height: 120px;
   padding: 0 16px;
   box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  overflow: hidden;
 }
 
 .header-left {
@@ -57,10 +59,12 @@ body {
 .lang-toggle:focus-visible { outline: 2px solid #4aa3a3; outline-offset: 2px; }
 
 .app-icon {
-  width: clamp(80px, 5vw + 40px, 128px);
-  height: auto;
+  aspect-ratio: 1 / 1;
+  height: calc(var(--header-h) - 16px); /* keep some vertical padding */
+  width: auto;                           /* derive width from height to preserve square shape */
   border-radius: 20%;
   box-shadow: 0 4px 18px rgba(110, 110, 210, 0.06);
+  object-fit: contain;                   /* stay inside the header box */
 }
 .app-title {
   font-size: clamp(18px, 1.4vw + 16px, 28px);
@@ -113,7 +117,8 @@ body {
 
 @media (max-width: 900px) {
   .header {
-    height: 88px;
+    --header-h: 88px;
+    height: var(--header-h);
     padding: 0 18px;
   }
   .app-title { font-size: 1.5rem;}
@@ -122,12 +127,16 @@ body {
 }
 @media (max-width: 600px) {
   .header {
-    height: 72px;
+    --header-h: 72px;
+    height: var(--header-h);
     padding: 0 8px;
   }
   .app-title { font-size: 1.13rem;}
   .hamburger { width: 32px; height: 32px;}
   .hamburger span { height: 3.5px;}
+  .app-icon {
+    height: calc(var(--header-h) - 12px); /* a bit tighter on very small screens */
+  }
 }
 
 /* SIDEMENU */
