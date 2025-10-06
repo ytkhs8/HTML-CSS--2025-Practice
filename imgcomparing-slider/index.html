@@ -42,6 +42,22 @@
         <section id="home" class="page active">
             <h1 data-i18n="home.title">画像比較スライダー</h1>
             <form id="compare-form" autocomplete="off">
+                <!-- Wizard Guide (Step-by-step helper) -->
+                <div id="wizard-guide" class="wizard-guide" aria-live="polite">
+                    <span id="guide-text" class="i18n-text" data-i18n="wizard.step.selectBefore">
+                        ビフォー画像を選択してください
+                    </span>
+                    <div class="wizard-actions">
+                        <!-- After selecting BEFORE image -->
+                        <button id="next-btn-1" class="btn-secondary" style="display:none" type="button" data-i18n="wizard.next">次へ</button>
+                        <!-- After selecting AFTER image -->
+                        <button id="next-btn-2" class="btn-secondary" style="display:none" type="button" data-i18n="wizard.next">次へ</button>
+                        <!-- After choosing face-only toggle -->
+                        <button id="next-btn-3" class="btn-secondary" style="display:none" type="button" data-i18n="wizard.next">次へ</button>
+                        <!-- Final: Start Compare (enabled only when both images selected) -->
+                        <button id="start-compare-btn" class="btn-primary" type="button" disabled data-i18n="wizard.start">比較を開始</button>
+                    </div>
+                </div>
                 <div class="upload-area">
                     <label class="big-upload">
                         <input type="file" id="before-img" accept="image/*" hidden>
@@ -64,7 +80,12 @@
                         <span data-i18n="face.only">顔だけ比較モード</span>
                     </label>
                 </div>
-                <button type="button" id="reset-btn" data-i18n="btn.reset">リセット</button>
+
+                    <button type="button" id="reset-btn" data-i18n="btn.reset">リセット</button>
+                    <span id="reset-hint" class="reset-hint i18n-text" data-i18n="wizard.hint.reset">
+                        比較をやり直す場合はリセットボタンをクリック
+                    </span>
+                </div>
             </form>
 
             <div id="half-face-result" class="half-face" style="display:none;">
@@ -119,7 +140,7 @@
 
             <div class="form-field">
                 <label for="message"><span class="i18n-text" data-i18n="contact.message">内容</span></label>
-                <textarea id="mesaage" name="message" required></textarea>
+                <textarea id="message" name="message" required></textarea>
             </div>
                 <button type="submit" data-i18n="contact.submit">送信</button>
             </form>

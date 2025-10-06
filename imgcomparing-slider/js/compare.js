@@ -3,6 +3,7 @@ import {
   TINY_OPTS,
   loadFaceApiModels,
   prepareFacesForSlider,
+  prepareFacesForSliderAligned,
   composeHalfFace
 } from './faceUtils.js';
 
@@ -16,14 +17,14 @@ const pages = document.querySelectorAll('.page');
 // --- ハンバーガーメニュー開閉（アクセシブル & スクロールロック） ---
 function openMenu(){
   sideMenu.classList.add('open');
-  menuOverlay.classList.add('show');
+  menuOverlay.classList.add('active');
   hamburgerBtn.classList.add('is-open');
   hamburgerBtn.setAttribute('aria-expanded', 'true');
   document.body.classList.add('menu-open'); // 背景スクロール禁止
 }
 function closeMenu(){
   sideMenu.classList.remove('open');
-  menuOverlay.classList.remove('show');
+  menuOverlay.classList.remove('active');
   hamburgerBtn.classList.remove('is-open');
   hamburgerBtn.setAttribute('aria-expanded', 'false');
   document.body.classList.remove('menu-open'); // 背景スクロール解除
@@ -81,6 +82,78 @@ const faceCheckbox = document.getElementById('face-only');
 const faceLoading = document.getElementById('face-loading');
 const faceError = document.getElementById('face-error');
 
+// ★ ウィザード要素
+const guideText = document.getElementById('guide-text');
+const nextBtn1 = document.getElementById('next-btn-1'); // Before → After へ
+const nextBtn2 = document.getElementById('next-btn-2'); // After → 顔モード選択へ
+const nextBtn3 = document.getElementById('next-btn-3'); // 顔モード選択 → 比較開始待ちへ
+const startBtn = document.getElementById('start-compare-btn'); // 比較開始
+
+// ステップ管理
+// 1: Before選択待ち
+// 2: Before選択済（Nextで3へ）
+// 3: After選択待ち
+// 4: After選択済（Nextで5へ）
+// 5: 顔モード選択中（Nextで6へ）
+// 6: 比較開始待ち（Startで表示）
+let currentStep = 1;
+
+// 比較開始まで自動表示しないためのフラグ
+let allowRender = false;
+
+// ステップに応じたUI更新
+function updateWizardUI(){
+  // 初期化
+  if (nextBtn1) nextBtn1.style.display = 'none';
+  if (nextBtn2) nextBtn2.style.display = 'none';
+  if (nextBtn3) nextBtn3.style.display = 'none';
+  if (startBtn) startBtn.disabled = true;
+
+  switch(currentStep){
+    case 1:
+      setGuide('wizard.step.selectBefore', 'ビフォー画像を選択してください');
+      break;
+    case 2:
+      setGuide('wizard.step.beforeChoosing', '現在ビフォー画像を選択しています');
+      if (nextBtn1) {
+        nextBtn1.style.display = 'inline-flex';
+        nextBtn1.disabled = !beforeFileRef;
+      }
+      break;
+    case 3:
+      setGuide('wizard.step.selectAfter', 'アフター画像を選択してください');
+      break;
+    case 4:
+      setGuide('wizard.step.afterChosen', 'アフター画像を選択しました。「次へ」で顔モード選択へ');
+      if (nextBtn2) {
+        nextBtn2.style.display = 'inline-flex';
+        nextBtn2.disabled = !afterFileRef;
+      }
+      break;
+    case 5:
+      setGuide('wizard.step.faceToggle', '顔だけ比較モードのON/OFFを選択してください');
+      if (nextBtn3) nextBtn3.style.display = 'inline-flex';
+      break;
+    case 6:
+      setGuide('wizard.step.ready', '準備完了。「比較を開始」を押してください');
+      if (startBtn) startBtn.disabled = !(beforeFileRef && afterFileRef);
+      break;
+  }
+}
+
+function setGuide(key, fallback){
+  if (guideText){
+    guideText.setAttribute('data-i18n', key);
+    guideText.textContent = fallback; // i18n 適用前でも見えるように
+
+    if (window.appI18n) {
+      const translated = window.appI18n.getText(key);
+      if (translated) {
+        window.appI18n.renderText(guideText, translated);
+      }
+    }
+  }
+}
 
 let beforeLoaded = false, afterLoaded = false;
 
@@ -93,21 +166,43 @@ function resetSlider() {
   afterInput.value = '';
   imgBefore.src = '';
   imgAfter.src = '';
-  beforeFileRef = null;
-  afterFileRef = null;
 
   overlayDiv.style.width = '50%';
   sliderHandle.style.left = '50%';
   sliderContainer.style.display = 'none';
 
-  document.getElementById('half-face-img').src = '';
-  document.getElementById('half-face-result').style.display = 'none';
-
+  const halfImg = document.getElementById('half-face-img');
+  const halfWrap = document.getElementById('half-face-result');
+  if (halfImg) halfImg.src = '';
+  if (halfWrap) halfWrap.style.display = 'none';
+  
   beforeLoaded = false;
   afterLoaded = false;
   faceError.style.display = 'none';
 }
-resetBtn.addEventListener('click', resetSlider);
+
+// ★ Resetの拡張：状態も初期化
+let beforeFileRef = null;
+let afterFileRef = null;
+
+function resetAll() {
+  allowRender = false;
+  beforeFileRef = null; afterFileRef = null;
+  beforeLoaded = false; afterLoaded = false;
+  currentStep = 1;
+  resetSlider();
+  updateWizardUI();
+}
+
+// リスナーを resetAll に差し替え
+if (resetBtn){
+  // 念のため既存の匿名ハンドラがあっても上書き動作に
+  resetBtn.replaceWith(resetBtn.cloneNode(true));
+}
+const _resetBtn = document.getElementById('reset-btn');
+if (_resetBtn){
+  _resetBtn.addEventListener('click', resetAll);
+}
 
 
 // 顔検出で顔だけ切り出してDataURL化
@@ -204,110 +299,106 @@ async function getFaceCanvasFromFile(file, targetWidth = 400) {
 }
 
 
-// ファイルアップロード共通
-let beforeFileRef = null;
-let afterFileRef = null;
+// ファイルアップロード共通（上で宣言済みの beforeFileRef/afterFileRef を使用）
 
-function handleImage(input, imgEl, flagName) {
-  input.addEventListener('change', async e => {
+// ファイル選択：即比較せず、プレビューのみ＆ステップ遷移
+function handleImageWizard(input, imgEl, which) {
+  input.addEventListener('change', async (e) => {
     faceError.style.display = 'none';
-    const file = e.target.files[0];
+    const file = e.target.files && e.target.files[0];
     if (!file) return;
 
-    // 参照を保持
-    if (flagName === 'before') beforeFileRef = file;
-    if (flagName === 'after') afterFileRef = file;
+    const reader = new FileReader();
+    reader.onload = (ev) => { imgEl.src = ev.target.result; };
 
-    // 顔モードOFF → 通常プレビュー
-    if (!faceCheckbox.checked) {
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        imgEl.src = ev.target.result;
-        if (flagName === 'before') beforeLoaded = true;
-        if (flagName === 'after') afterLoaded = true;
-        if (beforeLoaded && afterLoaded) {
-          // スライダー表示、半顔結果は非表示
-          sliderContainer.style.display = 'block';
-          document.getElementById('half-face-result').style.display = 'none';
-        }
-      };
+    if (which === 'before') {
+      beforeFileRef = file;
+      beforeLoaded = true;
       reader.readAsDataURL(file);
-      return;
-    }
-
-    // 顔モード ON：両方そろってから顔トリミング2枚をスライダーへ
-    if (beforeFileRef && afterFileRef) {
-      try {
-        faceLoading.style.display = 'block';
-        const faces = await prepareFacesForSlider(beforeFileRef, afterFileRef, 420);
-        faceLoading.style.display = 'none';
-
-        if (faces) {
-          imgBefore.src = faces.before;
-          imgAfter.src = faces.after;
-
-          overlayDiv.style.width = '50%';
-          sliderHandle.style.left = '50%';
-
-          sliderContainer.style.display = 'block';
-          document.getElementById('half-face-result').style.display = 'none';
-
-          // 表示位置へスクロール
-          setTimeout(() => {
-            const y = sliderContainer.getBoundingClientRect().top + window.scrollY - 90;
-            window.scrollTo({ top: y, behavior: 'smooth' });
-          }, 0);
-        } else {
-          faceError.style.display = 'block';
-          // 失敗時は通常スライダーへフォールバック
-        }
-      } catch (err) {
-        faceLoading.style.display = 'none';
-        console.error(err);
-        faceError.style.display = 'block';
-      }
+      currentStep = 2; // Before 選択済
     } else {
-      // 片方のみ選択時の暫定プレビュー
-      const reader = new FileReader();
-      reader.onload = ev => { imgEl.src = ev.target.result; };
+      afterFileRef = file;
+      afterLoaded = true;
       reader.readAsDataURL(file);
+      currentStep = 4; // After 選択済
     }
+    updateWizardUI();
   });
 }
 
-// 顔モードのON/OFF切替（既に2枚あれば即時反映）
+// 顔モードのON/OFF切替（ウィザード用：Step5で選択 → Nextで比較開始）
 faceCheckbox.addEventListener('change', async () => {
   faceError.style.display = 'none';
-  if (faceCheckbox.checked && beforeFileRef && afterFileRef) {
-    faceLoading.style.display = 'block';
-    const faces = await prepareFacesForSliderAligned(beforeFileRef, afterFileRef, 420, 520);
-    faceLoading.style.display = 'none';
-    if (faces) {
-      imgBefore.src = faces.before;
-      imgAfter.src = faces.after;
-      overlayDiv.style.width = '50%';
-      sliderHandle.style.left = '50%';
-      sliderContainer.style.display = 'block';
-      document.getElementById('half-face-result').style.display = 'none';
-      setTimeout(() => {
-        const y = sliderContainer.getBoundingClientRect().top + window.scrollY - 90;
-        window.scrollTo({ top: y, behavior: 'smooth' });
-      }, 0);
-      return;
-    }
-    faceError.style.display = 'block';
+  // 顔モードは Step5 で選択 → Next で Step6 へ進む想定。ここでは描画しない。
+  if (currentStep < 5) {
+    currentStep = 5;
   }
-
-  // OFF：通常スライダー表示へ
-  if (!faceCheckbox.checked && beforeLoaded && afterLoaded) {
-    document.getElementById('half-face-result').style.display = 'none';
-    sliderContainer.style.display = 'block';
-  }
+  updateWizardUI();
 });
 
 
-handleImage(beforeInput, imgBefore, 'before');
-handleImage(afterInput, imgAfter, 'after');
+handleImageWizard(beforeInput, imgBefore, 'before');
+handleImageWizard(afterInput, imgAfter, 'after');
+// --- ウィザードの Next/Start 制御 ---
+if (nextBtn1){
+  nextBtn1.addEventListener('click', () => {
+    if (!beforeFileRef) return;
+    currentStep = 3; // After選択へ
+    updateWizardUI();
+  });
+}
+if (nextBtn2){
+  nextBtn2.addEventListener('click', () => {
+    if (!afterFileRef) return;
+    currentStep = 5; // 顔モード選択へ
+    updateWizardUI();
+  });
+}
+if (nextBtn3){
+  nextBtn3.addEventListener('click', () => {
+    currentStep = 6; // 比較開始待ち
+    updateWizardUI();
+  });
+}
+if (startBtn){
+  startBtn.addEventListener('click', async () => {
+    if (!(beforeFileRef && afterFileRef)) return;
+    allowRender = true;
+
+    try {
+      if (faceCheckbox.checked) {
+        faceLoading.style.display = 'block';
+        const faces = await prepareFacesForSliderAligned(beforeFileRef, afterFileRef, 420, 520);
+        faceLoading.style.display = 'none';
+        if (faces) {
+          imgBefore.src = faces.before;
+          imgAfter.src = faces.after;
+        } else {
+          faceError.style.display = 'block';
+        }
+      }
+    } catch (e) {
+      faceLoading.style.display = 'none';
+      console.error(e);
+      faceError.style.display = 'block';
+    }
+
+    // 表示（通常 or 顔モード後）
+    sliderContainer.style.display = 'block';
+    const halfWrap = document.getElementById('half-face-result');
+    if (halfWrap) halfWrap.style.display = 'none';
+
+    overlayDiv.style.width = '50%';
+    sliderHandle.style.left = '50%';
+    setTimeout(() => {
+      const y = sliderContainer.getBoundingClientRect().top + window.scrollY - 90;
+      window.scrollTo({ top: y, behavior: 'smooth' });
+    }, 0);
+  });
+}
+
+// 初期描画
+updateWizardUI();
 
 // スライダーの動作
 const compareSlider = document.querySelector('.compare-slider');
@@ -383,6 +474,17 @@ if (contactForm){
       'msg.loading': 'Loading face detection models…',
       'msg.noFace': 'No face detected. Falling back to normal comparison.',
 
+      // wizard
+      'wizard.step.selectBefore': 'Select your BEFORE image to get started.',
+      'wizard.step.beforeChoosing': 'Your BEFORE image is selected. Proceed when ready.',
+      'wizard.step.selectAfter': 'Select your AFTER image next.',
+      'wizard.step.afterChosen': 'AFTER image ready. Continue to the face-only option.',
+      'wizard.step.faceToggle': 'Choose whether to enable face-only comparison.',
+      'wizard.step.ready': 'All set! Press “Start Comparison” to view the result.',
+      'wizard.next': 'Next',
+      'wizard.start': 'Start Comparison',
+      'wizard.hint.reset': 'Use reset if you want to run the comparison again.',
+
       // gallery
       'gallery.title': 'Gallery',
       'gallery.desc': 'Showcasing previous comparison examples.',
@@ -423,6 +525,17 @@ if (contactForm){
       'caption.halfface': '左：Before / 右：After',
       'msg.loading': '顔検出モデル読み込み中…',
       'msg.noFace': '顔が見つかりませんでした。通常比較になります。',
+
+      // wizard
+      'wizard.step.selectBefore': 'ビフォー画像を選択してください。',
+      'wizard.step.beforeChoosing': 'ビフォー画像を選択しました。準備ができたら進んでください。',
+      'wizard.step.selectAfter': '次にアフター画像を選択してください。',
+      'wizard.step.afterChosen': 'アフター画像の選択が完了しました。顔モードの選択へ進みましょう。',
+      'wizard.step.faceToggle': '顔だけ比較モードを使うか選択してください。',
+      'wizard.step.ready': '準備完了です。「比較を開始」を押してください。',
+      'wizard.next': '次へ',
+      'wizard.start': '比較を開始',
+      'wizard.hint.reset': 'もう一度比較する場合はリセットボタンを押してください。',
 
       // gallery
       'gallery.title': 'ギャラリー',
@@ -471,9 +584,27 @@ if (contactForm){
     }
 
     // 子要素（input/textarea等）を壊さない i18n 適用
-    function applyI18n(lang) {
+    function applyI18n(lang, scope) {
       const dict = DICT[lang] || {};
-      const nodes = document.querySelectorAll('[data-i18n]');
+      const nodes = [];
+
+      if (scope && scope !== document) {
+        if (scope.getAttribute && scope.hasAttribute('data-i18n')) {
+          nodes.push(scope);
+        }
+        if (scope.querySelectorAll) {
+          const scoped = scope.querySelectorAll('[data-i18n]');
+          for (let i = 0; i < scoped.length; i++) {
+            nodes.push(scoped[i]);
+          }
+        }
+      } else {
+        const all = document.querySelectorAll('[data-i18n]');
+        for (let i = 0; i < all.length; i++) {
+          nodes.push(all[i]);
+        }
+      }
+
       for (let i = 0; i < nodes.length; i++) {
         const el = nodes[i];
         const key = el.getAttribute('data-i18n');
@@ -528,8 +659,8 @@ if (contactForm){
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function(){ applyI18n(currentLang); });
   } else {
-    applyI18n(currentLang);
-  }
+      applyI18n(currentLang);
+    }
 
   // トグルボタン
   const toggleBtn = document.getElementById('lang-toggle');
@@ -539,4 +670,33 @@ if (contactForm){
       applyI18n(next);
     });
   }
+
+  // Expose lightweight helper so other scripts can reuse translations
+  window.appI18n = {
+    apply: function(lang, scope){
+      applyI18n(typeof lang === 'string' ? lang : currentLang, scope);
+    },
+    refresh: function(scope){
+      applyI18n(currentLang, scope);
+    },
+    getCurrentLang: function(){
+      return currentLang;
+    },
+    getText: function(key){
+      const dict = DICT[currentLang] || {};
+      const txt = dict[key];
+      return (typeof txt === 'string') ? txt : null;
+    },
+    renderText: renderText
+  };
+  window.faceDebugLog = function(label, payload){
+  const box = document.getElementById('face-debug');
+  if (!box) return;
+  const time = new Date().toLocaleTimeString();
+  const line = document.createElement('div');
+  line.textContent = `[${time}] ${label}: ${JSON.stringify(payload)}`;
+  box.prepend(line);
+  while (box.childElementCount > 30) box.removeChild(box.lastChild);
+};
+
 })();

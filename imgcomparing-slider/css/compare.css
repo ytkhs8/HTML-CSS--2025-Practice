@@ -6,7 +6,7 @@ body {
   background: #f9fafb;
   font-family: Arial, sans-serif;
   color: #222;
-}
+} 
 
 /* HEADER */
 .header {
@@ -124,7 +124,10 @@ body {
   .app-title { font-size: 1.5rem;}
   .hamburger { width: 44px; height: 44px;}
   .hamburger span { height: 6px;}
+  .reset-row { flex-direction: column; align-items: flex-start; }
+  :root { --anchor-offset: 88px; }
 }
+
 @media (max-width: 600px) {
   .header {
     --header-h: 72px;
@@ -137,6 +140,7 @@ body {
   .app-icon {
     height: calc(var(--header-h) - 12px); /* a bit tighter on very small screens */
   }
+  :root {--anchor-offset: 72px; }
 }
 
 /* SIDEMENU */
@@ -149,7 +153,7 @@ body {
   background: #fff;
   box-shadow: -3px 0 8px rgba(60, 80, 120, 0.09);
   transition: right 0.3s;
-  z-index: 200;
+  z-index: 1300;
   padding-top: 90px;
 }
 .side-menu.open {
@@ -177,7 +181,7 @@ body {
 .overlay {
   display: none;
   position: fixed;
-  z-index: 199;
+  z-index: 1200;
   top: 0; left: 0; width: 100vw; height: 100vh;
   background: rgba(60, 80, 120, 0.10);
 }
@@ -196,7 +200,7 @@ main {
   box-shadow: 0 6px 28px 0 rgba(60, 80, 120, 0.09);
 }
 /* Avoid sticky header overlap for in-page anchor jumps */
-main, .page { scroll-margin-top: 104px; }
+main, .page { scroll-margin-top: var(--anchor-offset); }
 
 .page {  display: none; }
 .page.active {  display: block; }
@@ -208,6 +212,17 @@ main, .page { scroll-margin-top: 104px; }
   margin: 30px 0 20px 0;
   flex-wrap: wrap;
 }
+
+/* Ensure consistent order: Before (left) → After (right) */
+/* Modern :has() approach: place the block containing #img-before first, #img-after second */
+.upload-area > *:has(input#img-before) { order: 0; }
+.upload-area > *:has(input#img-after) { order: 1; }
+
+/* Fallback ordering if both blocks exist but :has() is unsupported.
+   Assumes markup has exactly two children in .upload-area */
+.upload-area > *:first-child { order: 0; }
+.upload-area > *:last-child  { order: 1; }
+
 .big-upload {
   background: #eef5fd;
   border: 2.5px dashed #4097ee;
@@ -244,6 +259,50 @@ main, .page { scroll-margin-top: 104px; }
   color: #2767b3;
 }
 
+/* ===== Wizard (step-by-step guide) ===== */
+.wizard-guide {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #f2f7ff;
+  border: 1px solid #e0ecff;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin: 10px 0 6px;
+}
+.wizard-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.btn-secondary {
+  background: #eef5fd;
+  color: #2767b3;
+  border: 1px solid #cfe0fb;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.btn-secondary:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+.btn-primary {
+  background: #4097ee;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.btn-primary:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
 /* reset button */
 #reset-btn {
   display: block;
@@ -261,6 +320,19 @@ main, .page { scroll-margin-top: 104px; }
 }
 #reset-btn:hover {
   background: #c31212;
+}
+
+/* Reset row (button + hint) */
+.reset-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+.reset-hint {
+  color: #2767b3;
+  font-size: .95rem;
 }
 
 /* 画像比較スライダー */
@@ -285,6 +357,39 @@ main, .page { scroll-margin-top: 104px; }
   box-shadow: 0 6px 24px rgba(60, 120, 220, 0.11);
 }
 
+/* === Before/After labels (i18n-linked via :root[lang]) === */
+:root {
+  --before-label: "Before";
+  --after-label: "After";
+  --anchor-offset: 104px;
+}
+:root[lang="ja"] {
+  --before-label: "ビフォー";
+  --after-label: "アフター";
+}
+.compare-slider::before,
+.compare-slider::after {
+  position: absolute;
+  bottom: 8px;
+  padding: 2px 6px;
+  font-size: 0.9rem;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  line-height: 1;
+  z-index: 11;            /* above images and handle background */
+  pointer-events: none;   /* allow dragging without interference */
+  content: "";
+}
+.compare-slider::before {
+  content: var(--before-label);
+  left: 12px;
+}
+.compare-slider::after {
+  content: var(--after-label);
+  right: 12px;
+}
+
 /* ホバー時のスタイル変化 */
 .compare-slider img {
   display: block;
@@ -297,7 +402,7 @@ main, .page { scroll-margin-top: 104px; }
 .img-overlay {
   position: absolute;
   top: 0;
-  left: 0;
+  right: 0;
   width: 50%;
   height: 100%;
   overflow: hidden;
