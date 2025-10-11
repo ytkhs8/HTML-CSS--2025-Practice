@@ -1,10 +1,5 @@
 import {
-  FACE_MODEL_PATH,
-  TINY_OPTS,
-  loadFaceApiModels,
-  prepareFacesForSlider,
-  prepareFacesForSliderAligned,
-  composeHalfFace
+  prepareFacesForSliderAligned
 } from './faceUtils.js';
 
 // --- ハンバーガーメニュー＆SPAページ切替 ---
@@ -204,101 +199,6 @@ if (_resetBtn){
   _resetBtn.addEventListener('click', resetAll);
 }
 
-
-// 顔検出で顔だけ切り出してDataURL化
-async function extractFace(file) {
-  await loadFaceApiModels();
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = async function (ev) {
-      const img = new Image();
-      img.onload = async function () {
-        // 画像をcanvasに描画
-        const canvas = document.createElement('canvas');
-        canvas.width = img.width;
-        canvas.height = img.height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0);
-        // 顔検出
-        const det = await faceapi.detectSingleFace(canvas, TINY_OPTS);
-        if (!det) {
-          resolve(null);
-          return;
-        }
-        // 顔矩形でトリミング
-        const {x, y, width, height} = det.box;
-        const faceCanvas = document.createElement('canvas');
-        faceCanvas.width = width;
-        faceCanvas.height = height;
-        const faceCtx = faceCanvas.getContext('2d');
-        faceCtx.drawImage(img, x, y, width, height, 0, 0, width, height);
-        resolve(faceCanvas.toDataURL());
-      };
-      img.onerror = () => resolve(null);
-      img.src = ev.target.result;
-    };
-    reader.readAsDataURL(file);
-  });
-}
-
-// 画像FileをImageに読み込むPromise
-function loadImageFromFile(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = ev => {
-      const img = new Image();
-      img.onload = () => resolve(img);
-      img.onerror = reject;
-      img.src = ev.target.result;
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
-// 画像と検出結果から顔矩形を切り抜いたCanvasを返す
-function cropFaceToCanvas(img, box, targetWidth = 400) {
-  const sx = Math.max(0, box.x);
-  const sy = Math.max(0, box.y);
-  const sw = Math.min(img.width - sx, box.width);
-  const sh = Math.min(img.height - sy, box.height);
-
-  // 出力は等幅で整える（高さは比率維持）
-  const scale = targetWidth / sw;
-  const tw = Math.round(sw * scale);
-  const th = Math.round(sh * scale);
-
-  const faceCanvas = document.createElement('canvas');
-  faceCanvas.width = tw;
-  faceCanvas.height = th;
-  const ctx = faceCanvas.getContext('2d');
-  ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = 'high';
-  ctx.drawImage(img, sx, sy, sw, sh, 0, 0, tw, th);
-  return faceCanvas;
-}
-
-// ファイルから顔切り抜きCanvasを生成（TinyFaceDetectorを使用）
-async function getFaceCanvasFromFile(file, targetWidth = 400) {
-  await loadFaceApiModels();
-  const img = await loadImageFromFile(file);
-
-  // 元画像を一旦キャンバス化（検出のため）
-  const tmp = document.createElement('canvas');
-  tmp.width = img.width;
-  tmp.height = img.height;
-  tmp.getContext('2d').drawImage(img, 0, 0);
-
-  const det = await faceapi.detectSingleFace(tmp, TINY_OPTS);
-  if (!det) {
-    console.warn('[face detection] no face detected');
-  }
-  if (!det) return null;
-  return cropFaceToCanvas(img, det.box, targetWidth);
-  
-}
-
-
 // ファイルアップロード共通（上で宣言済みの beforeFileRef/afterFileRef を使用）
 
 // ファイル選択：即比較せず、プレビューのみ＆ステップ遷移
@@ -418,7 +318,7 @@ window.addEventListener('mousemove', (e) => {
   let offsetX = e.clientX - rect.left;
   offsetX = Math.max(0, Math.min(offsetX, rect.width));
   const percent = offsetX / rect.width * 100;
-  overlayDiv.style.width = percent + '%';
+  overlayDiv.style.width = (100 - percent) + '%';
   sliderHandle.style.left = percent + '%';
 });
 
@@ -436,7 +336,7 @@ window.addEventListener('touchmove', (e) => {
   let offsetX = touch.clientX - rect.left;
   offsetX = Math.max(0, Math.min(offsetX, rect.width));
   const percent = offsetX / rect.width * 100;
-  overlayDiv.style.width = percent + '%';
+  overlayDiv.style.width = (100 - percent) + '%';
   sliderHandle.style.left = percent + '%';
 });
 

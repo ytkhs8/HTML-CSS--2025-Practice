@@ -24,7 +24,7 @@ export async function loadFaceApiModels(modelPath = FACE_MODEL_PATH) {
   faceApiReady = true;
 }
 
-// File -> <img>
+// 画像FileをImageに読み込むPromise
 export function loadImageFromFile(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -39,7 +39,7 @@ export function loadImageFromFile(file) {
   });
 }
 
-// 顔矩形を切り抜いて希望幅にスケーリングした Canvas を返す
+// 画像と検出結果から顔矩形を切り抜いたCanvasを返す
 export function cropFaceToCanvas(img, box, targetWidth = 420) {
   const sx = Math.max(0, box.x);
   const sy = Math.max(0, box.y);
@@ -60,7 +60,7 @@ export function cropFaceToCanvas(img, box, targetWidth = 420) {
   return faceCanvas;
 }
 
-// File から 顔検出→切り抜き Canvas
+// ファイルから顔切り抜きCanvasを生成（TinyFaceDetectorを使用）
 export async function getFaceCanvasFromFile(file, targetWidth = 420) {
   await loadFaceApiModels();
   const img = await loadImageFromFile(file);
