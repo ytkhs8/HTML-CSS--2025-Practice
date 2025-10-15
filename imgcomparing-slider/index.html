@@ -29,9 +29,9 @@
         </div>
         <nav class="side-menu" id="side-menu">
             <ul>
-                <li><a href="#" data-page="gallery" data-i18n="menu.gallery">ギャラリー</a></li>
+                <li><a href="#" data-page="materials" data-i18n="menu.materials">比較用使用素材</a></li>
                 <li><a href="#" data-page="info" data-i18n="menu.info">利用案内・注意事項</a></li>
-                <li><a href="#" data-page="about" data-i18n="menu.about">開発者紹介</a></li>
+                <li><a href="#" data-page="about" data-i18n="menu.about">開発者・当サイト紹介</a></li>
                 <li><a href="#" data-page="contact" data-i18n="menu.contact">要望・バグ報告</a></li>
             </ul>
         </nav>
@@ -105,14 +105,205 @@
             <div id="face-loading" style="display: none;" data-i18n="msg.loading">顔検出モデル読み込み中...</div>
             <div id="face-error" style="display: none;color:crimson;margin-top:8px;" data-i18n="msg.noFace">顔が見つかりませんでした。通常比較になります。</div>
         </section>
-        <section id="gallery" class="page">
-            <h2 data-i18n="gallery.title">ギャラリー</h2>
-            <p data-i18n="gallery.desc">過去の比較例を掲載します。</p>
-            <div class="gallery-grid">
-                <div class="gallery-item">
-                    <img src="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=80" alt="Before">
-                    <img src="https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=crop&w=400&q=80" alt="After">
+        <section id="materials" class="page">
+            <h2 data-i18n="materials.title">比較用使用素材</h2>
+            <p data-i18n="materials.lead">
+                当サイトの画像比較スライダーを皆様に体験して頂く目的で様々な用途の素材をこちらで用意しました。是非素材をダウンロードして当サイトの画像比較をお楽しみください。
+            </p>
+
+            <div class="materials-section">
+                <h3 data-i18n="materials.category.landscape">風景画</h3>
+                <div class="materials-grid">
+                  <article class="material-set">
+                    <h4 data-i18n="materials.landscape.city.title">現在と昔の渋谷の変貌</h4>
+                    <figure>
+                        <figcaption data-i18n="materials.landscape.city.before">現在の渋谷駅周辺</figcaption>
+                        <img src="demo-images/city-before.png" alt="現在の渋谷駅周辺の高層ビルと交差点">
+                    </figure>
+                    <figure>
+                        <figcaption data-i18n="materials.landscape.city.after">昔の渋谷駅周辺</figcaption>
+                        <img src="demo-images/city-after.png" alt="昔の渋谷駅周辺の街並み">
+                    </figure>
+                  </article>
+                  <article class="material-set">
+                    <h4 data-i18n="materials.landscape.lifestyle.title">現在と昔の人々の暮らしの違い</h4>
+                    <figure>
+                        <figcaption data-i18n="materials.landscape.lifestyle.before">現代の暮らし</figcaption>
+                        <img src="demo-images/lifestyle-before.png" alt="現代の街角でスマートフォンを使う人々">
+                    </figure>
+                    <figure>
+                        <figcaption data-i18n="materials.landscape.lifestyle.after">昔の暮らし</figcaption>
+                        <img src="demo-images/lifestyle-after.png" alt="昔の市場で買い物をする人々">
+                    </figure>
+                  </article>
+                  <article class="material-set">
+                    <h4 data-i18n="materials.landscape.resolution.title">アメリカのシリコンバレーと東京の街並みの対比</h4>
+                    <figure>
+                        <figcaption data-i18n="materials.landscape.town.before">アメリカのシリコンバレー</figcaption>
+                        <img src="demo-images/landscape-before.jpg" alt="アメリカのシリコンバレーの街並み">
+                    </figure>
+                    <figure>
+                        <figcaption data-i18n="materials.landscape.town.after">日本の東京</figcaption>
+                        <img src="demo-images/landscape-after.jpg" alt="日本の東京の街並み">
+                    </figure>
+                  </article>
                 </div>
+            </div>
+
+            <div class="materials-section">
+              <h3 data-i18n="materials.category.objects">対象物</h3>
+              <div class="materials-grid">
+                <article class="material-set">
+                　<h4 data-i18n="materials.objects.iphone.title">iPhone3GとiPhone17 Proの外観の対比</h4>
+                　<figure>
+                    <figcaption data-i18n="materials.objects.iphone.before">iPhone3Gの外観</figcaption>
+                    <img src="demo-images/device-before.png" alt="黒いiPhone3G">
+                </figure>
+                <figure>
+                    <figcaption data-i18n="materials.objects.iphone.after">iPhone16 Proの外観</figcaption>
+                    <img src="demo-images/device-after.png" alt="iPhone16 Pro">
+                </figure>
+                </article>
+                <article class="material-set">
+                  <h4 data-i18n="materials.objects.shirt.title">オックスフォードシャツとオープンカラーシャツの対比</h4>
+                  <figure>
+                    <figcaption data-i18n="materials.objects.shirt.oxford">オックスフォードシャツ</figcaption>
+                    <img src="demo-images/shirt-oxford.png" alt="ボタンダウンの白いオックスフォードシャツ">
+                  </figure>
+                  <figure>
+                    <figcaption data-i18n="materials.objects.shirt.opencollar">オープンカラーシャツ</figcaption>
+                    <img src="demo-images/shirt-opencollar.png" alt="開襟のオープンカラーシャツ">
+                  </figure>
+                </article>
+                <article class="material-set">
+                   <h4 data-i18n="materials.objects.chameleon.title">カメレオンの体の色の変化</h4>
+                   <figure>
+                    <figcaption data-i18n="materials.objects.chameleon.before">緑色のカメレオン</figcaption>
+                    <img src="https://images.unsplash.com/photo-1617540021016-72023b487e99?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=3174" alt="緑色のカメレオン">
+                   </figure>
+                   <figure>
+                    <figcaption data-i18n="materials.objects.chameleon.after">鮮やかな色のカメレオン</figcaption>
+                    <img src="https://images.unsplash.com/photo-1633507733525-fb5960cba41d?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=2940" alt="鮮やかな色のカメレオン">
+                   </figure>
+                </article>
+              </div>
+            </div>
+
+            <div class="materials-section">
+              <h3 data-i18n="materials.category.people">人物像</h3>
+              <div class="materials-grid">
+                <article class="material-set">
+                    <h4 data-i18n="materials.people.diet.title">ダイエット前とダイエット後の姿の対比</h4>
+                    <figure>
+                      <figcaption data-i18n="materials.people.diet.before">ダイエット前の姿</figcaption>
+                      <img src="demo-images/diet-before.jpeg" alt="ダイエット前の全身写真">
+                    </figure>
+                    <figure>
+                        <figcaption data-i18n="materials.people.diet.after">ダイエット後の姿</figcaption>
+                        <img src="demo-images/diet-after.jpeg" alt="ダイエット後の全身写真">
+                    </figure>
+                </article>
+                <article class="material-set">
+                  <h4 data-i18n="materials.people.growth.title">子どもの成長前後の比較</h4>
+                  <figure>
+                    <figcaption data-i18n="materials.people.growth.before">７歳の頃</figcaption>
+                    <img src="demo-images/growth-before.png" alt="幼少期の写真">
+                  </figure>
+                  <figure>
+                    <figcaption data-i18n="materials.people.growth.after">２０歳の頃</figcaption>
+                    <img src="demo-images/growth-after.png" alt="成長後の写真">
+                  </figure>
+                </article>
+                <article class="material-set">
+                  <h4 data-i18n="materials.people.cosplay.title">普段の自分とハロウィンのコスプレをした自分の対比</h4>
+                  <figure>
+                    <figcaption data-i18n="materials.people.cosplay.before">普段着の自分</figcaption>
+                    <img src="demo-images/cosplay-before.png" alt="普段着の写真">
+                  </figure>
+                  <figure>
+                    <figcaption data-i18n="materials.people.cosplay.after">ハロウィンのコスプレ</figcaption>
+                    <img src="demo-images/cosplay-after.png" alt="ハロウィンコスプレの写真">
+                  </figure>
+                </article>
+              </div>
+            </div>
+
+            <div class="materials-section">
+              <h3 data-i18n="materials.category.faces">人物の顔</h3>
+              <div class="materials-grid">
+                <article class="material-set">
+                  <h4 data-i18n="materials.face.cosmetic-surgery.title">美容整形施術前後の顔の対比</h4>
+                  <figure>
+                    <figcaption data-i18n="materials.face.cosmetic-surgery.before">施術前</figcaption>
+                    <img src="https://images.unsplash.com/photo-1524502397800-2eeaad7c3fe5?auto=format&fit=crop&w=600&q=80" alt="施術前の顔の正面写真">
+                  </figure>
+                  <figure>
+                    <figcaption data-i18n="materials.face.cosmetic-surgery.after">施術後</figcaption>
+                    <img src="https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=600&q=80" alt="施術後の顔の正面写真">
+                  </figure>
+                </article>
+                <article class="material-set">
+                  <h4 data-i18n="materials.face.makeup.title">メイク前後の自分の顔の比較</h4>
+                  <figure>
+                    <figcaption data-i18n="materials.face.makeup.before">すっぴん</figcaption>
+                    <img src="demo-images/face-before.png" alt="すっぴんの女性">
+                  </figure>
+                  <figure>
+                    <figcaption data-i18n="materials.face.makeup.after">メイク時</figcaption>
+                    <img src="demo-images/face-after.png" alt="メイク時の女性">
+                  </figure>
+                </article>
+                <article class="material-set">
+                  <h4 data-i18n="materials.face.age.title">幼少期と成人の同一人物の顔の対比</h4>
+                  <figure>
+                    <figcaption data-i18n="materials.face.age.before">３歳の顔</figcaption>
+                    <img src=""　alt="３歳頃の顔写真">
+                  </figure>
+                  <figure>
+                    <figcaption data-i18n="materials.face.age.after">２３歳の頃</figcaption>
+                    <img src="" alt="２３歳頃の顔写真">
+                  </figure>
+                </article>
+              </div>
+            </div>
+
+            <div class="materials-section">
+              <h3 data-i18n="materials.category.results">成果物</h3>
+              <div class="materials-grid">
+                <article class="material-set">
+                  <h4 data-i18n="materials.result.cleaning.title">掃除をした箇所のビフォーアフター</h4>
+                  <figure>
+                    <figcaption data-i18n="materials.result.cleaning.before">掃除前の状態</figcaption>
+                    <img src="" alt="水垢や黒カビで汚くなった浴室">
+                  </figure>
+                  <figure>
+                    <figcaption data-i18n="materials.result.cleaning.after">掃除後の状態</figcaption>
+                    <img src="" alt="ピカピカに磨かれた浴室">
+                  </figure>
+                </article>
+                <article class="material-set">
+                  <h4 data-i18n="materials.result.learning.title">学習前後の成果物の対比</h4>
+                  <figure>
+                    <figcaption data-i18n="materials.result.learning.before">学習前の作品</figcaption>
+                    <img src="" alt="練習中の絵画">
+                  </figure>
+                  <figure>
+                    <figcaption data-i18n="materials.result.learning.after">学習後の作品</figcaption>
+                    <img src="" alt="プロ並みの腕前の絵画">
+                  </figure>
+                </article>
+                <article class="material-set">
+                  <h4 data-i18n="materials.result.clothing.title">洋服の汚れ落としのビフォーアフター</h4>
+                  <figure>
+                    <figcaption data-i18n="materials.result.clothing.before">汚れの付いた洋服</figcaption>
+                    <img src="" alt="汚れの付いた白いシャツ">
+                  </figure>
+                  <figure>
+                    <figcaption data-i18n="materials.result.clothing.after">汚れを落とした洋服</figcaption>
+                    <img src="" alt="汚れが落ちた白いシャツ">
+                  </figure>
+                </article>
+              </div>
             </div>
         </section>
         <section id="info" class="page">
@@ -128,7 +319,9 @@
         <section id="about" class="page">
             <h2 data-i18n="about.title">開発者について</h2>
             <p data-i18n="about.desc">東京都在住の駆け出しエンジニアYuukiが、学習の一環で制作しています。<br>
-            JavaやReactなど幅広くWeb技術を学び、ポートフォリオとして公開中です。</p>
+            JavaやSpringBoot、JavaScriptなど幅広くWeb技術を学び、ポートフォリオとして公開中です。</p>
+            <h2 data-i18n="about.howto">用途概要</h2>
+            <p data-i18n="about.howto.desc">この画像比較スライダーは主に風景画・対象物・人物像・人物の顔・成果物の比較を行いたい際に役立ちます。</p>
         </section>
         <section id="contact" class="page">
             <h2 data-i18n="contact.title">要望・バグ報告</h2>
