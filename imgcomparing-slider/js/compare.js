@@ -703,3 +703,168 @@ if (contactForm){
 };
 
 })();
+
+// ===== Materials Accordion (accessible + animated) =====
+(function initMaterialsAccordion(){
+  const root = document.querySelector('#materials');
+  if (!root) return;
+
+  const toggles = root.querySelectorAll('.acc-toggle');
+
+  const setOpen = (btn, open) => {
+    const content = btn.nextElementSibling;
+    if (!content || !content.classList.contains('acc-content')) return;
+
+    if (open) {
+      btn.setAttribute('aria-expanded', 'true');
+      // 高さを測ってから開く
+      content.classList.remove('open');
+      content.style.height = content.scrollHeight + 'px';
+      const onEnd = () => {
+        content.classList.add('open');
+        content.style.height = 'auto';
+        content.removeEventListener('transitionend', onEnd);
+      };
+      content.addEventListener('transitionend', onEnd);
+    } else {
+      btn.setAttribute('aria-expanded', 'false');
+      // 一度現在の高さを固定してから0へ
+      content.classList.remove('open');
+      const h = content.scrollHeight;
+      content.style.height = h + 'px';
+      requestAnimationFrame(() => { content.style.height = '0px'; });
+    }
+  };
+
+  const closeAllExcept = (btn) => {
+    toggles.forEach(other => {
+      if (other === btn) return;
+      if (other.getAttribute('aria-expanded') === 'true') setOpen(other, false);
+    });
+  };
+
+  // 初期化（開いているセクションはauto、閉じているセクションは0）
+  toggles.forEach(btn => {
+    const content = btn.nextElementSibling;
+    if (!content || !content.classList.contains('acc-content')) return;
+
+    if (btn.getAttribute('aria-expanded') === 'true') {
+      content.classList.add('open');
+      content.style.height = 'auto';
+    } else {
+      content.style.height = '0px';
+    }
+
+    // クリックで開閉
+    btn.addEventListener('click', () => {
+      const isOpen = btn.getAttribute('aria-expanded') === 'true';
+      if (!isOpen) closeAllExcept(btn);
+      setOpen(btn, !isOpen);
+    });
+
+    // キーボード操作 Enter / Space でもトグル
+    btn.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        btn.click();
+      }
+    });
+  });
+})();
+
+// ===== i18n連携：data-i18n を使う見出しは既存の適用処理に乗る想定 =====
+// もし i18n 再適用関数があるなら、その中で .acc-toggle > span[data-i18n] も更新されます。
+// 追加のコードは不要。
+
+// ===== Lightbox (A: contain thumbnails + C: enlarge & save) =====
+(function initLightbox(){
+  const materialsRoot = document.getElementById('materials');
+  if (!materialsRoot) return;
+
+  const overlay = document.getElementById('lightbox');
+  const imgEl   = document.getElementById('lightbox-img');
+  const dlLink  = document.getElementById('lightbox-download');
+  const openBtn = document.getElementById('lightbox-open');
+  const closeBtn= document.getElementById('lightbox-close');
+
+  if (!overlay || !imgEl || !dlLink || !openBtn || !closeBtn) return;
+
+  let currentList = [];   // NodeList of IMG in current grid
+  let currentIndex = -1;  // index within currentList
+
+  const setDownloadLink = (src) => {
+    try {
+      const url = new URL(src, location.href);
+      const file = (url.pathname.split('/').pop() || 'image').split('?')[0] || 'image';
+      dlLink.href = url.href;
+      dlLink.setAttribute('download', file);
+    } catch {
+      dlLink.href = src;
+      dlLink.setAttribute('download', 'image');
+    }
+  };
+
+  const openAt = (idx) => {
+    if (!currentList.length) return;
+    currentIndex = Math.max(0, Math.min(idx, currentList.length - 1));
+    const node = currentList[currentIndex];
+    if (!node) return;
+    const src = node.getAttribute('src');
+    const alt = node.getAttribute('alt') || '';
+    imgEl.src = src;
+    imgEl.alt = alt;
+    setDownloadLink(src);
+    overlay.classList.add('open');
+    overlay.removeAttribute('hidden');
+    document.body.style.overflow = 'hidden';
+    closeBtn.focus();
+  };
+
+  const close = () => {
+    overlay.classList.remove('open');
+    overlay.setAttribute('hidden', 'true');
+    imgEl.removeAttribute('src');
+    document.body.style.overflow = '';
+    currentList = [];
+    currentIndex = -1;
+  };
+
+  const openFromThumb = (thumb) => {
+    // gather siblings within same materials-grid
+    const grid = thumb.closest('.materials-grid');
+    if (!grid) return;
+    currentList = Array.from(grid.querySelectorAll('.material-set img'));
+    const idx = currentList.indexOf(thumb);
+    openAt(idx >= 0 ? idx : 0);
+  };
+
+  // Delegated click on thumbnails inside materials
+  materialsRoot.addEventListener('click', (e) => {
+    const t = e.target;
+    if (t && t.tagName === 'IMG' && t.closest('.material-set')) {
+      e.preventDefault();
+      openFromThumb(t);
+    }
+  });
+
+  // Close behaviors
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+  closeBtn.addEventListener('click', close);
+
+  // Open in new tab
+  openBtn.addEventListener('click', () => { if (imgEl.src) window.open(imgEl.src, '_blank', 'noopener'); });
+
+  // Keyboard controls inside lightbox
+  window.addEventListener('keydown', (e) => {
+    if (!overlay.classList.contains('open')) return;
+    if (e.key === 'Escape') { e.preventDefault(); close(); return; }
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      if (currentList.length) openAt((currentIndex - 1 + currentList.length) % currentList.length);
+    }
+    if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      if (currentList.length) openAt((currentIndex + 1) % currentList.length);
+    }
+  });
+})();

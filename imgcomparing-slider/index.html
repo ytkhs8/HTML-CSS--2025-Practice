@@ -85,7 +85,7 @@
                     <span id="reset-hint" class="reset-hint i18n-text" data-i18n="wizard.hint.reset">
                         比較をやり直す場合はリセットボタンをクリック
                     </span>
-                </div>
+                
             </form>
 
             <div id="half-face-result" class="half-face" style="display:none;">
@@ -112,7 +112,11 @@
             </p>
 
             <div class="materials-section">
-                <h3 data-i18n="materials.category.landscape">風景画</h3>
+            <button class="acc-toggle" aria-expanded="false">
+                <span data-i18n="materials.category.landscape">風景画</span>
+                <svg class="icon-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5z"></path></svg>
+            </button>
+              <div class="acc-content">
                 <div class="materials-grid">
                   <article class="material-set">
                     <h4 data-i18n="materials.landscape.city.title">現在と昔の渋谷の変貌</h4>
@@ -148,10 +152,15 @@
                     </figure>
                   </article>
                 </div>
+              </div>
             </div>
 
             <div class="materials-section">
-              <h3 data-i18n="materials.category.objects">対象物</h3>
+            <button class="acc-toggle" aria-expanded="false">
+              <span data-i18n="materials.category.objects">対象物</span>
+              <svg class="icon-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5z"></path></svg>
+            </button>
+            <div class="acc-content">
               <div class="materials-grid">
                 <article class="material-set">
                 　<h4 data-i18n="materials.objects.iphone.title">iPhone3GとiPhone17 Proの外観の対比</h4>
@@ -188,9 +197,14 @@
                 </article>
               </div>
             </div>
+            </div>
 
             <div class="materials-section">
-              <h3 data-i18n="materials.category.people">人物像</h3>
+            <button class="acc-toggle" aria-expanded="false">
+              <span data-i18n="materials.category.people">人物像</span>
+              <svg class="icon-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5z"></path></svg>
+            </button>
+            <div class="acc-content">
               <div class="materials-grid">
                 <article class="material-set">
                     <h4 data-i18n="materials.people.diet.title">ダイエット前とダイエット後の姿の対比</h4>
@@ -227,9 +241,14 @@
                 </article>
               </div>
             </div>
+            </div>
 
             <div class="materials-section">
-              <h3 data-i18n="materials.category.faces">人物の顔</h3>
+            <button class="acc-toggle" aria-expanded="false">
+              <span data-i18n="materials.category.faces">人物の顔</span>
+              <svg class="icon-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5z"></path></svg>
+            </button>
+            <div class="acc-content">
               <div class="materials-grid">
                 <article class="material-set">
                   <h4 data-i18n="materials.face.season.title">冬季と夏季の顔の対比</h4>
@@ -257,7 +276,7 @@
                   <h4 data-i18n="materials.face.age.title">幼少期と成人の同一人物の顔の対比</h4>
                   <figure>
                     <figcaption data-i18n="materials.face.age.before">３歳の顔</figcaption>
-                    <img src="demo-images/age-before.png"　alt="３歳頃の顔写真">
+                    <img src="demo-images/age-before.png" alt="３歳頃の顔写真">
                   </figure>
                   <figure>
                     <figcaption data-i18n="materials.face.age.after">２３歳の頃</figcaption>
@@ -266,9 +285,14 @@
                 </article>
               </div>
             </div>
+            </div>
 
             <div class="materials-section">
-              <h3 data-i18n="materials.category.results">成果物</h3>
+            <button class="acc-toggle" aria-expanded="false">
+              <span data-i18n="materials.category.results">成果物</span>
+              <svg class="icon-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5z"></path></svg>
+            </button>
+            <div class="acc-content">
               <div class="materials-grid">
                 <article class="material-set">
                   <h4 data-i18n="materials.result.cleaning.title">掃除をした箇所のビフォーアフター</h4>
@@ -304,6 +328,7 @@
                   </figure>
                 </article>
               </div>
+            </div>
             </div>
         </section>
         <section id="info" class="page">
@@ -345,7 +370,19 @@
      <footer class="site-footer">
         <p><small>Copyright ©︎ 2025 Yuuki</small></p>
      </footer>
+<!-- Lightbox root (A + C 運用) -->
+<div id="lightbox" class="lightbox-overlay" aria-modal="true" role="dialog" aria-label="Image preview" hidden>
+  <div class="lightbox-inner">
+    <img id="lightbox-img" class="lightbox-img" alt="">
+    <div class="lightbox-actions">
+      <a id="lightbox-download" class="lightbox-btn" download>保存</a>
+      <button id="lightbox-open" class="lightbox-btn" type="button">新しいタブで開く</button>
+    </div>
+    <button id="lightbox-close" class="lightbox-btn lightbox-close" type="button" aria-label="閉じる">閉じる</button>
+  </div>
+</div>
+
 <!-- JavaScript -->
-    <script type="module" src="js/compare.js"></script>
+<script type="module" src="js/compare.js"></script>
 </body>
 </html>

@@ -122,11 +122,22 @@ body {
     height: var(--header-h);
     padding: 0 18px;
   }
-  .app-title { font-size: 1.5rem;}
-  .hamburger { width: 44px; height: 44px;}
-  .hamburger span { height: 6px;}
+  .app-title { font-size: 1.5rem; }
+  .hamburger { width: 44px; height: 44px; }
+  .hamburger span { height: 6px; }
   .reset-row { flex-direction: column; align-items: flex-start; }
   :root { --anchor-offset: 88px; }
+  #materials .materials-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+   #materials .materials-section > .acc-toggle,
+  #materials .materials-section > .acc-content {
+    width: 100%;
+    margin: 0; /* headers butt together */
+  }
+  #materials .materials-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @media (max-width: 600px) {
@@ -158,6 +169,12 @@ body {
     min-width: 120px;
     height: 92px;
     font-size: .93rem;
+  }
+  #materials .materials-grid { 
+    grid-template-columns: 1fr;
+  }
+  #materials .acc-toggle {
+    font-size: 1rem;
   }
 }
 
@@ -482,9 +499,10 @@ button[type='submit']:hover {
 }
 
 /* スライダーのマルチカラムレイアウト表示 */
-.materials-section {
-  margin-top: 36px;
-}
+/* materials sections: remove outer margins so headers touch without white gaps */
+.materials-section { margin-top: 0; }
+/* keep spacing only inside expanded content */
+#materials .acc-content .materials-grid { padding-top: 12px; }
 .materials-section h3 {
   margin-bottom: 16px;
   color: #2767b3;
@@ -565,4 +583,166 @@ body.menu-open {
 .site-footer p {
   font-size: 0.9rem;
   line-height: 1.6;
+}
+
+
+
+#materials .acc-toggle {
+  width: 100%;
+  background: #f8fafc;
+  border: none;
+  padding: 1rem 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+  line-height: 1.2;
+}
+#materials .acc-toggle:focus-visible {
+  outline: 3px solid #3b82f6;
+  outline-offset: 2px;
+}
+#materials .acc-toggle .icon-arrow {
+  width: 20px; height: 20px;
+  fill: currentColor;
+  transition: transform .25s ease;
+}
+#materials .acc-toggle[aria-expanded="true"] .icon-arrow { transform: rotate(180deg); }
+
+/* Vibrant category headers (inspired by CodePen) */
+#materials .materials-section:nth-of-type(1) > .acc-toggle {
+  background: #ab0f50;  /* magenta */
+  color: #241b01;
+}
+#materials .materials-section:nth-of-type(2) > .acc-toggle {
+  background: #f5a500;  /* orange */
+  color: #3a7bca;       /* dark text for contrast */
+}
+#materials .materials-section:nth-of-type(3) > .acc-toggle {
+  background: #adcc33;  /* lime */
+  color: #1f2937;
+}
+#materials .materials-section:nth-of-type(4) > .acc-toggle {
+  background: #97cdf3;  /* sky */
+  color: #404058;
+}
+#materials .materials-section:nth-of-type(5) > .acc-toggle {
+  background: #00489d;  /* blue */
+  color: #eaf6fd;
+}
+/* Ensure the chevron inherits the text color */
+#materials .materials-section > .acc-toggle .icon-arrow { fill: currentColor; }
+
+/* アニメーション（計測式） */
+#materials .acc-content {
+  overflow: hidden;
+  height: 0;
+  transition: height .3s ease;
+}
+
+
+/* make headers butt up against each other with no white seams */
+#materials .materials-section > .acc-toggle { margin: 0; border-bottom: 0; }
+#materials .materials-section + .materials-section > .acc-toggle { margin-top: 0; }
+
+/* optional: rounded corners only for first/last header in the group */
+#materials .materials-section:first-of-type > .acc-toggle { border-top-left-radius: 10px; border-top-right-radius: 10px; }
+#materials .materials-section:last-of-type  > .acc-toggle { border-bottom-left-radius: 10px; border-bottom-right-radius: 10px; }
+
+
+#materials .materials-grid {
+  /* Base grid styling */
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+}
+/* Desktop: 3 columns */
+@media (min-width: 901px) {
+  #materials .materials-grid { grid-template-columns: repeat(3, 1fr); }
+}
+#materials .material-set {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: .75rem;
+}
+#materials .material-set figure {
+  margin: .4rem 0;
+  display: grid;
+  gap: .4rem;
+}
+#materials .material-set img {
+  width: 100%;
+  aspect-ratio: var(--thumb-ratio, 4 / 3);
+  object-fit: contain;          /* 画像全体を表示（A案） */
+  object-position: center;
+  background: #f1f5f9;          /* レターボックスの色 */
+  border-radius: 8px;
+  display: block;
+  cursor: zoom-in;              /* ライトボックスの示唆（C案） */
+}
+/* カテゴリごとに cover（トリミング重視）へ切替可能 */
+#materials .materials-grid[data-fit="cover"] .material-set img {
+  object-fit: cover;
+  background: transparent;
+}
+/* カテゴリごとに比率切替（任意） */
+#materials .materials-grid[data-ratio="3/4"] .material-set img { --thumb-ratio: 3 / 4; }
+#materials .materials-grid[data-ratio="1/1"] .material-set img { --thumb-ratio: 1 / 1; }
+#materials .material-set h4 {
+  font-size: 1rem; margin: .25rem 0 .5rem;
+}
+#materials .material-set figcaption {
+  font-size: .9rem; color: #475569;
+}
+
+/* モーション軽減 */
+@media (prefers-reduced-motion: reduce) {
+  #materials .acc-content {
+    transition: none;
+  }
+  #materials .acc-toggle .icon-arrow {
+    transition: none;
+  }
+}
+
+/* === Lightbox (C案) === */
+.lightbox-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.85);
+  display: none; /* 初期は非表示。JSで表示 */
+  place-items: center;
+  z-index: 10000;
+  padding: 4vmin;
+}
+.lightbox-overlay.open { display: grid; }
+.lightbox-inner { position: relative; max-width: 92vw; max-height: 92vh; }
+.lightbox-img { max-width: 92vw; max-height: 92vh; object-fit: contain; border-radius: 10px; background: #000; display: block;}
+.lightbox-actions { position: absolute; right: 8px; top: 8px; display: flex; gap: 8px; }
+.lightbox-btn { appearance: none; border: 1px solid #cbd5e1; background: #0f172a; color: #fff; font: inherit; border-radius: 999px; padding: .4rem .8rem; cursor: pointer; opacity: .9; }
+.lightbox-btn:hover { opacity: 1; }
+.lightbox-close { position: absolute; left: 8px; top: 8px; }
+/* === Accordion header: bigger vertical tap target + narrower width on desktop === */
+/* Base: keep current for mobile/tablet */
+#materials .materials-section > .acc-toggle {
+  /* ensure comfortable min tap height even on small screens */
+  min-height: 72px;                 /* larger than before */
+}
+
+@media (min-width: 901px) {
+  /* Desktop: narrow header AND content to the same width (2/3) */
+  #materials .materials-section > .acc-toggle,
+  #materials .materials-section > .acc-content { 
+    width: 66.666%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  /* Taller tap target on desktop */
+  #materials .materials-section > .acc-toggle {
+    padding-block: 2.25rem;
+    min-height: 96px;
+  }
 }
