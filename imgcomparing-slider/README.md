@@ -86,30 +86,6 @@ imgcomparing-slider/
 
 ---
 
-## 🚀 Getting Started (Local Development)
-
-1. Clone this repository.
-2. Download the required model files from [face-api.js-models](https://github.com/justadudewhohacks/face-api.js-models) and place them under `./models/`.
-   - `tiny_face_detector_model-weights_manifest.json`
-   - `tiny_face_detector_model-shard1`
-   - `face_landmark_68_model-weights_manifest.json`
-   - `face_landmark_68_model-shard1`
-3. Run with Live Server (VS Code) or any static file server.
-4. Open `http://localhost:5500/imgcomparing-slider/` (Live Server default may vary).
-
----
-
-## 🖼 Demo Images
-
-To help first-time users quickly try the application, demo image sets are provided:
-
-1. **General comparison demo** — two sample images for landscape/object comparison  
-2. **Face-only demo** — two sample facial images prepared specifically for face-alignment mode  
-
-These demo resources allow anyone to immediately understand how the application works without preparing their own images first.
-
----
-
 ## How to use
 
 1.	Open the application in your browser.
