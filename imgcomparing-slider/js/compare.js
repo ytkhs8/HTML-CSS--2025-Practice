@@ -7,7 +7,6 @@ import {
 const hamburgerBtn = document.getElementById('hamburger-btn');
 const sideMenu = document.getElementById('side-menu');
 const menuOverlay = document.getElementById('menu-overlay');
-const pages = document.querySelectorAll('.page');
 
 // --- ハンバーガーメニュー開閉（アクセシブル & スクロールロック） ---
 function openMenu(){
@@ -150,7 +149,6 @@ function setGuide(key, fallback){
   }
 }
 
-let beforeLoaded = false, afterLoaded = false;
 
 // face-api モデル初回ロードフラグ
 let faceApiReady = false;
@@ -359,7 +357,7 @@ if (contactForm){
     en: {
       // header & menu
       'header.title': 'Image Compare Slider',
-      'menu.materials': 'Sample Assets',
+      'menu.materials': 'Comparison Samples',
       'menu.info': 'Guide & Notes',
       'menu.about': 'About the Developer',
       'menu.contact': 'Requests & Bug Reports',
@@ -386,8 +384,8 @@ if (contactForm){
       'wizard.hint.reset': 'Use reset if you want to run the comparison again.',
 
       // materials
-      'materials.title': 'Ready-to-use Sample Assets',
-      'materials.lead': 'We prepared before/after assets across different themes so you can try the comparison slider right away.',
+      'materials.title': 'Ready-to-use Comparison Samples',
+      'materials.lead': 'We prepared before/after samples across different themes so you can try the comparison slider right away.',
       'materials.category.landscape': 'Landscapes',
       'materials.landscape.city.title': 'Shibuya: Then and Now',
       'materials.landscape.city.before': 'Present-day Shibuya Station area',
@@ -645,13 +643,16 @@ if (contactForm){
       // html lang属性
       document.documentElement.setAttribute('lang', lang);
 
-    // トグルのラベルを反転
+    // 言語を切り替えるたびに現在の言語に合わせて更新する
       const toggle = document.getElementById('lang-toggle');
       if (toggle){
-        const next = (lang === 'en') ? 'JP' : 'EN';
+        const next = (lang === 'en') ? '🇯🇵' : '🇬🇧';
         toggle.textContent = next;
-        toggle.setAttribute('aria-label', lang === 'en' ? '日本語に切り替える' : 'Switch to English');
-    }
+        toggle.setAttribute(
+          'aria-label',
+          lang === 'en' ? '日本語に切り替える' : 'Switch to English'
+        );
+      }
 
     // 永続化
     try { localStorage.setItem('lang', lang); } catch(e){}
@@ -665,7 +666,7 @@ if (contactForm){
       applyI18n(currentLang);
     }
 
-  // トグルボタン
+  // クリックされた時に現在の言語が英語なら日本語へ、日本語なら英語へ切り替えて　allplyi18n()を呼ぶ処理登録
   const toggleBtn = document.getElementById('lang-toggle');
   if (toggleBtn){
     toggleBtn.addEventListener('click', function(){

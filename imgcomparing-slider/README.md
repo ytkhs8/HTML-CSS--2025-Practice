@@ -23,16 +23,15 @@ Another reason was that the app can be deployed on a simple static web server �
 This Image Compare Slider can be applied to a wide range of comparisons, such as landscapes, objects, portraits, facial changes, and various before/after results.
 
 - **Landscapes:**  
-  Compare the transformation of a city over time, differences in lifestyles between eras, or improvements in photo resolution.
+  Compare the transformation of a city over time, differences in lifestyles between eras, or Contrasting cityscapes between an international metropolis and Tokyo’s Shibuya district.
 - **Objects:**  
-  Contrast an iPhone 3G with an iPhone 17 Pro, examine the evolution of the Coca-Cola logo, or showcase a chameleon’s color change.
-- **Portraits:**  
+  Contrast an iPhone 3G with an iPhone 16 Pro, examine the differences between oxford and open-collar shirt, or showcase a chameleon’s color change.
+- **People:**  
   Show before/after weight loss progress, a child’s growth over time, or the difference between everyday appearance and cosplay.
 - **Faces:**  
-  Compare facial appearance before and after weight loss, makeup, massage treatments, or cosmetic surgery.  
-  Display differences between childhood and adulthood in the same person.
-- **Results / Products:**  
-  Showcase a cleaned vs. messy space, compare study achievements (artwork, calligraphy, web design), or highlight stain removal on clothing.
+  Compare facial appearance in winter season and summer season, makeup, differences between childhood and adulthood in the same person.  
+- **Outcomes:**  
+  Showcase a cleaned vs. messy bathroom, compare study achievements of artwork, or highlight stain removal on clothing.
 
 ---
 
@@ -86,35 +85,11 @@ imgcomparing-slider/
 
 ---
 
-## 🚀 Getting Started (Local Development)
-
-1. Clone this repository.
-2. Download the required model files from [face-api.js-models](https://github.com/justadudewhohacks/face-api.js-models) and place them under `./models/`.
-   - `tiny_face_detector_model-weights_manifest.json`
-   - `tiny_face_detector_model-shard1`
-   - `face_landmark_68_model-weights_manifest.json`
-   - `face_landmark_68_model-shard1`
-3. Run with Live Server (VS Code) or any static file server.
-4. Open `http://localhost:5500/imgcomparing-slider/` (Live Server default may vary).
-
----
-
-## 🖼 Demo Images
-
-To help first-time users quickly try the application, demo image sets are provided:
-
-1. **General comparison demo** — two sample images for landscape/object comparison  
-2. **Face-only demo** — two sample facial images prepared specifically for face-alignment mode  
-
-These demo resources allow anyone to immediately understand how the application works without preparing their own images first.
-
----
-
 ## How to use
 
 1.	Open the application in your browser.
 2.	Use the image upload buttons to select the two images you want to compare.
-	•	For example, upload landscape-before.jpg and landscape-after.jpg to see a cityscape comparison.
+	•	We serve a wide variety of images on the comparison samples page on the site.
 	•	You can also try device-before.jpg and device-after.jpg for product evolution.
 	•	Or test face-before.jpg and face-after.jpg to experience the face-only alignment mode.
 3.	Once uploaded, the slider will appear automatically.

@@ -29,9 +29,9 @@ body {
 .header-left {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 18px;          /* default spacing on tablet/desktop */
   min-width: 0;       /* allow title to ellipsis */
-  flex-shrink: 0;     /* don't let icon/title get squashed */
+  flex-shrink: 0;     /* keep left area stable on wider screens */
 }
 .header-right {
   display: flex;
@@ -55,6 +55,8 @@ body {
   color: #2767b3;
   font-weight: 700;
   cursor: pointer;
+  font-size: 2.35rem;
+  line-height: 1;
 }
 .lang-toggle:hover { background: #eaf4ff; }
 .lang-toggle:focus-visible { outline: 2px solid #4aa3a3; outline-offset: 2px; }
@@ -92,7 +94,7 @@ body {
   cursor: pointer;
   border-radius: 10px;
   -webkit-tap-highlight-color: transparent;
-  z-index: 201;
+  z-index: 1400;
 }
 .hamburger:focus-visible {
   outline: 2px solid #4aa3a3;
@@ -145,6 +147,7 @@ body {
     --header-h: 72px;
     height: var(--header-h);
     padding: 0 8px;
+    align-items: center;
   }
   .app-title { font-size: 1.13rem;}
   .hamburger { width: 32px; height: 32px;}
@@ -176,6 +179,27 @@ body {
   #materials .acc-toggle {
     font-size: 1rem;
   }
+  /* --- mobile fine-tune: prevent title overlap & nudge hamburger left --- */
+  .header-left {
+    flex: 1 1 auto;   /* allow the left area (icon + title) to shrink */
+    min-width: 0;     /* enable ellipsis */
+    gap: 8px;
+  }
+  .header-right {
+    flex: 0 0 auto;   /* keep buttons at intrinsic width */
+  }
+  .app-title {
+    font-size: 0.98rem;      /* a touch smaller to avoid overlap */
+    text-align: left;        /* explicitly left align */
+  }
+  .lang-toggle {
+    min-width: 40px;
+    min-height: 32px;
+    padding: 4px 8px;
+    font-weight: 700;
+  }
+  /* extra-tight on small phones */
+  .app-title { max-width: 62vw; }
 }
 
 /* SIDEMENU */
@@ -653,13 +677,13 @@ body.menu-open {
 
 
 #materials .materials-grid {
-  /* Base grid styling */
+  /* Base grid box (column count is controlled by media queries) */
   display: grid;
   gap: 12px;
   padding: 12px;
 }
-/* Desktop: 3 columns */
 @media (min-width: 901px) {
+  /* Desktop: 3 columns */
   #materials .materials-grid { grid-template-columns: repeat(3, 1fr); }
 }
 #materials .material-set {
