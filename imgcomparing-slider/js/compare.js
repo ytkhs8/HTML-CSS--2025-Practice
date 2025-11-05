@@ -8,6 +8,16 @@ const hamburgerBtn = document.getElementById('hamburger-btn');
 const sideMenu = document.getElementById('side-menu');
 const menuOverlay = document.getElementById('menu-overlay');
 
+/**
+ * Opens the side navigation menu.
+ *
+ * - Adds classes to show the slide-in side menu and dark overlay.
+ * - Updates the hamburger button to the 'open' (X) state.
+ * - Sets `aria-expanded="true"` for accessibility/screen readers.
+ * - Locks body scrolling while the menu is open.
+ *
+ * @returns {void}
+ */
 // --- ハンバーガーメニュー開閉（アクセシブル & スクロールロック） ---
 function openMenu(){
   sideMenu.classList.add('open');
@@ -16,6 +26,17 @@ function openMenu(){
   hamburgerBtn.setAttribute('aria-expanded', 'true');
   document.body.classList.add('menu-open'); // 背景スクロール禁止
 }
+/**
+ * Closes the side navigation menu.
+ *
+ * Reverts all changes made by `openMenu()`:
+ * - Hides the menu and overlay.
+ * - Restores the hamburger button visual state.
+ * - Sets `aria-expanded="false"`.
+ * - Re-enables page scrolling.
+ *
+ * @returns {void}
+ */
 function closeMenu(){
   sideMenu.classList.remove('open');
   menuOverlay.classList.remove('active');
@@ -23,17 +44,45 @@ function closeMenu(){
   hamburgerBtn.setAttribute('aria-expanded', 'false');
   document.body.classList.remove('menu-open'); // 背景スクロール解除
 }
+/**
+ * Toggles the side navigation menu between open and closed states.
+ * If the menu is currently open, it will be closed. Otherwise, it opens.
+ *
+ * @returns {void}
+ */
 function toggleMenu(){
   if (sideMenu.classList.contains('open')) closeMenu();
   else openMenu();
 }
 
+/**
+ * Handle click on the hamburger button.
+ * Toggles the side navigation menu open/closed.
+ *
+ * This uses optional chaining so that if the hamburger button
+ * does not exist on the current page, no error is thrown.
+ */
 // クリックで開閉
 hamburgerBtn?.addEventListener('click', toggleMenu);
 
+/**
+ * Handle click on the dark overlay behind the side menu.
+ * Clicking outside the menu will close it.
+ */
 // オーバーレイをクリックで閉じる
 menuOverlay?.addEventListener('click', closeMenu);
 
+/**
+ * Handle navigation clicks inside the side menu (SPA behavior).
+ *
+ * - Prevents default <a> navigation (no full page reload).
+ * - Reads data-page from the clicked link.
+ * - Hides the currently active <section class="page"> and shows the target one.
+ * - Scrolls to top.
+ * - Closes the side menu afterward.
+ *
+ * @param {MouseEvent} e
+ */
 // サイドメニューのリンクでページ切替して閉じる（SPA）
 sideMenu?.addEventListener('click', (e) => {
   const link = e.target.closest('a');
@@ -49,6 +98,13 @@ sideMenu?.addEventListener('click', (e) => {
   closeMenu();
 });
 
+/**
+ * Global keydown handler.
+ * If Escape is pressed while the side menu is open,
+ * the menu will be closed. Matches common modal UX patterns.
+ *
+ * @param {KeyboardEvent} e
+ */
 // ESCキーで閉じる
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && sideMenu.classList.contains('open')) {
@@ -56,6 +112,11 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
+/**
+ * Clicking the app title (header title) always returns the UI
+ * to the 'home' page section. Clears any other active section.
+ * Also scrolls the viewport back to the top.
+ */
 // --- SPAトップに戻る ---
 document.querySelector('.app-title').addEventListener('click', () => {
   document.querySelectorAll('.page').forEach(pg => pg.classList.remove('active'));
@@ -83,6 +144,32 @@ const nextBtn2 = document.getElementById('next-btn-2'); // After → 顔モー�
 const nextBtn3 = document.getElementById('next-btn-3'); // 顔モード選択 → 比較開始待ちへ
 const startBtn = document.getElementById('start-compare-btn'); // 比較開始
 
+/**
+ * ===============================
+ *  Image Comparison Wizard Logic
+ * ===============================
+ * 
+ * This section controls the step-by-step workflow for users:
+ * 1. Select BEFORE image
+ * 2. Select AFTER image
+ * 3. Choose whether to enable "face-only" mode
+ * 4. Start comparison
+ * 
+ * It dynamically updates guide texts, buttons, and step transitions.
+ */
+
+/**
+ * Current wizard step number.
+ * 
+ * 1: Waiting for Before image selection
+ * 2: Before selected
+ * 3: Waiting for After image selection
+ * 4: After selected
+ * 5: Face-only mode selection
+ * 6: Ready to start comparison
+ * 
+ * @type {number}
+ */
 // ステップ管理
 // 1: Before選択待ち
 // 2: Before選択済（Nextで3へ）
@@ -92,9 +179,23 @@ const startBtn = document.getElementById('start-compare-btn'); // 比較開始
 // 6: 比較開始待ち（Startで表示）
 let currentStep = 1;
 
+/**
+ * Flag to control whether comparison rendering is allowed.
+ * Becomes true only after user presses "Start Comparison".
+ * 
+ * @type {boolean}
+ */
 // 比較開始まで自動表示しないためのフラグ
 let allowRender = false;
 
+/**
+ * Update UI components according to the current wizard step.
+ * - Shows/hides navigation buttons (`Next`, `Start`)
+ * - Updates localized guide messages
+ * - Enables/disables buttons based on loaded images
+ * 
+ * @returns {void}
+ */
 // ステップに応じたUI更新
 function updateWizardUI(){
   // 初期化
@@ -135,6 +236,14 @@ function updateWizardUI(){
   }
 }
 
+/**
+ * Set the localized guide text inside the wizard area.
+ * Automatically applies translation via `window.appI18n` if available.
+ * 
+ * @param {string} key - i18n dictionary key (e.g., "wizard.step.selectBefore")
+ * @param {string} fallback - Text shown before translation (default visible text)
+ * @returns {void}
+ */
 function setGuide(key, fallback){
   if (guideText){
     guideText.setAttribute('data-i18n', key);
@@ -149,10 +258,33 @@ function setGuide(key, fallback){
   }
 }
 
+/**
+ * Indicates whether the BEFORE and AFTER images are fully loaded.
+ * Used to control step transitions and button states.
+ * 
+ * @type {boolean}
+ */
+let beforeLoaded = false, afterLoaded = false;
 
+
+/**
+ * Flag indicating whether the face-api.js models are loaded.
+ * Prevents premature face-only comparisons before initialization.
+ * 
+ * @type {boolean}
+ */
 // face-api モデル初回ロードフラグ
 let faceApiReady = false;
 
+/**
+ * Reset only the visual parts of the comparison slider.
+ * Clears image sources, resets overlay position, hides containers,
+ * and restores initial display state.
+ * 
+ * This does NOT reset the overall wizard step or file references.
+ *
+ * @returns {void}
+ */
 // ファイルinputと画像表示リセット
 function resetSlider() {
   beforeInput.value = '';
@@ -178,7 +310,84 @@ function resetSlider() {
 let beforeFileRef = null;
 let afterFileRef = null;
 
+// ==== Preload (face-only) cache & helpers ==================================
+
+/**
+ * Face-only precomputed result cache.
+ * If available, Startボタン押下時に即時描画に使う。
+ * @type {{before: string, after: string} | null}
+ */
+let precomputedFaces = null;
+
+/**
+ * Incrementing token to cancel stale preloads when files or options change.
+ * @type {number}
+ */
+let preloadingId = 0;
+
+/**
+ * Clear any in-flight preload and cached result.
+ * Also hides face-loading indicator for safety.
+ * @returns {void}
+ */
+function clearPreload() {
+  precomputedFaces = null;
+  preloadingId++; // invalidate all in-flight tasks
+  if (faceLoading) faceLoading.style.display = 'none';
+}
+
+/**
+ * Whether we can run face-only preloading now.
+ * @returns {boolean}
+ */
+function canPreloadFaces() {
+  return !!(beforeFileRef && afterFileRef && faceCheckbox && faceCheckbox.checked);
+}
+
+/**
+ * Preload face-aligned images in background.
+ * If a newer change happens (files/checkbox), this run is abandoned by token.
+ * @returns {Promise<void>}
+ */
+async function preloadFacesIfPossible() {
+  if (!canPreloadFaces()) return;
+
+  const token = ++preloadingId;
+  try {
+    faceLoading.style.display = 'block';
+    const faces = await prepareFacesForSliderAligned(beforeFileRef, afterFileRef, 420, 520);
+    // Abandon if a newer change occurred
+    if (token !== preloadingId) return;
+
+    if (faces) {
+      precomputedFaces = faces; // cache for Start
+    } else {
+      precomputedFaces = null;
+      // ここではエラー表示は出さず、Start時に通常比較へフォールバック
+    }
+  } catch (err) {
+    // サイレント失敗（Start時に通常処理へフォールバック）
+    precomputedFaces = null;
+    // console.error(err);
+  } finally {
+    if (token === preloadingId) {
+      faceLoading.style.display = 'none';
+    }
+  }
+}
+
+/**
+ * Complete reset of all wizard state, image references, and UI.
+ * 
+ * This is called when the user clicks the "Reset" button.
+ * It ensures the application returns to its initial (step 1) state,
+ * ready for a new comparison workflow.
+ *
+ * @returns {void}
+ */
 function resetAll() {
+  clearPreload(); // プリロード＆キャッシュの完全クリア
+
   allowRender = false;
   beforeFileRef = null; afterFileRef = null;
   beforeLoaded = false; afterLoaded = false;
@@ -198,14 +407,35 @@ if (_resetBtn){
 }
 
 // ファイルアップロード共通（上で宣言済みの beforeFileRef/afterFileRef を使用）
-
+/**
+ * Handle a file input change for the wizard flow:
+ * - Stores the selected file (before/after)
+ * - Generates a preview into the provided <img> element
+ * - Advances the wizard step and refreshes the guide/buttons
+ *
+ * Note: This function does NOT start the comparison rendering.
+ *       Rendering is triggered only when the user presses "Start".
+ *
+ * @param {HTMLInputElement} input - <input type="file"> element to bind on.
+ * @param {HTMLImageElement} imgEl - Target <img> element to show a preview.
+ * @param {'before'|'after'} which - Which slot this input corresponds to.
+ * @returns {void}
+ *
+ * @example
+ * handleImageWizard(beforeInput, imgBefore, 'before');
+ * handleImageWizard(afterInput,  imgAfter,  'after');
+ */
 // ファイル選択：即比較せず、プレビューのみ＆ステップ遷移
 function handleImageWizard(input, imgEl, which) {
   input.addEventListener('change', async (e) => {
     faceError.style.display = 'none';
+    /** @type {File|null} */
     const file = e.target.files && e.target.files[0];
     if (!file) return;
 
+    clearPreload();
+
+    // if (!file.type.startsWith('image/')) { faceError.textContent = 'Invalid file type'; faceError.style.display = 'block'; return; }
     const reader = new FileReader();
     reader.onload = (ev) => { imgEl.src = ev.target.result; };
 
@@ -221,17 +451,42 @@ function handleImageWizard(input, imgEl, which) {
       currentStep = 4; // After 選択済
     }
     updateWizardUI();
+
+    // 両方の画像が揃っていて、顔モードがONなら裏で先行計算
+    if (canPreloadFaces()) {
+      // Afterを選んだ直後が最も自然だが、Before選択後にAfterが既にあっても動く
+      preloadFacesIfPossible();
+    }
   });
 }
 
+/**
+ * Face-only mode toggle handler for the wizard.
+ * - Clears any previous face-detection error message.
+ * - Ensures the wizard is at step 5 (face-mode selection).
+ * - DOES NOT start rendering here; rendering happens after "Start".
+ *
+ * @listens HTMLInputElement#change
+ * @returns {void}
+ */
 // 顔モードのON/OFF切替（ウィザード用：Step5で選択 → Nextで比較開始）
 faceCheckbox.addEventListener('change', async () => {
   faceError.style.display = 'none';
+
+  // モード切替時は過去の結果を破棄
+  clearPreload();
+
+  // Move to the face-mode selection step if not yet reached.
   // 顔モードは Step5 で選択 → Next で Step6 へ進む想定。ここでは描画しない。
   if (currentStep < 5) {
     currentStep = 5;
   }
   updateWizardUI();
+
+  // ON かつ 両画像ありなら、ここで裏プリロード開始
+  if (canPreloadFaces()) {
+    preloadFacesIfPossible();
+  }
 });
 
 
@@ -265,14 +520,23 @@ if (startBtn){
 
     try {
       if (faceCheckbox.checked) {
-        faceLoading.style.display = 'block';
-        const faces = await prepareFacesForSliderAligned(beforeFileRef, afterFileRef, 420, 520);
-        faceLoading.style.display = 'none';
-        if (faces) {
-          imgBefore.src = faces.before;
-          imgAfter.src = faces.after;
+        // 1) 事前計算があれば即適用
+        if (precomputedFaces) {
+          imgBefore.src = precomputedFaces.before;
+          imgAfter.src = precomputedFaces.after;
         } else {
-          faceError.style.display = 'block';
+          // 2) なければ従来通りここで推論を実行（フォールバック）
+          faceLoading.style.display = 'block';
+          const faces = await prepareFacesForSliderAligned(beforeFileRef, afterFileRef, 420, 520);
+          faceLoading.style.display = 'none';
+          if (faces) {
+            imgBefore.src = faces.before;
+            imgAfter.src = faces.after;
+            // 今後のStart（再実行）に備えてキャッシュしておく
+            precomputedFaces = faces;
+          } else {
+            faceError.style.display = 'block';
+          }
         }
       }
     } catch (e) {
