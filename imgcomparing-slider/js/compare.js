@@ -562,46 +562,165 @@ if (startBtn){
 // 初期描画
 updateWizardUI();
 
-// スライダーの動作
+// スライダーの動作（Pointer Events + rAF + キーボード対応）
 const compareSlider = document.querySelector('.compare-slider');
-let isDragging = false;
 
-sliderHandle.addEventListener('mousedown', (e) => {
-  isDragging = true;
-  document.body.style.cursor = 'ew-resize';
-});
-window.addEventListener('mouseup', () => {
-  isDragging = false;
+// 現在のスライダー位置（0〜100％）
+let sliderPercent = 50;
+// ドラッグ中かどうか
+let sliderDragging = false;
+// スライダー領域の位置と幅（ドラッグ開始時に取得）
+let sliderRect = null;
+// requestAnimationFrame用フラグ（1フレームに描画1回に抑える）
+let sliderRafPending = false;
+
+/**
+ * Updates the visual state of the slider (handle position and overlay width).
+ * All DOM writes are batched inside requestAnimationFrame for smoother rendering.
+ *
+ * @returns {void}
+ */
+function updateSliderDom() {
+  sliderRafPending = false;
+  overlayDiv.style.width = (100 - sliderPercent) + '%';
+  sliderHandle.style.left = sliderPercent + '%';
+}
+
+/**
+ * Schedules a DOM update for the slider on the next animation frame.
+ * This prevents redundant layout/paint work for every pointer event.
+ *
+ * @returns {void}
+ */
+function scheduleSliderUpdate() {
+  if (sliderRafPending) return;
+  sliderRafPending = true;
+  requestAnimationFrame(updateSliderDom);
+}
+
+/**
+ * Converts a clientX coordinate into a 0–100 percentage
+ * relative to the left edge of the slider track.
+ *
+ * @param {number} clientX - The pointer’s client X coordinate.
+ * @returns {number} Percentage position in the range [0, 100].
+ */
+function clientXToPercent(clientX) {
+  if (!sliderRect) return sliderPercent;
+  const rawX = clientX - sliderRect.left;
+  const clamped = Math.max(0, Math.min(rawX, sliderRect.width));
+  return (clamped / sliderRect.width) * 100;
+}
+
+/**
+ * Common cleanup logic when dragging ends.
+ * Resets the dragging flag and restores the default cursor.
+ *
+ * @returns {void}
+ */
+function endSliderDrag() {
+  if (!sliderDragging) return;
+  sliderDragging = false;
   document.body.style.cursor = '';
-});
-window.addEventListener('mousemove', (e) => {
-  if (!isDragging) return;
-  const rect = compareSlider.getBoundingClientRect();
-  let offsetX = e.clientX - rect.left;
-  offsetX = Math.max(0, Math.min(offsetX, rect.width));
-  const percent = offsetX / rect.width * 100;
-  overlayDiv.style.width = (100 - percent) + '%';
-  sliderHandle.style.left = percent + '%';
+}
+
+/**
+ * Pointer down handler on the slider handle (mouse/touch/pen).
+ * Starts dragging and captures the pointer so subsequent moves
+ * are reliably delivered to the handle.
+ *
+ * @param {PointerEvent} e
+ * @returns {void}
+ */
+sliderHandle.addEventListener('pointerdown', (e) => {
+  // マウスの場合は左クリックのみ受け付ける
+  if (e.pointerType === 'mouse' && e.button !== 0) return;
+
+  sliderDragging = true;
+  sliderRect = compareSlider.getBoundingClientRect();
+  document.body.style.cursor = 'ew-resize';
+
+  // ドラッグ中はハンドルがすべてのpointermoveを受け取る
+  if (sliderHandle.setPointerCapture) {
+    sliderHandle.setPointerCapture(e.pointerId);
+  }
+
+  // クリックした場所にハンドルを即時移動
+  sliderPercent = clientXToPercent(e.clientX);
+  scheduleSliderUpdate();
+
+  e.preventDefault();
 });
 
-// タッチ操作にも対応
-sliderHandle.addEventListener('touchstart', () => {
-  isDragging = true;
-});
-window.addEventListener('touchend', () => {
-  isDragging = false;
-});
-window.addEventListener('touchmove', (e) => {
-  if (!isDragging) return;
-  const touch = e.touches[0];
-  const rect = compareSlider.getBoundingClientRect();
-  let offsetX = touch.clientX - rect.left;
-  offsetX = Math.max(0, Math.min(offsetX, rect.width));
-  const percent = offsetX / rect.width * 100;
-  overlayDiv.style.width = (100 - percent) + '%';
-  sliderHandle.style.left = percent + '%';
+/**
+ * Pointer move handler while dragging.
+ * Updates the slider percentage based on the current pointer position.
+ *
+ * @param {PointerEvent} e
+ * @returns {void}
+ */
+window.addEventListener('pointermove', (e) => {
+  if (!sliderDragging) return;
+  sliderPercent = clientXToPercent(e.clientX);
+  // 0〜100％にクランプ
+  if (sliderPercent < 0) sliderPercent = 0;
+  if (sliderPercent > 100) sliderPercent = 100;
+  scheduleSliderUpdate();
 });
 
+/**
+ * Finishes dragging on pointerup / pointercancel events.
+ *
+ * @returns {void}
+ */
+window.addEventListener('pointerup', endSliderDrag);
+window.addEventListener('pointercancel', endSliderDrag);
+
+/**
+ * Keyboard interaction for the slider handle.
+ * ArrowLeft / ArrowRight move the handle by ±5%.
+ *
+ * @param {KeyboardEvent} e
+ * @returns {void}
+ */
+sliderHandle.setAttribute('tabindex', '0');
+sliderHandle.setAttribute('role', 'slider');
+sliderHandle.setAttribute('aria-valuemin', '0');
+sliderHandle.setAttribute('aria-valuemax', '100');
+sliderHandle.setAttribute('aria-valuenow', String(Math.round(sliderPercent)));
+
+sliderHandle.addEventListener('keydown', (e) => {
+  let delta = 0;
+  if (e.key === 'ArrowLeft') delta = -5;
+  else if (e.key === 'ArrowRight') delta = 5;
+  else return;
+
+  sliderPercent += delta;
+  if (sliderPercent < 0) sliderPercent = 0;
+  if (sliderPercent > 100) sliderPercent = 100;
+
+  sliderHandle.setAttribute('aria-valuenow', String(Math.round(sliderPercent)));
+  scheduleSliderUpdate();
+  e.preventDefault();
+});
+
+// 初期位置（50％）を描画
+scheduleSliderUpdate();
+
+/**
+ * Initializes the dummy submit behavior for the contact form.
+ *
+ * When the user submits the form:
+ * - Prevents the default browser submission (no page reload).
+ * - Shows a temporary “success” message.
+ * - Resets all form fields to their initial (empty) state.
+ * - Hides the success message again after 3 seconds.
+ *
+ * This is intended as a front-end only mock and does not
+ * send any data to a back-end server.
+ *
+ * @returns {void}
+ */
 // --- フォーム送信ダミー
 const contactForm = document.getElementById('contact-form');
 if (contactForm){
