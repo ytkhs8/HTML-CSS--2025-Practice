@@ -163,10 +163,6 @@ body {
   .compare-slider {
     max-width: 98vw;
   }
-  .gallery-item img {
-    width: 60px;
-    height: 40px;
-  }
   .big-upload {
     width: 96vw;
     min-width: 120px;
@@ -261,9 +257,14 @@ main {
 /* Avoid sticky header overlap for in-page anchor jumps */
 main, .page { scroll-margin-top: var(--anchor-offset); }
 
-.page {  display: none; }
-.page.active {  display: block; }
+.page {
+  display: none;
+}
+.page.active {
+  display: block;
+}
 
+/* ===== Image upload area ===== */
 .upload-area {
   display: flex;
   gap: 40px;
