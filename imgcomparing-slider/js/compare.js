@@ -947,6 +947,17 @@ if (contactForm){
   };
 
 
+    /**
+     * Currently active UI language code.
+     *
+     * The value is lazily initialized from localStorage (key: "lang")
+     * and falls back to "en" if no value is stored or an error occurs
+     * (for example, when localStorage is not available).
+     *
+     * This variable is later updated whenever the user toggles the language.
+     *
+     * @type {string}
+     */
     // 現在の言語（永続化）
     let currentLang = (function(){
       try {
@@ -954,7 +965,17 @@ if (contactForm){
         catch(e){ return 'en'; }
       })();
 
-    // テキスト反映（XSS安全・改行OK）
+    /**
+     * Renders localized text into a DOM node in a safe way.
+     *
+     * - Escapes HTML special characters to prevent XSS.
+     * - If the string contains newline characters, they are converted into <br> tags.
+     * - Otherwise, the text is assigned via textContent.
+     *
+     * @param {HTMLElement} node - Target DOM node to receive the translated text.
+     * @param {string} str - The text to render into the node.
+     * @returns {void}
+     */
     function renderText(node, str) {
       if (!node || typeof str !== 'string') return;
       if (str.indexOf('\n') >= 0) {
@@ -967,7 +988,22 @@ if (contactForm){
         }
     }
 
-    // 子要素（input/textarea等）を壊さない i18n 適用
+    /**
+     * Applies i18n translations to all elements with a `data-i18n` attribute.
+     *
+     * This function:
+     * - Walks the DOM within an optional scope (or the whole document by default).
+     * - Finds elements that declare a `data-i18n` key.
+     * - Safely injects translated text without breaking child form controls
+     *   (inputs, textareas, selects, buttons, etc.).
+     *
+     * If a descendant `.i18n-text` element exists, it is used as the injection target.
+     * Otherwise, one may be created and inserted before form controls.
+     *
+     * @param {string} lang - Language code to apply (e.g., "en" or "ja").
+     * @param {ParentNode|HTMLElement|Document} [scope=document] - Optional root node to limit translation updates.
+     * @returns {void}
+     */
     function applyI18n(lang, scope) {
       const dict = DICT[lang] || {};
       const nodes = [];
@@ -1042,14 +1078,28 @@ if (contactForm){
     currentLang = lang;
   }
 
-  // 初期適用
+  /**
+   * Applies the initial i18n translations once the DOM is ready.
+   *
+   * If the document is still loading, it waits for the DOMContentLoaded event;
+   * otherwise, it applies translations immediately using the current language.
+   *
+   * @returns {void}
+   */
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function(){ applyI18n(currentLang); });
   } else {
       applyI18n(currentLang);
     }
 
-  // クリックされた時に現在の言語が英語なら日本語へ、日本語なら英語へ切り替えて　allplyi18n()を呼ぶ処理登録
+  /**
+   * Registers a click handler on the language toggle button.
+   *
+   * When clicked, it switches between English ("en") and Japanese ("ja")
+   * and re-applies i18n texts across the page using `applyI18n()`.
+   *
+   * @returns {void}
+   */
   const toggleBtn = document.getElementById('lang-toggle');
   if (toggleBtn){
     toggleBtn.addEventListener('click', function(){
@@ -1058,7 +1108,18 @@ if (contactForm){
     });
   }
 
-  // Expose lightweight helper so other scripts can reuse translations
+  /**
+   * Global i18n helper exposed on `window.appI18n`.
+   *
+   * Provides a small API for:
+   * - Applying translations to the entire document or a specific scope.
+   * - Refreshing translations using the current language.
+   * - Getting the current language code.
+   * - Fetching a translated string for a given key.
+   * - Reusing the low-level `renderText` utility.
+   *
+   * @namespace appI18n
+   */
   window.appI18n = {
     apply: function(lang, scope){
       applyI18n(typeof lang === 'string' ? lang : currentLang, scope);
@@ -1076,6 +1137,16 @@ if (contactForm){
     },
     renderText: renderText
   };
+  /**
+   * Debug helper for face-related operations.
+   *
+   * Appends a timestamped JSON log line into the #face-debug element
+   * (if it exists), keeping the log size bounded.
+   *
+   * @param {string} label - Short label describing the log event.
+   * @param {*} payload - Arbitrary data to be stringified and logged.
+   * @returns {void}
+   */
   window.faceDebugLog = function(label, payload){
   const box = document.getElementById('face-debug');
   if (!box) return;
@@ -1088,13 +1159,35 @@ if (contactForm){
 
 })();
 
-// ===== Materials Accordion (accessible + animated) =====
+/**
+ * Initializes the materials accordion component.
+ *
+ * Sets up:
+ * - Initial open/closed heights for each accordion content panel.
+ * - Click handlers to toggle individual sections.
+ * - Keyboard support (Enter/Space) for accessible toggling.
+ *
+ * This function is wrapped in an IIFE and runs once on load.
+ *
+ * @returns {void}
+ */
 (function initMaterialsAccordion(){
   const root = document.querySelector('#materials');
   if (!root) return;
 
   const toggles = root.querySelectorAll('.acc-toggle');
 
+  /**
+   * Opens or closes a single accordion section.
+   *
+   * Uses the panel's scrollHeight to animate the height from 0 to auto
+   * (for opening) and back to 0 (for closing), while keeping
+   * aria-expanded in sync with the visual state.
+   *
+   * @param {HTMLButtonElement} btn - The accordion toggle button.
+   * @param {boolean} open - Whether the section should be opened (true) or closed (false).
+   * @returns {void}
+   */
   const setOpen = (btn, open) => {
     const content = btn.nextElementSibling;
     if (!content || !content.classList.contains('acc-content')) return;
@@ -1120,6 +1213,14 @@ if (contactForm){
     }
   };
 
+  /**
+   * Closes all accordion sections except the one associated with `btn`.
+   *
+   * Ensures only a single section remains open when a new header is toggled.
+   *
+   * @param {HTMLButtonElement} btn - The button whose section should remain open.
+   * @returns {void}
+   */
   const closeAllExcept = (btn) => {
     toggles.forEach(other => {
       if (other === btn) return;
@@ -1160,7 +1261,19 @@ if (contactForm){
 // もし i18n 再適用関数があるなら、その中で .acc-toggle > span[data-i18n] も更新されます。
 // 追加のコードは不要。
 
-// ===== Lightbox (A: contain thumbnails + C: enlarge & save) =====
+/**
+ * Initializes the lightbox for sample materials.
+ *
+ * Enables:
+ * - Clicking on thumbnail images to open them in an overlay.
+ * - Navigating between images with the keyboard (ArrowLeft/ArrowRight).
+ * - Closing the overlay via background click, close button, or Escape key.
+ * - Opening the current image in a new tab and downloading it.
+ *
+ * This function is wrapped in an IIFE and runs once on load.
+ *
+ * @returns {void}
+ */
 (function initLightbox(){
   const materialsRoot = document.getElementById('materials');
   if (!materialsRoot) return;
@@ -1175,7 +1288,19 @@ if (contactForm){
 
   let currentList = [];   // NodeList of IMG in current grid
   let currentIndex = -1;  // index within currentList
+  let lastActiveThumb = null; // currently highlighted thumbnail for touch/pointer
+  let isPointerDown = false; // flag for pointer down state
 
+  /**
+   * Configures the download link for the currently displayed image.
+   *
+   * Derives a reasonable filename from the image URL (stripping any query
+   * parameters) and sets both the `href` and `download` attributes on the
+   * dedicated download link element.
+   *
+   * @param {string} src - The image URL to be used for downloading.
+   * @returns {void}
+   */
   const setDownloadLink = (src) => {
     try {
       const url = new URL(src, location.href);
@@ -1188,6 +1313,15 @@ if (contactForm){
     }
   };
 
+  /**
+   * Opens the lightbox at the specified index within the current image list.
+   *
+   * Clamps the index to a valid range, updates the main lightbox image
+   * (src and alt), configures the download link, and shows the overlay.
+   *
+   * @param {number} idx - Index of the image to display from `currentList`.
+   * @returns {void}
+   */
   const openAt = (idx) => {
     if (!currentList.length) return;
     currentIndex = Math.max(0, Math.min(idx, currentList.length - 1));
@@ -1204,6 +1338,14 @@ if (contactForm){
     closeBtn.focus();
   };
 
+  /**
+   * Closes the lightbox overlay and clears its current state.
+   *
+   * Hides the overlay, removes the image src, restores body scrolling,
+   * and resets the current image list and index.
+   *
+   * @returns {void}
+   */
   const close = () => {
     overlay.classList.remove('open');
     overlay.setAttribute('hidden', 'true');
@@ -1213,6 +1355,16 @@ if (contactForm){
     currentIndex = -1;
   };
 
+  /**
+  * Opens the lightbox using a clicked thumbnail image as the starting point.
+  *
+  * Collects all sibling thumbnails within the same `.materials-grid`,
+  * stores them as the current image list, and opens the lightbox at the
+  * index of the clicked thumbnail.
+  *
+  * @param {HTMLImageElement} thumb - The thumbnail image that was clicked.
+  * @returns {void}
+  */
   const openFromThumb = (thumb) => {
     // gather siblings within same materials-grid
     const grid = thumb.closest('.materials-grid');
@@ -1222,7 +1374,94 @@ if (contactForm){
     openAt(idx >= 0 ? idx : 0);
   };
 
-  // Delegated click on thumbnails inside materials
+  /**
+  * Highlights the thumbnail currently touched by the user (pointerdown).
+  *
+  * Intended to provide immediate visual feedback, especially on touch devices.
+  * When the pointer goes down on a thumbnail, this function marks it with the
+  * `.is-active-thumb` class and removes the highlight from any previously active
+  * thumbnail.
+  *
+  * @listens PointerEvent#pointerdown
+  * @param {PointerEvent} e - The pointer event triggered when touching a thumbnail.
+  * @returns {void}
+  */
+  materialsRoot.addEventListener('pointerdown', (e) => {
+    const t = e.target;
+    if (!t || t.tagName !== 'IMG') return;
+    if (!t.closest('.material-set')) return;
+
+    isPointerDown = true;
+
+    // Remove the class from the previously active thumbnail, if any
+    if (lastActiveThumb && lastActiveThumb !== t) {
+      lastActiveThumb.classList.remove('is-active-thumb');
+    }
+
+    // Mark the current thumbnail as active
+    t.classList.add('is-active-thumb');
+    lastActiveThumb = t;
+  });
+
+/**
+* Continuously updates the highlighted thumbnail while the pointer moves.
+*
+* When the pointer moves across multiple thumbnails (for example, when the user
+* slides their finger across the screen), this handler adds `.is-active-thumb`
+* to the thumbnail currently under the pointer and removes it from the previous
+* one. This enables a “tracking highlight” gesture that feels more natural on
+* touch screens.
+*
+* Ignores movement when no active pointerdown has occurred.
+*
+* @listens PointerEvent#pointermove
+* @param {PointerEvent} e - The pointer event triggered during pointer movement.
+* @returns {void}
+*/
+  materialsRoot.addEventListener('pointermove', (e) => {
+    if (!isPointerDown) return; // Only proceed if pointer is down
+
+    // get the element currently under the pointer
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+    if (!el || el.tagName !== 'IMG') return;
+    if (!el.closest('.material-set')) return;
+
+    if (lastActiveThumb && lastActiveThumb !== el) {
+      lastActiveThumb.classList.remove('is-active-thumb');
+    }
+    el.classList.add('is-active-thumb');
+    lastActiveThumb = el;
+  });
+
+// When the pointer is released or cancelled, remove the active highlight
+/**
+* Clears the active highlight state for thumbnails and
+* stops pointer tracking. Used on pointerup / pointercancel.
+*
+* This version does not rely on the event target being an <img>,
+* so it also works when the pointer is released outside the thumbnail.
+*/
+  const clearActiveThumb = () => {
+    isPointerDown = false;
+    if (lastActiveThumb) {
+      lastActiveThumb.classList.remove('is-active-thumb');
+      lastActiveThumb = null;
+    }
+  };
+
+  materialsRoot.addEventListener('pointerup', clearActiveThumb);
+  materialsRoot.addEventListener('pointercancel', clearActiveThumb);
+
+/**
+* Delegated click handler for all thumbnails inside the materials section.
+*
+* Detects clicks on <img> elements that belong to a `.material-set`
+* and opens the lightbox starting from that thumbnail. Prevents any
+* default link navigation so that the lightbox takes over the UX.
+*
+* @param {MouseEvent} e - The click event originating from the materials root.
+* @returns {void}
+*/
   materialsRoot.addEventListener('click', (e) => {
     const t = e.target;
     if (t && t.tagName === 'IMG' && t.closest('.material-set')) {

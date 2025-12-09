@@ -561,11 +561,6 @@ button[type='submit']:hover {
   font-weight: 600;
   color: #2767b3;
 }
-.material-set img {
-  width: 100%;
-  border-radius: 8px;
-  object-fit: cover;
-}
 
 /* 半顔合成の表示 */
   .half-face {
@@ -707,6 +702,15 @@ body.menu-open {
   border-radius: 8px;
   display: block;
   cursor: zoom-in;              /* ライトボックスの示唆（C案） */
+  filter: blur(2px) brightness(0.8);
+  opacity: 0.7;
+  transition: filter 0.5s ease, opacity 0.5s ease;
+}
+/* hover（PC） and JS-driven active state（モバイル等） */
+#materials .material-set img:hover,
+#materials .material-set img.is-active-thumb {
+  filter: blur(0) brightness(1);
+  opacity: 1;
 }
 /* カテゴリごとに cover（トリミング重視）へ切替可能 */
 #materials .materials-grid[data-fit="cover"] .material-set img {
