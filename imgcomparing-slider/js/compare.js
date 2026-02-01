@@ -8,6 +8,119 @@ const hamburgerBtn = document.getElementById('hamburger-btn');
 const sideMenu = document.getElementById('side-menu');
 const menuOverlay = document.getElementById('menu-overlay');
 
+// --- Language dropdown (disable while side menu is open) ---
+function setLangDropdownEnabled(enabled) {
+  const dropdown = document.getElementById('lang-dropdown');
+  const btn = document.getElementById('lang-menu-btn');
+  const menu = document.getElementById('lang-menu');
+
+  if (dropdown) dropdown.classList.toggle('is-disabled', !enabled);
+
+  if (btn) {
+    // Use both semantic + visual disabling
+    if (enabled) {
+      btn.removeAttribute('aria-disabled');
+      btn.disabled = false;
+    } else {
+      btn.setAttribute('aria-disabled', 'true');
+      btn.disabled = true;
+      // Also force the dropdown closed when disabling
+      btn.setAttribute('aria-expanded', 'false');
+    }
+  }
+
+  // Force close when disabling (popover-based)
+  if (!enabled && typeof window.__closeLangMenu === 'function') {
+    window.__closeLangMenu();
+  } else if (!enabled && menu && typeof menu.hidePopover === 'function') {
+    try { menu.hidePopover(); } catch (_) {}
+  }
+}
+
+/**
+ * Language dropdown click behavior (Popover API manual mode):
+ * - click to toggle
+ * - click outside to close
+ * - ESC to close
+ * - close after selecting a language
+ */
+function initLangDropdownClick() {
+  const dropdown = document.getElementById('lang-dropdown');
+  const btn = document.getElementById('lang-menu-btn');
+  const menu = document.getElementById('lang-menu');
+  if (!dropdown || !btn || !menu) return;
+
+  const isOpen = () => {
+    try { return menu.matches(':popover-open'); } catch { return false; }
+  };
+
+  const open = () => {
+    if (btn.disabled) return;
+    try { menu.showPopover(); } catch {}
+    btn.setAttribute('aria-expanded', 'true');
+  };
+
+  const close = () => {
+    try { menu.hidePopover(); } catch {}
+    btn.setAttribute('aria-expanded', 'false');
+  };
+
+  const toggle = () => (isOpen() ? close() : open());
+
+  // For case close from outside
+  window.__closeLangMenu = close;
+
+  // toggle on pointerdown (align with outside pointerdown close)
+  btn.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggle();
+  });
+
+  // Helper: detect whether an event happened inside the dropdown (robust for Shadow DOM)
+  const isEventInsideDropdown = (ev) => {
+    try {
+      const path = (typeof ev.composedPath === 'function') ? ev.composedPath() : null;
+      if (path && path.indexOf(dropdown) >= 0) return true;
+    } catch (_) {}
+    return dropdown.contains(ev.target);
+  };
+
+  // Prevent clicks inside the dropdown from bubbling to other global handlers
+  dropdown.addEventListener('click', (e) => e.stopPropagation());
+
+  // Outside interaction closes (use pointerdown + capture to be reliable on mouse/touch)
+  document.addEventListener('pointerdown', (e) => {
+    // Only react when menu is open
+    if (!isOpen()) return;
+    if (dropdown.contains(e.target)) return;
+    close();
+  });
+
+  // close on ESC key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && isOpen()) close();
+  });
+
+  // Exclude menu clicks from the "click outside" logic.
+  menu.addEventListener('pointerdown', (e) => {
+    e.stopPropagation();
+  });
+
+  // Close after choosing a language + apply i18n
+  menu.querySelectorAll('.lang-item[data-lang]').forEach((item) => {
+    item.addEventListener('click', () => close());
+  });
+
+  //Initially closed
+  close();
+
+}
+
+  document.addEventListener('DOMContentLoaded', () => {
+    initLangDropdownClick();
+  });
+
 /**
  * Opens the side navigation menu.
  *
@@ -25,6 +138,7 @@ function openMenu(){
   hamburgerBtn.classList.add('is-open');
   hamburgerBtn.setAttribute('aria-expanded', 'true');
   document.body.classList.add('menu-open'); // 背景スクロール禁止
+  setLangDropdownEnabled(false);
 }
 /**
  * Closes the side navigation menu.
@@ -43,6 +157,7 @@ function closeMenu(){
   hamburgerBtn.classList.remove('is-open');
   hamburgerBtn.setAttribute('aria-expanded', 'false');
   document.body.classList.remove('menu-open'); // 背景スクロール解除
+  setLangDropdownEnabled(true);
 }
 /**
  * Toggles the side navigation menu between open and closed states.
@@ -99,17 +214,51 @@ sideMenu?.addEventListener('click', (e) => {
 });
 
 /**
- * Global keydown handler.
- * If Escape is pressed while the side menu is open,
- * the menu will be closed. Matches common modal UX patterns.
+ * Global Escape key handler.
+ *
+ * Priority order:
+ * 1) If the side menu is open, close it.
+ * 2) Otherwise, if the language dropdown is open, close it.
+ *
+ * Keeping this as a single handler avoids competing Escape listeners.
  *
  * @param {KeyboardEvent} e
  */
-// ESCキーで閉じる
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && sideMenu.classList.contains('open')) {
+  if (e.key !== 'Escape') return;
+
+  // 1) Close side menu first (modal priority)
+  if (sideMenu.classList.contains('open')) {
     closeMenu();
+    return;
   }
+
+  // 2) Close language dropdown if open
+  const menu = document.getElementById('lang-menu');
+  if (!menu) return;
+
+  const isPopoverOpen = !!menu.matches?.(':popover-open');
+  const isLegacyOpen = !menu.hasAttribute('hidden');
+  const isOpen = isPopoverOpen || isLegacyOpen;
+
+  if (!isOpen) return;
+
+  e.preventDefault();
+
+  if (typeof window.__closeLangMenu === 'function') {
+    window.__closeLangMenu();
+    return;
+  }
+
+  // Fallback: close via Popover API if available
+  if (typeof menu.hidePopover === 'function') {
+    try { menu.hidePopover(); } catch (_) {}
+  }
+
+  // Legacy fallback
+  menu.setAttribute('hidden', 'true');
+  const btn = document.getElementById('lang-menu-btn');
+  if (btn) btn.setAttribute('aria-expanded', 'false');
 });
 
 /**
@@ -118,11 +267,14 @@ document.addEventListener('keydown', (e) => {
  * Also scrolls the viewport back to the top.
  */
 // --- SPAトップに戻る ---
-document.querySelector('.app-title').addEventListener('click', () => {
-  document.querySelectorAll('.page').forEach(pg => pg.classList.remove('active'));
-  document.getElementById('home').classList.add('active');
-  window.scrollTo(0, 0);
-});
+const appTitle = document.querySelector('.app-title');
+if (appTitle) {
+  appTitle.addEventListener('click', () => {
+    document.querySelectorAll('.page').forEach(pg => pg.classList.remove('active'));
+    document.getElementById('home')?.classList.add('active');
+    window.scrollTo(0, 0);
+  });
+}
 
 // --- 画像比較スライダー機能（バニラJS）---
 const beforeInput = document.getElementById('before-img');
@@ -662,7 +814,7 @@ sliderHandle.addEventListener('pointerdown', (e) => {
 window.addEventListener('pointermove', (e) => {
   if (!sliderDragging) return;
   sliderPercent = clientXToPercent(e.clientX);
-  // 0〜100％にクランプ
+  // Clamp to [0, 100] range
   if (sliderPercent < 0) sliderPercent = 0;
   if (sliderPercent > 100) sliderPercent = 100;
   scheduleSliderUpdate();
@@ -734,7 +886,7 @@ if (contactForm){
   });
 }
 
-// ==== Internationalization (default EN + JP toggle with persistence) ====
+// ==== Internationalization (default EN + JP dropdown with persistence) ====
 (function(){
   const DICT = {
     en: {
@@ -1033,16 +1185,16 @@ if (contactForm){
 
         let target = null;
 
-        // 1) 自身が i18n スロット
+        // 1) Element itself is an i18n slot
         if (el.classList && el.classList.contains('i18n-text')) {
           target = el;
         } else {
-          // 2) 子に .i18n-text がある
+          // 2) Has a child .i18n-text slot
           const span = el.querySelector ? el.querySelector('.i18n-text') : null;
           if (span) {
             target = span;
           } else {
-            // 3) フォーム部品を含む → 先頭に .i18n-text を作る
+            // 3) Contains form controls -> create a leading .i18n-text slot
             const hasFormChild = el.querySelector ? el.querySelector('input, textarea, select, button') : null;
             if (hasFormChild) {
               const head = document.createElement('span');
@@ -1051,7 +1203,7 @@ if (contactForm){
               else el.appendChild(head);
               target = head;
             } else {
-              // 4) 純テキスト要素
+              // 4) Plain text container
               target = el;
             }
           }
@@ -1059,52 +1211,84 @@ if (contactForm){
         renderText(target, txt);
       }
 
-      // html lang属性
+      // Update <html lang="...">
       document.documentElement.setAttribute('lang', lang);
 
-    // 言語を切り替えるたびに現在の言語に合わせて更新する
-      const toggle = document.getElementById('lang-toggle');
-      if (toggle){
-        const next = (lang === 'en') ? '🇯🇵' : '🇬🇧';
-        toggle.textContent = next;
-        toggle.setAttribute(
-          'aria-label',
-          lang === 'en' ? '日本語に切り替える' : 'Switch to English'
-        );
-      }
-
-    // 永続化
-    try { localStorage.setItem('lang', lang); } catch(e){}
-    currentLang = lang;
-  }
-
-  /**
-   * Applies the initial i18n translations once the DOM is ready.
-   *
-   * If the document is still loading, it waits for the DOMContentLoaded event;
-   * otherwise, it applies translations immediately using the current language.
-   *
-   * @returns {void}
-   */
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function(){ applyI18n(currentLang); });
-  } else {
-      applyI18n(currentLang);
+      // Persist language
+      try { localStorage.setItem('lang', lang); } catch(e){}
+      currentLang = lang;
     }
 
   /**
-   * Registers a click handler on the language toggle button.
-   *
-   * When clicked, it switches between English ("en") and Japanese ("ja")
-   * and re-applies i18n texts across the page using `applyI18n()`.
+   * Initializes i18n and the language dropdown UI on page load.
+   * - Applies translations for the persisted language.
+   * - Syncs the dropdown disabled state.
+   * - Forces the dropdown into a closed state.
    *
    * @returns {void}
    */
-  const toggleBtn = document.getElementById('lang-toggle');
-  if (toggleBtn){
-    toggleBtn.addEventListener('click', function(){
-      const next = (currentLang === 'en') ? 'ja' : 'en';
-      applyI18n(next);
+  function initI18nUI() {
+    applyI18n(currentLang);
+    updateLangMenuUI();
+
+    // Force-close dropdown on load (works for both Popover API and legacy hidden)
+    if (typeof window.__closeLangMenu === 'function') {
+      window.__closeLangMenu();
+    } else {
+      const menu = document.getElementById('lang-menu');
+      if (menu && typeof menu.hidePopover === 'function') {
+        try { menu.hidePopover(); } catch (_) {}
+      }
+      const btn = document.getElementById('lang-menu-btn');
+      if (btn) btn.setAttribute('aria-expanded', 'false');
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initI18nUI);
+  } else {
+    initI18nUI();
+  }
+
+
+  // ==== Language dropdown UI sync (current item disabled) ====
+  function getLangEls() {
+    return {
+      btn: document.getElementById('lang-menu-btn'),
+      menu: document.getElementById('lang-menu')
+    };
+  }
+
+  function updateLangMenuUI() {
+    const { menu } = getLangEls();
+    if (!menu) return;
+
+    const items = menu.querySelectorAll('[data-lang]');
+    items.forEach((item) => {
+      const code = item.getAttribute('data-lang');
+      const isCurrent = code === currentLang;
+
+      // Accessibility state
+      item.setAttribute('aria-disabled', isCurrent ? 'true' : 'false');
+
+      // If it's a button, use the native disabled attribute.
+      if (item.tagName === 'BUTTON') {
+        item.disabled = isCurrent;
+      }
+
+      // Prevent focus on the current language item
+      if (isCurrent) item.setAttribute('tabindex', '-1');
+      else item.removeAttribute('tabindex');
+
+      // Visual disabled style (works with Tailwind or plain CSS)
+      item.classList.toggle('is-current-lang', isCurrent);
+      item.classList.toggle('opacity-50', isCurrent);
+      item.classList.toggle('cursor-not-allowed', isCurrent);
+
+      // For <a> elements, disable pointer interaction when current
+      if (item.tagName === 'A') {
+        item.classList.toggle('pointer-events-none', isCurrent);
+      }
     });
   }
 
@@ -1121,20 +1305,50 @@ if (contactForm){
    * @namespace appI18n
    */
   window.appI18n = {
+    /**
+     * Applies translations for the specified language (or current) to the given DOM scope.
+     * Also updates the language dropdown UI.
+     * @param {string} [lang] - Language code to apply.
+     * @param {ParentNode|HTMLElement|Document} [scope] - Optional root node to limit translation updates.
+     * @returns {void}
+     */
     apply: function(lang, scope){
       applyI18n(typeof lang === 'string' ? lang : currentLang, scope);
+      updateLangMenuUI();
     },
+    /**
+     * Refreshes translations using the current language for the given scope.
+     * Also updates the language dropdown UI.
+     * @param {ParentNode|HTMLElement|Document} [scope] - Optional root node to limit translation updates.
+     * @returns {void}
+     */
     refresh: function(scope){
       applyI18n(currentLang, scope);
+      updateLangMenuUI();
     },
+    /**
+     * Gets the currently active language code.
+     * @returns {string}
+     */
     getCurrentLang: function(){
       return currentLang;
     },
+    /**
+     * Gets the translated string for the given key, or null if not found.
+     * @param {string} key - The i18n dictionary key.
+     * @returns {string|null}
+     */
     getText: function(key){
       const dict = DICT[currentLang] || {};
       const txt = dict[key];
       return (typeof txt === 'string') ? txt : null;
     },
+    /**
+     * Renders translated text into a DOM node.
+     * @param {HTMLElement} node
+     * @param {string} str
+     * @returns {void}
+     */
     renderText: renderText
   };
   /**
@@ -1148,14 +1362,14 @@ if (contactForm){
    * @returns {void}
    */
   window.faceDebugLog = function(label, payload){
-  const box = document.getElementById('face-debug');
-  if (!box) return;
-  const time = new Date().toLocaleTimeString();
-  const line = document.createElement('div');
-  line.textContent = `[${time}] ${label}: ${JSON.stringify(payload)}`;
-  box.prepend(line);
-  while (box.childElementCount > 30) box.removeChild(box.lastChild);
-};
+    const box = document.getElementById('face-debug');
+    if (!box) return;
+    const time = new Date().toLocaleTimeString();
+    const line = document.createElement('div');
+    line.textContent = `[${time}] ${label}: ${JSON.stringify(payload)}`;
+    box.prepend(line);
+    while (box.childElementCount > 30) box.removeChild(box.lastChild);
+  };
 
 })();
 

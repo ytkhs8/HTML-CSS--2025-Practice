@@ -8,6 +8,11 @@
 
     <!-- CSS -->
     <link rel="stylesheet" href="css/compare.css" />
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <!-- load tailwindplus elements -->
+    <script src="https://cdn.tailwindcss.com"></script>
 
     <!-- favicon -->
      <link rel="icon" href="favicon/favicon.ico" sizes="16x16" type="image/x-icon">
@@ -28,12 +33,60 @@
             <div class="app-title" data-i18n="header.title">Image Compare</div>
         </div>
         <div class="header-right">
-        <button id="lang-toggle" class="lang-toggle" aria-label="Toggle language">日本語</button>
-        <button class="hamburger" id="hamburger-btn" aria-label="メニューを開く" aria-controls="side-menu" aria-expanded="false">
-            <span></span>
-            <span></span>
-            <span></span>
-        </button>
+          <!-- Language dropdown (Tailwind Plus Elements: el-dropdown / el-menu) -->
+          <el-dropdown id="lang-dropdown" class="relative inline-block">
+          <button
+            id="lang-menu-btn"
+            type="button"
+            aria-haspopup="menu"
+            aria-expanded="false"
+            class="inline-flex items-center justify-center gap-x-2 rounded-md bg-gray-700/5 px-3 py-2 text-sm font-serif font-light text-gray-900 ring-1 ring-inset ring-gray-900/10 hover:bg-gray-900/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900/30 disabled:opacity-50"
+          >
+            <i class="bi bi-globe2" aria-hidden="true"></i>
+            <span class="lang-label">LANGUAGE</span>
+            <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="-mr-1 h-5 w-5 text-gray-500">
+              <path fill-rule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
+            </svg>
+          </button>
+
+          <!-- Dropdown menu -->
+          <el-menu
+            id="lang-menu"
+            anchor="bottom end"
+            popover="manual"
+            role="menu"
+            aria-label="Language menu"
+            class="z-[4000] mt-2 w-56 origin-top-right divide-y divide-white/30 rounded-md bg-gray-300 shadow-lg outline-1 -outline-offset-1 outline-white/10 transition transition-discrete [--anchor-gap:--spacing(2)] data-closed:scale-95 data-closed:transform data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in"
+          >
+            <div class="py-1">
+              <button
+                type="button"
+                class="lang-item block w-full px-4 py-2 text-left text-sm text-gray-800 hover:bg-white/10 focus:bg-white/10 focus:text-white focus:outline-none"
+                role="menuitem"
+                data-lang="en"
+              >
+                English
+              </button>
+            </div>
+            <div class="py-1">
+              <button
+                type="button"
+                class="lang-item block w-full px-4 py-2 text-left text-sm text-gray-800 hover:bg-white/10 focus:bg-white/10 focus:text-white focus:outline-none"
+                role="menuitem"
+                data-lang="ja"
+              >
+                日本語
+              </button>
+            </div>
+          </el-menu>
+          </el-dropdown>
+
+          <!-- Hamburger Menu Button -->
+          <button class="hamburger" id="hamburger-btn" aria-label="メニューを開く" aria-controls="side-menu" aria-expanded="false">
+              <span></span>
+              <span></span>
+              <span></span>
+          </button>
         </div>
         <nav class="side-menu" id="side-menu">
             <ul>
@@ -347,6 +400,35 @@
                 <li data-i18n="info.storage">アップロードされた画像はサーバに保存されません</li>
                 <li data-i18n="info.usage">画像の悪用・転載は一切行いません</li>
                 <li data-i18n="info.contact">不具合・ご要望は「要望・バグ報告」よりご連絡ください</li>
+                <li data-i18n="info.privacypolicy"><hr>
+                  <strong>プライバシーポリシー</strong><br>
+                  当サイトは、サービス提供に必要な範囲で情報を取得します。<br>
+                  1. 利用目的
+                  <ul>
+                    <li> - 画像比較機能の提供</li>
+                    <li> - サービス改善・不正利用の防止</li>
+                  </ul>
+                  2. 保存・削除
+                  <ul>
+                    <li> - 画像は比較処理のために一時的に利用し、処理後は速やかに削除します（※運用に合わせて変更）。</li>
+                    <li> - サーバには一切保存されません。</li>
+                  </ul>
+                  3. 第三者提供
+                  <ul>
+                    <li> - 法令に基づく場合を除き、第三者に提供することはありません。</li>
+                  </ul>
+                  4. 外部サービス
+                  <ul>
+                    <li> - CDN等の外部サービスを利用する場合があります。</li>
+                    <li> - 画像の処理は、利用者のブラウザ内で face-api.js を用いて行われます。<br>
+                           画像データは当サイトのサーバーへ送信・保存されません。
+                    </li>
+                  </ul>
+                  5. お問い合わせ
+                  <ul>
+                    <li> - プライバシーポリシーに関するお問い合わせは「要望・バグ報告」よりご連絡ください。</li>
+                  </ul>
+                </li>
             </ul>
         </section>
         <section id="about" class="page">
@@ -361,12 +443,12 @@
             <form id="contact-form">
             <div class="form-field">
                 <label for="name"><span class="i18n-text" data-i18n="contact.name">お名前（任意）</span></label>
-                <input id="name" type="text" name="name" autocomplete="name">
+                <input id="name" type="text" name="name" autocomplete="name" placeholder="氏名">
             </div>
 
             <div class="form-field">
                 <label for="message"><span class="i18n-text" data-i18n="contact.message">内容</span></label>
-                <textarea id="message" name="message" required></textarea>
+                <textarea id="message" name="message" placeholder="要望や不具合の内容を入力" required></textarea>
             </div>
                 <button type="submit" data-i18n="contact.submit">送信</button>
             </form>
