@@ -400,33 +400,37 @@
                 <li data-i18n="info.storage">アップロードされた画像はサーバに保存されません</li>
                 <li data-i18n="info.usage">画像の悪用・転載は一切行いません</li>
                 <li data-i18n="info.contact">不具合・ご要望は「要望・バグ報告」よりご連絡ください</li>
-                <li data-i18n="info.privacypolicy"><hr>
-                  <strong>プライバシーポリシー</strong><br>
-                  当サイトは、サービス提供に必要な範囲で情報を取得します。<br>
-                  1. 利用目的
+                <li data-i18n="info.privacypolicy">
+                  <hr>
+                  <h2 data-i18n="privacy.title">プライバシーポリシー</h2>
+                  <p data-i18n="privacy.intro">当サイトは、サービス提供に必要な範囲で情報を取得します。</p>
+
+                  <h3 data-i18n="privacy.section.purpose">1. 利用目的</h3>
                   <ul>
-                    <li> - 画像比較機能の提供</li>
-                    <li> - サービス改善・不正利用の防止</li>
+                    <li data-i18n="privacy.purpose.item1">画像比較機能の提供</li>
+                    <li data-i18n="privacy.purpose.item2">サービス改善・不正利用の防止</li>
                   </ul>
-                  2. 保存・削除
+
+                  <p class="i18n-text" data-i18n="privacy.storage.title"></p>
                   <ul>
-                    <li> - 画像は比較処理のために一時的に利用し、処理後は速やかに削除します（※運用に合わせて変更）。</li>
-                    <li> - サーバには一切保存されません。</li>
+                    <li class="i18n-text" data-i18n="privacy.storage.item1"></li>
+                    <li class="i18n-text" data-i18n="privacy.storage.item2"></li>
                   </ul>
-                  3. 第三者提供
+
+                  <p class="i18n-text" data-i18n="privacy.thirdparty.title"></p>
                   <ul>
-                    <li> - 法令に基づく場合を除き、第三者に提供することはありません。</li>
+                    <li class="i18n-text" data-i18n="privacy.thirdparty.item1"></li>
                   </ul>
-                  4. 外部サービス
+
+                  <p class="i18n-text" data-i18n="privacy.external.title"></p>
                   <ul>
-                    <li> - CDN等の外部サービスを利用する場合があります。</li>
-                    <li> - 画像の処理は、利用者のブラウザ内で face-api.js を用いて行われます。<br>
-                           画像データは当サイトのサーバーへ送信・保存されません。
-                    </li>
+                    <li class="i18n-text" data-i18n="privacy.external.item1"></li>
+                    <li class="i18n-text" data-i18n="privacy.external.item2"></li>
                   </ul>
-                  5. お問い合わせ
+
+                  <p class="i18n-text" data-i18n="privacy.contact.title"></p>
                   <ul>
-                    <li> - プライバシーポリシーに関するお問い合わせは「要望・バグ報告」よりご連絡ください。</li>
+                    <li class="i18n-text" data-i18n="privacy.contact.item1"></li>
                   </ul>
                 </li>
             </ul>
@@ -443,12 +447,25 @@
             <form id="contact-form">
             <div class="form-field">
                 <label for="name"><span class="i18n-text" data-i18n="contact.name">お名前（任意）</span></label>
-                <input id="name" type="text" name="name" autocomplete="name" placeholder="氏名">
+                <input 
+                  id="name"
+                  type="text"
+                  name="name"
+                  autocomplete="name"
+                  data-i18n-placeholder="contact.placeholder.name"
+                  placeholder="氏名"
+                >
             </div>
 
             <div class="form-field">
                 <label for="message"><span class="i18n-text" data-i18n="contact.message">内容</span></label>
-                <textarea id="message" name="message" placeholder="要望や不具合の内容を入力" required></textarea>
+                <textarea
+                  id="message"
+                  name="message"
+                  data-i18n-placeholder="contact.placeholder.message"
+                  placeholder="要望や不具合の内容を入力"
+                  required
+                ></textarea>
             </div>
                 <button type="submit" data-i18n="contact.submit">送信</button>
             </form>
