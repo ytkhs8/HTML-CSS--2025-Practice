@@ -1444,6 +1444,15 @@ if (contactForm){
 
 
   // ==== Language dropdown UI sync (current item disabled) ====
+
+  /**
+   * Retrieves key DOM elements used by the language dropdown.
+   *
+   * @returns {{ btn: HTMLButtonElement|null, menu: HTMLElement|null }}
+   * An object containing:
+   * - btn: The language dropdown trigger button (#lang-menu-btn)
+   * - menu: The language dropdown container (#lang-menu)
+   */
   function getLangEls() {
     return {
       btn: document.getElementById('lang-menu-btn'),
@@ -1451,6 +1460,23 @@ if (contactForm){
     };
   }
 
+  /**
+   * Synchronizes the visual and accessibility state of the language dropdown menu.
+   *
+   * Responsibilities:
+   * - Marks the currently active language as disabled.
+   * - Applies `aria-disabled="true"` for screen readers.
+   * - Uses native `disabled` for <button> elements when applicable.
+   * - Prevents keyboard focus on the active language item.
+   * - Adds visual disabled styles (Tailwind or custom CSS classes).
+   * - Disables pointer interaction for <a> elements when active.
+   *
+   * This function should be called:
+   * - After language changes.
+   * - After applying i18n updates.
+   *
+   * @returns {void}
+   */
   function updateLangMenuUI() {
     const { menu } = getLangEls();
     if (!menu) return;
