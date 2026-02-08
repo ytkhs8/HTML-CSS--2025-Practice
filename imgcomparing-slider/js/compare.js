@@ -54,30 +54,129 @@ function initLangDropdownClick() {
     try { return menu.matches(':popover-open'); } catch { return false; }
   };
 
+  const toggle = () => (isOpen() ? close() : open());
+
+  /**
+   * Positions the language menu popover directly under the dropdown button.
+   *
+   * Why this is needed:
+   * - Elements using the Popover API are promoted to the browser's top layer.
+   * - Once promoted, CSS `position: absolute` can no longer anchor to `.lang-dropdown`.
+   *
+   * Strategy:
+   * - Read the button's viewport coordinates via `getBoundingClientRect()`.
+   * - Apply `position: fixed` + `left/top` to the menu so it always appears under the button.
+   * - Clamp the horizontal position so the menu stays within the viewport.
+   *
+   * @returns {void}
+   */
+  const positionMenu = () => {
+    try {
+      const r = btn.getBoundingClientRect();
+      // Ensure we can measure the popover's width.
+      const mw = menu.getBoundingClientRect().width || 224;
+      const gap = 8;
+
+      // Right-align the menu with the button.
+      let left = r.right - mw;
+      const top = r.bottom + gap;
+
+      // Keep within viewport (small screens)
+      const padding = 8;
+      left = Math.max(padding, Math.min(left, window.innerWidth - mw - padding));
+
+      menu.style.position = 'fixed';
+      menu.style.left = left + 'px';
+      menu.style.top = top + 'px';
+      menu.style.margin = '0';
+      menu.style.zIndex = '4000';
+    } catch (_) {}
+  };
+
+  /**
+   * Repositions the popover only when it is currently open.
+   *
+   * This keeps the menu visually anchored under the button during scroll/resize,
+   * especially when the header layout can move.
+   *
+   * @returns {void}
+   */
+  const repositionIfOpen = () => {
+    if (!isOpen()) return;
+    positionMenu();
+  };
+
+  /**
+   * Opens the language menu popover.
+   *
+   * Notes:
+   * - Opens first, then positions on the next animation frame so the popover width
+   *   is measurable (layout is ready).
+   * - Updates `aria-expanded` for accessibility.
+   *
+   * @returns {void}
+   */
   const open = () => {
     if (btn.disabled) return;
     try { menu.showPopover(); } catch {}
     btn.setAttribute('aria-expanded', 'true');
+    requestAnimationFrame(() => {
+      positionMenu();
+    });
   };
 
+  /**
+   * Closes the language menu popover and resets transient inline positioning.
+   *
+   * We clean up inline styles so the closed-state appearance remains driven by CSS
+   * and we avoid stale coordinates across future opens.
+   *
+   * @returns {void}
+   */
   const close = () => {
     try { menu.hidePopover(); } catch {}
     btn.setAttribute('aria-expanded', 'false');
+    // Cleanup inline positioning so CSS can remain the source of truth when closed.
+    menu.style.left = '';
+    menu.style.top = '';
+    menu.style.position = '';
+    menu.style.margin = '';
+    menu.style.zIndex = '';
   };
 
-  const toggle = () => (isOpen() ? close() : open());
-
-  // For case close from outside
+  /**
+   * Exposes a close function for other UI flows (e.g., hamburger menu modal).
+   *
+   * Some parts of the app may need to force-close the language menu
+   * (for example, when opening the side menu overlay).
+   *
+   * @type {() => void}
+   */
   window.__closeLangMenu = close;
 
-  // toggle on pointerdown (align with outside pointerdown close)
+  /**
+   * Toggles the language menu on pointer interaction.
+   *
+   * We use `pointerdown` to align with the global outside-close handler
+   * (also `pointerdown`), preventing timing mismatches between click and pointer events.
+   *
+   * @listens HTMLButtonElement#pointerdown
+   */
   btn.addEventListener('pointerdown', (e) => {
     e.preventDefault();
     e.stopPropagation();
     toggle();
   });
 
-  // Helper: detect whether an event happened inside the dropdown (robust for Shadow DOM)
+  /**
+   * Returns true if an event originated from inside the dropdown.
+   *
+   * Uses `composedPath()` when available to be robust with Shadow DOM / top-layer
+   * behaviors, then falls back to `contains()`.
+   *
+   * @param {Event} ev
+   * @returns {boolean}
+   */
   const isEventInsideDropdown = (ev) => {
     try {
       const path = (typeof ev.composedPath === 'function') ? ev.composedPath() : null;
@@ -86,10 +185,22 @@ function initLangDropdownClick() {
     return dropdown.contains(ev.target);
   };
 
-  // Prevent clicks inside the dropdown from bubbling to other global handlers
+  /**
+   * Prevents click events inside the dropdown from bubbling to global handlers.
+   * This avoids accidental immediate close when other parts of the page listen globally.
+   *
+   * @listens HTMLElement#click
+   */
   dropdown.addEventListener('click', (e) => e.stopPropagation());
 
-  // Outside interaction closes (use pointerdown + capture to be reliable on mouse/touch)
+  /**
+   * Closes the menu when the user interacts outside of the dropdown.
+   *
+   * Implemented with `pointerdown` (instead of `click`) to be reliable across
+   * mouse/touch and to close promptly.
+   *
+   * @listens Document#pointerdown
+   */
   document.addEventListener('pointerdown', (e) => {
     // Only react when menu is open
     if (!isOpen()) return;
@@ -97,22 +208,46 @@ function initLangDropdownClick() {
     close();
   });
 
-  // close on ESC key
+  /**
+   * Keeps the popover anchored under the button while the page scrolls/resizes.
+   *
+   * We listen in the capture phase for scroll so it also works when nested
+   * scroll containers are involved.
+   */
+  window.addEventListener('scroll', repositionIfOpen, true);
+  window.addEventListener('resize', repositionIfOpen);
+
+  /**
+   * Closes the menu when the user presses the Escape key.
+   *
+   * @listens Document#keydown
+   */
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && isOpen()) close();
   });
 
-  // Exclude menu clicks from the "click outside" logic.
+  /**
+   * Prevents pointer events inside the menu from triggering the outside-close handler.
+   *
+   * @listens HTMLElement#pointerdown
+   */
   menu.addEventListener('pointerdown', (e) => {
     e.stopPropagation();
   });
 
-  // Close after choosing a language + apply i18n
+  /**
+   * Closes the menu after the user selects a language.
+   *
+   * The actual language switching (`applyI18n`) is handled elsewhere; this handler
+   * only ensures the menu closes after a selection.
+   */
   menu.querySelectorAll('.lang-item[data-lang]').forEach((item) => {
     item.addEventListener('click', () => close());
   });
 
-  //Initially closed
+  /**
+   * Ensures the dropdown starts in a closed state on initialization.
+   */
   close();
 
 }
@@ -979,6 +1114,28 @@ if (contactForm){
       'info.storage': 'Uploaded images are not stored on the server',
       'info.usage': 'We do not misuse or redistribute your images',
       'info.contact': 'For issues or requests, use "Requests & Bug Reports"',
+      
+      // privacy
+      'privacy.title': 'Privacy Policy',
+      'privacy.intro': 'This site collects information only to the extent necessary to provide its services.',
+
+      'privacy.section.purpose': '1. Purpose of Use',
+      'privacy.purpose.item1': 'Providing the image comparison feature',
+      'privacy.purpose.item2': 'Improving the service and preventing misuse',
+
+      'privacy.section.storage': '2. Storage and Deletion',
+      'privacy.storage.item1': 'Images are used temporarily for comparison and deleted promptly after processing.',
+      'privacy.storage.item2': 'No images are stored on the server.',
+
+      'privacy.section.thirdparty': '3. Third-Party Disclosure',
+      'privacy.thirdparty.item1': 'Information will not be provided to third parties except as required by law.',
+
+      'privacy.section.external': '4. External Services',
+      'privacy.external.item1': 'External services such as CDNs may be used.',
+      'privacy.external.item2': 'Image processing is performed locally in the user’s browser using face-api.js.',
+
+      'privacy.section.contact': '5. Contact',
+      'privacy.contact.item1': 'For privacy-related inquiries, please contact us via the feedback form.',
 
       // about
       'about.title': 'About the Developer',
@@ -991,7 +1148,9 @@ if (contactForm){
       'contact.name': 'Name (optional)',
       'contact.message': 'Message',
       'contact.submit': 'Send',
-      'contact.success': 'Thank you for your feedback!'
+      'contact.success': 'Thank you for your feedback!',
+      'contact.placeholder.name': 'Your name',
+      'contact.placeholder.message': 'Describe your request or bug here'
     },
     ja: {
       // header & menu
@@ -1084,6 +1243,28 @@ if (contactForm){
       'info.usage': '画像の悪用・転載は一切行いません',
       'info.contact': '不具合・ご要望は「要望・バグ報告」よりご連絡ください',
 
+      // privacy
+      'privacy.title': 'プライバシーポリシー',
+      'privacy.intro': '当サイトは、サービス提供に必要な範囲で情報を取得します。',
+
+      'privacy.section.purpose': '1. 利用目的',
+      'privacy.purpose.item1': '画像比較機能の提供',
+      'privacy.purpose.item2': 'サービス改善・不正利用の防止',
+
+      'privacy.section.storage': '2. 保存・削除',
+      'privacy.storage.item1': '画像は比較処理のために一時的に利用し、処理後は速やかに削除します。',
+      'privacy.storage.item2': 'サーバには一切保存されません。',
+
+      'privacy.section.thirdparty': '3. 第三者提供',
+      'privacy.thirdparty.item1': '法令に基づく場合を除き、第三者に提供することはありません。',
+
+      'privacy.section.external': '4. 外部サービス',
+      'privacy.external.item1': 'CDN等の外部サービスを利用する場合があります。',
+      'privacy.external.item2': '画像の処理は利用者のブラウザ内で face-api.js を用いてブラウザ内で行われます。',
+
+      'privacy.section.contact': '5. お問い合わせ',
+      'privacy.contact.item1': 'プライバシーポリシーに関するお問い合わせは「要望・バグ報告」よりご連絡ください。',
+
       // about
       'about.title': '開発者について',
       'about.desc': '東京都在住の駆け出しエンジニアYuukiが、学習の一環で制作しています。JavaやSpringBoot、JavaScriptなど幅広くWeb技術を学び、ポートフォリオとして公開中です。',
@@ -1094,7 +1275,9 @@ if (contactForm){
       'contact.name': 'お名前（任意）',
       'contact.message': '内容',
       'contact.submit': '送信',
-      'contact.success': 'ご意見ありがとうございます！'
+      'contact.success': 'ご意見ありがとうございます！',
+      'contact.placeholder.name': '氏名',
+      'contact.placeholder.message': '要望や不具合の内容を入力'
     }
   };
 
@@ -1209,6 +1392,15 @@ if (contactForm){
           }
         }
         renderText(target, txt);
+
+        // Placeholder support (data-i18n-placeholder)
+        if (el.hasAttribute && el.hasAttribute('data-i18n-placeholder')) {
+          const phKey = el.getAttribute('data-i18n-placeholder');
+          const phTxt = dict[phKey];
+          if (typeof phTxt === 'string') {
+            el.setAttribute('placeholder', phTxt);
+          }
+        }
       }
 
       // Update <html lang="...">
