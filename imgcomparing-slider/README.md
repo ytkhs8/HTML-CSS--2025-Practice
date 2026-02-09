@@ -53,7 +53,7 @@ It leverages **face-api.js** to detect facial landmarks and aligns faces (rotati
 - **Local-first & privacy-friendly**  
   All processing happens directly in the browser. **No server uploads or data storage**.
 - **Internationalization (i18n)**
-  Built-in JP/EN toggle with persistence across pages (localStorage)
+  Built-in JP/EN dropdown with persistence across pages (localStorage)
 
 ---
 
@@ -120,13 +120,13 @@ imgcomparing-slider/
 
 ## 🛣 Roadmap
 
-- [ ] Improve mobile UI (larger touch areas, slider handle)
+- [ x ] Improve mobile UI (larger touch areas, slider handle)
 - [ ] Landmark detection fallback (auto switch to non-aligned mode on failure)
 - [ ] Client+Server UI Improvements ([Milestone](https://github.com/ytkhs8/HTML-CSS--2025-Practice/imgcomparing-slider/Client+ServerUIImprovements/1))
 - [ ] User Accounts & Data Persistence
 - [ ] Cloud alignment option (e.g., Google Vision API) with explicit user consent
 - [ ] Export aligned comparison results (side-by-side or half-face composite)
-- [ ] Accessibility support (keyboard slider control, ARIA labels)
+- [ x ] Accessibility support (keyboard slider control, ARIA labels)
 - [ x ] Multi-language support (English & Japanese)
 - [ ] Phase 2: Add user accounts and persistent data storage ([Issue #12](link-to-issue))
 
