@@ -342,7 +342,14 @@ sideMenu?.addEventListener('click', (e) => {
   const pageId = link.dataset.page;
   if (pageId) {
     document.querySelector('.page.active')?.classList.remove('active');
-    document.getElementById(pageId)?.classList.add('active');
+    const target = document.getElementById(pageId);
+    target?.classList.add('active');
+
+    // Re-apply i18n to the newly activated page (includes placeholders).
+    if (window.appI18n && typeof window.appI18n.refresh === 'function' && target) {
+      window.appI18n.refresh(target);
+    }
+
     window.scrollTo(0, 0);
   }
   closeMenu();
@@ -1392,15 +1399,37 @@ if (contactForm){
           }
         }
         renderText(target, txt);
+        // (placeholder translation removed from here; now in second pass)
+      }
 
-        // Placeholder support (data-i18n-placeholder)
-        if (el.hasAttribute && el.hasAttribute('data-i18n-placeholder')) {
-          const phKey = el.getAttribute('data-i18n-placeholder');
-          const phTxt = dict[phKey];
-          if (typeof phTxt === 'string') {
-            el.setAttribute('placeholder', phTxt);
-          }
+      /**
+       * Placeholder i18n (second pass).
+       *
+       * Placeholders live on <input>/<textarea> elements which often do NOT have `data-i18n`.
+       * If we only translate nodes collected by `[data-i18n]`, placeholders will be skipped.
+       *
+       * This pass targets `[data-i18n-placeholder]` directly and updates the `placeholder` attribute.
+       */
+      const phNodes = [];
+
+      if (scope && scope !== document) {
+        if (scope.getAttribute && scope.hasAttribute('data-i18n-placeholder')) {
+          phNodes.push(scope);
         }
+        if (scope.querySelectorAll) {
+          const scopedPh = scope.querySelectorAll('[data-i18n-placeholder]');
+          for (let i = 0; i < scopedPh.length; i++) phNodes.push(scopedPh[i]);
+        }
+      } else {
+        const allPh = document.querySelectorAll('[data-i18n-placeholder]');
+        for (let i = 0; i < allPh.length; i++) phNodes.push(allPh[i]);
+      }
+
+      for (let i = 0; i < phNodes.length; i++) {
+        const el = phNodes[i];
+        const phKey = el.getAttribute('data-i18n-placeholder');
+        const phTxt = dict[phKey];
+        if (typeof phTxt === 'string') el.setAttribute('placeholder', phTxt);
       }
 
       // Update <html lang="...">
