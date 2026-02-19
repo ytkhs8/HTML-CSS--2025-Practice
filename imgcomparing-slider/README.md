@@ -62,7 +62,10 @@ It leverages **face-api.js** to detect facial landmarks and aligns faces (rotati
 - HTML / CSS / JavaScript
 - [face-api.js](https://github.com/justadudewhohacks/face-api.js) (TinyFaceDetector + FaceLandmark68)
 - Canvas 2D API
-- (Development) VS Code Live Server
+- (Development) 
+  - S3: static files
+  - CloudFront: CDN + HTTPS
+  - Route53: custom domain
 
 ---
 
