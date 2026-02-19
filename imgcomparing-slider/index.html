@@ -40,13 +40,23 @@
             type="button"
             aria-haspopup="menu"
             aria-expanded="false"
-            class="inline-flex items-center justify-center gap-x-2 rounded-md bg-gray-700/5 px-3 py-2 text-sm font-serif font-light text-gray-900 ring-1 ring-inset ring-gray-900/10 hover:bg-gray-900/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900/30 disabled:opacity-50"
+            class="lang-menu-btn inline-flex items-center justify-center gap-x-2 rounded-md bg-gray-700/5 px-3 py-2 text-sm font-serif font-light text-gray-900 ring-1 ring-inset ring-gray-900/10 hover:bg-gray-900/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900/30 disabled:opacity-50"
           >
-            <i class="bi bi-globe2" aria-hidden="true"></i>
-            <span class="lang-label">LANGUAGE</span>
-            <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" class="-mr-1 h-5 w-5 text-gray-500">
-              <path fill-rule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clip-rule="evenodd" />
+            <!-- Desktop / Tablet layout -->
+            <i class="bi bi-globe2 lang-icon-desktop hidden sm:inline text-xl" aria-hidden="true"></i>
+            <span class="lang-label hidden sm:inline">LANGUAGE</span>
+            <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"
+              class="hidden sm:inline -mr-1 h-5 w-5 text-gray-500">
+              <path fill-rule="evenodd"
+                d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z"
+                clip-rule="evenodd" />
             </svg>
+
+            <!-- Mobile layout -->
+            <div class="flex flex-col items-center justify-center sm:hidden">
+              <i class="bi bi-translate lang-icon-mobile" aria-hidden="true"></i>
+              <span class="lang-mobile-label">Language</span>
+            </div>
           </button>
 
           <!-- Dropdown menu -->
