@@ -810,6 +810,12 @@ body.menu-open .lang-dropdown{
 @media (min-width: 901px) {
   /* Desktop: 3 columns */
   #materials .materials-grid { grid-template-columns: repeat(3, 1fr); }
+  /* Desptop: keep it comfortably large without feeling cramped */
+  #contact-form input[type='text'],
+  #contact-form textarea {
+    font-size: 1.08rem;
+    padding: 14px 16px;
+  }
 }
 #materials .material-set {
   background: #fff;
