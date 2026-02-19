@@ -87,6 +87,13 @@ body {
   line-height: 1;
 }
 
+/* === Language dropdown ===
+   Index markup uses Tailwind visibility utilities:
+   - Desktop/Tablet: `.lang-icon-desktop`, `.lang-label`, and the chevron SVG are `hidden sm:inline`
+   - Mobile: a wrapper `div` is `sm:hidden` and contains `.lang-icon-mobile` + `.lang-mobile-label`
+   Therefore CSS should NOT force show/hide; we only fine-tune sizing/spacing.
+*/
+
 /* Text */
 .lang-menu-btn .lang-label{
   font-size: 14px;
@@ -247,6 +254,13 @@ body {
   #materials .materials-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+
+/* Tablet: keep it comfortably large without feeling cramped */
+  #contact-form button[type='submit'] {
+    width: auto;
+    min-width: 220px;
+  }
+
 }
 
 @media (max-width: 600px) {
@@ -255,7 +269,13 @@ body {
     padding: 0 8px;
     align-items: center;
   }
-  .app-title { font-size: 1.13rem;}
+  .app-title { 
+    font-size: 0.85rem;
+    line-height: 1.15;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+    text-align: left;        /* explicitly left align */
+    }
   .hamburger { width: 32px; height: 32px;}
   .hamburger span { height: 3.5px;}
   .app-icon {
@@ -288,14 +308,10 @@ body {
   .header-left {
     flex: 1 1 auto;   /* allow the left area (icon + title) to shrink */
     min-width: 0;     /* enable ellipsis */
-    gap: 8px;
+    gap: 0px;
   }
   .header-right {
     flex: 0 0 auto;   /* keep buttons at intrinsic width */
-  }
-  .app-title {
-    font-size: 0.98rem;      /* a touch smaller to avoid overlap */
-    text-align: left;        /* explicitly left align */
   }
   .lang-toggle {
     min-width: 40px;
@@ -304,15 +320,62 @@ body {
     font-weight: 700;
   }
   /* extra-tight on small phones */
-  .app-title { max-width: 62vw; }
+  .app-title { max-width: 72vw; }
 
   body.menu-open .lang-dropdown {
     position: fixed;
     top: 16px;
     left: calc(var(--side-menu-w) + 16px);
     z-index: 1200;
-    transform: translateX(-40px);
+    transform: translateX(0);
   }
+
+  /* Mobile language button: 44x55, icon + small label under it (Tailwind handles visibility) */
+  .lang-menu-btn {
+    width: 44px;
+    height: 55px;
+    padding: 0;
+    gap: 0;                 /* desktop parts are hidden anyway; keep width tight */
+    border-radius: 12px;
+  }
+
+  /* The mobile wrapper inside the button (sm:hidden) */
+  .lang-menu-btn > div.sm\:hidden {
+    margin: 0;
+    padding: 0;
+    line-height: 1;
+    gap: 3px;
+  }
+
+  /* Mobile translate icon */
+  .lang-menu-btn .lang-icon-mobile {
+    font-size: 24px;
+    line-height: 1;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Mobile label under the icon (fixed 44px width, no outer margins) */
+  .lang-menu-btn .lang-mobile-label {
+    display: block;
+    width: 44px;
+    margin: 0;
+    padding: 0;
+    font-size: 11px;
+    line-height: 1.1;
+    text-align: center;
+    letter-spacing: 0;
+    color: inherit;
+    opacity: 0.9;
+  }
+
+  /* On mobile, ensure the desktop label doesn't accidentally take space if other CSS changes later */
+  .lang-menu-btn .lang-label {
+    white-space: nowrap;
+  }
+
+  /* Mobile header-right spacing: tighten gap between dropdown and hamburger */
+  .header-right{ gap: 6px; }
 }
 
 /* SIDEMENU */
@@ -373,6 +436,18 @@ main {
   position: relative;
   z-index: 0;
 }
+
+/* home以外は自然に広がる（Safari OK） */
+body.wide-page main{
+  max-width: min(1100px, calc(100vw - 48px));
+}
+
+/* Contact page: wider container (desktop/tablet) but still responsive on mobile */
+body.contact-wide .page#contact {
+  width: min(1100px, calc(100vw - 32px));
+  margin-inline: auto;
+}
+
 /* Avoid sticky header overlap for in-page anchor jumps */
 main, .page { scroll-margin-top: var(--anchor-offset); }
 
@@ -621,26 +696,122 @@ main, .page { scroll-margin-top: var(--anchor-offset); }
   font-size: 2.2rem;
 }
 
-/* input form */
-form label {
+/* === Contact form (roomy, user-friendly) === */
+#contact-form {
+  width: 100%;
+  max-width: 100%;
+}
+
+#contact-form .form-field {
+  margin: 14px 0;
+}
+
+#contact-form label {
   display: block;
   margin: 12px 0 8px 0;
+  font-weight: 600;
+  color: #1f2937;
 }
+
+/* Make inputs/textarea expand with the container (fix: default narrow width) */
+#contact-form input[type='text'],
+#contact-form textarea {
+  width: 50%;
+  box-sizing: border-box;
+  font-size: 1.05rem;
+  line-height: 1.45;
+
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(0,0,0,0.18);
+  background: #fff;
+
+  outline: none;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+#contact-form textarea {
+  min-height: 200px;
+  resize: vertical;
+}
+
+#contact-form input[type='text']::placeholder,
+#contact-form textarea::placeholder {
+  color: rgba(17, 24, 39, 0.55);
+}
+
+#contact-form input[type='text']:focus,
+#contact-form textarea:focus {
+  border-color: rgba(64, 151, 238, 0.85);
+  box-shadow: 0 0 0 4px rgba(64, 151, 238, 0.18);
+}
+
+/* Keep file inputs unchanged elsewhere */
 input[type='file'] {
   margin-top: 6px;
 }
-button[type='submit'] {
+
+#contact-form button[type='submit'] {
   background: #4097ee;
   color: #fff;
-  padding: 8px 20px;
+  padding: 12px 22px;
   border: none;
-  border-radius: 6px;
+  border-radius: 10px;
   font-size: 1.1rem;
+  font-weight: 700;
   cursor: pointer;
   margin-top: 18px;
+  width: 70%; /* easier tap target on mobile */
 }
-button[type='submit']:hover {
+
+#contact-form button[type='submit']:hover {
   background: #3376c6;
+}
+
+#contact-form button[type='submit']:active {
+  transform: translateY(1px);
+}
+
+/* Contact form: comfortable sizing */
+#contact-form input,
+#contact-form textarea,
+#contact-form button[type="submit"] {
+  font-size: 16px;   /* recognizable even on smartphone device */
+}
+
+#contact-form input,
+#contact-form textarea {
+  width: 70%;
+  max-width: 100%;
+}
+
+/* === Compare form (top page only) === */
+#compare-form {
+  width: 100%;
+}
+
+/* Wizard周辺の余白を少し整える */
+#compare-form .wizard-guide {
+  margin-bottom: 20px;
+}
+
+/* Face-only toggle spacing */
+#compare-form .face-only-option {
+  margin-top: 12px;
+}
+
+/* Reset button area */
+#compare-form #reset-btn {
+  margin-top: 20px;
+}
+
+#compare-form .reset-hint {
+  display: inline-block;
+  margin-top: 6px;
+}
+
+#compare-form {
+  display: block;
 }
 
 /* スライダーのマルチカラムレイアウト表示 */
@@ -716,7 +887,6 @@ body.menu-open .lang-dropdown{
   top: 16px; /* ヘッダー上の見た目に合わせて調整 */
   left: calc(var(--side-menu-w) + 16px); /* サイドメニューの外(右隣)に置く */
   z-index: 1200; /* side-menu/overlayより上にしたいなら大きく、隠したいなら小さく */
-  transform: translateX(-72px); /* 以前のtranslateXが残ってたら無効化 */
 }
 /* ========== Footer ========== */
 .site-footer {
@@ -908,5 +1078,61 @@ body.menu-open .lang-dropdown{
   #materials .materials-section > .acc-toggle {
     padding-block: 2.25rem;
     min-height: 96px;
+  }
+}
+
+/* === Layout: keep footer at the bottom even on short pages === */
+html, body {
+  min-height: 100%;
+}
+
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Markup uses <main>, this will push footer down. */
+main {
+  flex: 1 0 auto;
+}
+
+footer {
+  margin-top: auto;
+}
+
+/* === Mid-size phones (376px–600px): make header feel less cramped === */
+@media (min-width: 376px) and (max-width: 600px) {
+  /* Bring back a little breathing room between app icon and title */
+  .header-left {
+    gap: 10px;
+  }
+
+  /* Give the title slightly more presence on mid-size phones */
+  .app-title {
+    font-size: 1.00rem;
+    max-width: 68vw;
+  }
+
+  /* Keep right side comfortable but still compact */
+  .header-right {
+    gap: 8px;
+  }
+
+  /* Slightly roomier language button on mid-size phones */
+  .lang-menu-btn {
+    width: 48px;
+    height: 58px;
+    border-radius: 12px;
+  }
+
+  /* Icon + label sizing for the mobile layout */
+  .lang-menu-btn .lang-icon-mobile {
+    font-size: 26px;
+  }
+
+  .lang-menu-btn .lang-mobile-label {
+    width: 48px;
+    font-size: 11.5px;
   }
 }
