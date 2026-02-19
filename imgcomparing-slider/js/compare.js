@@ -242,7 +242,27 @@ function initLangDropdownClick() {
    * only ensures the menu closes after a selection.
    */
   menu.querySelectorAll('.lang-item[data-lang]').forEach((item) => {
-    item.addEventListener('click', () => close());
+  item.addEventListener('click', (e) => {
+    // Prevent accidental navigation (if the markup becomes <a> later)
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Ignore the current (disabled) language item
+    if (item.getAttribute('aria-disabled') === 'true' || item.disabled) {
+      close();
+      return;
+    }
+
+    const code = item.getAttribute('data-lang');
+
+    // Apply language switch
+    if (code && window.appI18n && typeof window.appI18n.apply === 'function') {
+      window.appI18n.apply(code);
+    }
+
+    // Close after switching
+    close();
+  });
   });
 
   /**
@@ -345,6 +365,9 @@ sideMenu?.addEventListener('click', (e) => {
     const target = document.getElementById(pageId);
     target?.classList.add('active');
 
+    document.body.classList.toggle('wide-page', pageId !== 'home');
+    document.body.classList.toggle('contact-wide', pageId === 'contact');
+
     // Re-apply i18n to the newly activated page (includes placeholders).
     if (window.appI18n && typeof window.appI18n.refresh === 'function' && target) {
       window.appI18n.refresh(target);
@@ -414,6 +437,8 @@ if (appTitle) {
   appTitle.addEventListener('click', () => {
     document.querySelectorAll('.page').forEach(pg => pg.classList.remove('active'));
     document.getElementById('home')?.classList.add('active');
+    document.body.classList.remove('wide-page');
+    document.body.classList.remove('contact-wide');
     window.scrollTo(0, 0);
   });
 }
