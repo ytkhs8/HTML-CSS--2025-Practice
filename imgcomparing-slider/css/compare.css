@@ -74,11 +74,17 @@ body {
   padding: 10px 12px;
   border-radius: 10px;
   border: 1px solid rgba(0,0,0,0.15);
-  background: rgba(255,255,255,0.9);
+
+  /* Match Tailwind's `bg-gray-700/5` (very light gray) even when Tailwind is removed/changed */
+  background-color: rgba(54, 65, 83, 0.05);
 
   cursor: pointer;
   user-select: none;
   line-height: 1;
+}
+
+.lang-menu-btn:hover{
+  background-color: rgba(16, 24, 40, 0.10); /* similar to Tailwind `hover:bg-gray-900/10` */
 }
 
 /* Bootstrap icon: make it big & friendly */
@@ -99,13 +105,6 @@ body {
   font-size: 14px;
   letter-spacing: 0.02em;
   font-family: Arial, sans-serif;
-}
-
-/* caret */
-.lang-caret{
-  font-size: 12px;
-  line-height: 1;
-  opacity: 0.8;
 }
 
 /* Dropdown menu panel */
@@ -313,12 +312,6 @@ body {
   .header-right {
     flex: 0 0 auto;   /* keep buttons at intrinsic width */
   }
-  .lang-toggle {
-    min-width: 40px;
-    min-height: 32px;
-    padding: 4px 8px;
-    font-weight: 700;
-  }
   /* extra-tight on small phones */
   .app-title { max-width: 72vw; }
 
@@ -337,6 +330,7 @@ body {
     padding: 0;
     gap: 0;                 /* desktop parts are hidden anyway; keep width tight */
     border-radius: 12px;
+    background-color: rgba(54, 65, 83, 0.05);
   }
 
   /* The mobile wrapper inside the button (sm:hidden) */
