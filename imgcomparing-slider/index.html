@@ -6,13 +6,14 @@
     <meta name="description" content="画像比較スライダーのページです。" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- CSS -->
-    <link rel="stylesheet" href="css/compare.css" />
-    <!-- Bootstrap CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- Bootstrap Icons (self-hosted) -->
+    <link rel="stylesheet" href="css/vendor/bootstrap-icons/bootstrap-icons.min.css" />
 
-    <!-- load tailwindplus elements -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind (self-hosted build output) -->
+    <link rel="stylesheet" href="css/tailwind.css" />
+
+    <!-- App CSS (keep last so it can override utilities when needed) -->
+    <link rel="stylesheet" href="css/compare.css" />
 
     <!-- favicon -->
      <link rel="icon" href="favicon/favicon.ico" sizes="16x16" type="image/x-icon">
@@ -66,7 +67,7 @@
             popover="manual"
             role="menu"
             aria-label="Language menu"
-            class="z-[4000] mt-2 w-56 origin-top-right divide-y divide-white/30 rounded-md bg-gray-300 shadow-lg outline-1 -outline-offset-1 outline-white/10 transition transition-discrete [--anchor-gap:--spacing(2)] data-closed:scale-95 data-closed:transform data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in"
+            class="z-4000 mt-2 w-56 origin-top-right divide-y divide-white/30 rounded-md bg-gray-300 shadow-lg outline-1 -outline-offset-1 outline-white/10 transition transition-discrete [--anchor-gap:--spacing(2)] data-closed:scale-95 data-closed:transform data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in"
           >
             <div class="py-1">
               <button
