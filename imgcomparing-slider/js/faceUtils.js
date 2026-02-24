@@ -1,8 +1,28 @@
 // js/faceUtils.js  — 共通処理ユーティリティ（ES Modules）
 
+/**
+ * Base path for loading Face API models.
+ * This path can be overridden externally (e.g., from compare.js)
+ * if models are stored in a different directory.
+ *
+ * @type {string}
+ */
 // モデルパス（必要なら compare.js から上書き可）
 export let FACE_MODEL_PATH = './models/';
 
+/**
+ * TinyFaceDetector configuration optimized for stability and performance,
+ * especially on Safari and mobile browsers.
+ *
+ * inputSize:
+ *   Controls internal resolution used for detection.
+ *   Higher values increase accuracy but reduce performance.
+ *
+ * scoreThreshold:
+ *   Minimum confidence score required to consider a face detection valid.
+ *
+ * @type {faceapi.TinyFaceDetectorOptions}
+ */
 // Safari 安定化向けオプション（必要に応じて調整可）
 export const TINY_OPTS = new faceapi.TinyFaceDetectorOptions({
   inputSize: 512,
@@ -11,6 +31,21 @@ export const TINY_OPTS = new faceapi.TinyFaceDetectorOptions({
 
 let faceApiReady = false;
 
+/**
+ * Loads the required Face API models if not already loaded.
+ *
+ * This function initializes:
+ * - TinyFaceDetector (lightweight and fast face detection)
+ * - FaceLandmark68Net (facial landmark detection)
+ *
+ * Models are loaded only once and cached using the faceApiReady flag.
+ *
+ * @param {string} [modelPath=FACE_MODEL_PATH]
+ * Path to the directory containing Face API model files.
+ *
+ * @returns {Promise<void>}
+ * Resolves when all required models are successfully loaded.
+ */
 // モデル読込
 export async function loadFaceApiModels(modelPath = FACE_MODEL_PATH) {
   if (faceApiReady) return;
@@ -24,6 +59,18 @@ export async function loadFaceApiModels(modelPath = FACE_MODEL_PATH) {
   faceApiReady = true;
 }
 
+/**
+ * Loads an image file and converts it into an HTMLImageElement.
+ *
+ * This function reads the file using FileReader and creates an Image object,
+ * allowing it to be used in canvas operations or face detection.
+ *
+ * @param {File} file
+ * The image file selected by the user.
+ *
+ * @returns {Promise<HTMLImageElement>}
+ * Resolves with a fully loaded HTMLImageElement.
+ */
 // 画像FileをImageに読み込むPromise
 export function loadImageFromFile(file) {
   return new Promise((resolve, reject) => {
@@ -39,6 +86,24 @@ export function loadImageFromFile(file) {
   });
 }
 
+/**
+ * Crops a detected face region from an image and returns it as a canvas.
+ *
+ * The cropped region is scaled proportionally so its width matches targetWidth.
+ * High-quality image smoothing is applied to preserve visual quality.
+ *
+ * @param {HTMLImageElement} img
+ * The source image containing the face.
+ *
+ * @param {faceapi.Box} box
+ * The bounding box representing the detected face region.
+ *
+ * @param {number} [targetWidth=420]
+ * Desired output width of the cropped face canvas.
+ *
+ * @returns {HTMLCanvasElement}
+ * A canvas element containing the cropped and scaled face image.
+ */
 // 画像と検出結果から顔矩形を切り抜いたCanvasを返す
 export function cropFaceToCanvas(img, box, targetWidth = 420) {
   const sx = Math.max(0, box.x);
@@ -60,6 +125,24 @@ export function cropFaceToCanvas(img, box, targetWidth = 420) {
   return faceCanvas;
 }
 
+/**
+ * Detects a face in an image file and returns a cropped face canvas.
+ *
+ * This function performs the following steps:
+ * 1. Loads Face API models if necessary.
+ * 2. Converts the file into an HTMLImageElement.
+ * 3. Detects a single face using TinyFaceDetector.
+ * 4. Crops and scales the detected face region.
+ *
+ * @param {File} file
+ * The image file containing a face.
+ *
+ * @param {number} [targetWidth=420]
+ * Desired width of the resulting face canvas.
+ *
+ * @returns {Promise<HTMLCanvasElement|null>}
+ * Resolves with the cropped face canvas, or null if no face is detected.
+ */
 // ファイルから顔切り抜きCanvasを生成（TinyFaceDetectorを使用）
 export async function getFaceCanvasFromFile(file, targetWidth = 420) {
   await loadFaceApiModels();
@@ -76,6 +159,31 @@ export async function getFaceCanvasFromFile(file, targetWidth = 420) {
   return cropFaceToCanvas(img, det.box, targetWidth);
 }
 
+/**
+ * Extracts and aligns face canvases from two image files.
+ *
+ * Each image is processed independently, and the resulting face canvases
+ * are resized to match the smallest common dimensions.
+ *
+ * This ensures both faces can be compared directly (e.g., in a slider or composite).
+ *
+ * @param {File} beforeFile
+ * The "before" image file.
+ *
+ * @param {File} afterFile
+ * The "after" image file.
+ *
+ * @param {number} [targetWidth=420]
+ * Desired width of each face canvas before alignment.
+ *
+ * @returns {Promise<{
+ *   bAligned: HTMLCanvasElement,
+ *   aAligned: HTMLCanvasElement,
+ *   w: number,
+ *   h: number
+ * } | null>}
+ * Resolves with aligned face canvases and dimensions, or null if detection fails.
+ */
 // 2枚の File から「検出済み・同サイズの顔 Canvas」を返す（共通基盤）
 export async function getAlignedFacesFromFiles(beforeFile, afterFile, targetWidth = 420) {
   const bFace = await getFaceCanvasFromFile(beforeFile, targetWidth);
