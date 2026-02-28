@@ -206,7 +206,29 @@ export async function getAlignedFacesFromFiles(beforeFile, afterFile, targetWidt
   return { bAligned, aAligned, w, h };
 }
 
-// スライダー用（DataURL 化した2枚を返すラッパー）
+/**
+ * Prepares two aligned face images for the comparison slider.
+ *
+ * This is a thin wrapper around {@link getAlignedFacesFromFiles} that converts
+ * the aligned face canvases into PNG Data URLs.
+ *
+ * @param {File} beforeFile
+ * The "before" image file.
+ *
+ * @param {File} afterFile
+ * The "after" image file.
+ *
+ * @param {number} [targetWidth=420]
+ * Desired width of each extracted face canvas prior to alignment.
+ *
+ * @returns {Promise<{
+ *   before: string,
+ *   after: string,
+ *   w: number,
+ *   h: number
+ * } | null>}
+ * Resolves with PNG Data URLs and the common dimensions, or `null` if face detection fails.
+ */
 export async function prepareFacesForSlider(beforeFile, afterFile, targetWidth = 420) {
   const faces = await getAlignedFacesFromFiles(beforeFile, afterFile, targetWidth);
   if (!faces) return null;
@@ -218,7 +240,25 @@ export async function prepareFacesForSlider(beforeFile, afterFile, targetWidth =
   };
 }
 
-// 半顔合成（Before左 + After右）— 静止画1枚にしたい時に呼ぶ
+/**
+ * Composes a single "half-face" image from two input photos.
+ *
+ * The output is a PNG Data URL where the left half is taken from the aligned
+ * "before" face and the right half from the aligned "after" face.
+ * A subtle vertical blend is added at the center boundary to reduce harsh seams.
+ *
+ * @param {File} beforeFile
+ * The "before" image file.
+ *
+ * @param {File} afterFile
+ * The "after" image file.
+ *
+ * @param {number} [targetWidth=420]
+ * Desired width of each extracted face canvas prior to alignment.
+ *
+ * @returns {Promise<string | null>}
+ * Resolves with a PNG Data URL, or `null` if face detection fails.
+ */
 export async function composeHalfFace(beforeFile, afterFile, targetWidth = 420) {
   const faces = await getAlignedFacesFromFiles(beforeFile, afterFile, targetWidth);
   if (!faces) return null;
@@ -248,15 +288,55 @@ export async function composeHalfFace(beforeFile, afterFile, targetWidth = 420) 
   return out.toDataURL('image/png');
 }
 
-// 目の中心を計算
+/**
+ * Calculates the centroid (average position) of a set of points.
+ *
+ * Used to estimate the center of an eye region from landmark points.
+ *
+ * @param {Array<{x: number, y: number}>} pts
+ * List of points that contain `x` and `y` coordinates.
+ *
+ * @returns {{x: number, y: number}}
+ * The centroid of the provided points.
+ */
 function eyeCenter(pts) {
   const x = pts.reduce((s, p) => s + p.x, 0) / pts.length;
   const y = pts.reduce((s, p) => s + p.y, 0) / pts.length;
   return {x, y};
 }
 
-// ランドマークで回転・スケール・平行移動を正規化して、テンプレートに合わせて描画
-// outW/outH: 出力キャンバスサイズ、eyeY: 目の位置(0〜1, 高さ比)、eyeDist: 目と目の目標距離(px)
+/**
+ * Aligns a face to a canonical template using eye landmarks.
+ *
+ * The alignment normalizes rotation, scale, and translation so that the midpoint
+ * between the eyes is placed at a target position, and the eye-to-eye distance
+ * matches a desired pixel distance in the output canvas.
+ *
+ * Internally, this applies an affine transform in the following order:
+ * translate to target eye midpoint → rotate to level the eyes → scale to match eye distance
+ * → translate so the detected eye midpoint lands on the origin.
+ *
+ * @param {HTMLImageElement} img
+ * Source image element used for drawing.
+ *
+ * @param {faceapi.FaceLandmarks68} landmarks
+ * Face landmarks (must provide left/right eye points).
+ *
+ * @param {number} [outW=420]
+ * Output canvas width in pixels.
+ *
+ * @param {number} [outH=520]
+ * Output canvas height in pixels.
+ *
+ * @param {number} [eyeY=0.38]
+ * Normalized vertical position (0–1) of the eye line in the output canvas.
+ *
+ * @param {number} [eyeDist=0.42 * outW]
+ * Target distance (in pixels) between the left and right eye centers in the output.
+ *
+ * @returns {HTMLCanvasElement}
+ * A canvas containing the aligned face image.
+ */
 export function alignFaceToTemplate(img, landmarks, outW = 420, outH = 520, eyeY = 0.38, eyeDist = 0.42 * outW) {
   const leftEyePts = landmarks.getLeftEye();
   const rightEyePts = landmarks.getRightEye();
@@ -296,7 +376,27 @@ export function alignFaceToTemplate(img, landmarks, outW = 420, outH = 520, eyeY
   return out;
 }
 
-// File → ランドマーク → アライメント済みcanvas を返す
+/**
+ * Extracts face landmarks from an image file and returns an aligned face canvas.
+ *
+ * This function:
+ * 1) ensures Face API models are loaded,
+ * 2) loads the image file,
+ * 3) detects a face with {@link TINY_OPTS} and extracts 68-point landmarks,
+ * 4) aligns the face to a template via {@link alignFaceToTemplate}.
+ *
+ * @param {File} file
+ * Image file containing a face.
+ *
+ * @param {number} [targetW=420]
+ * Output canvas width.
+ *
+ * @param {number} [targetH=520]
+ * Output canvas height.
+ *
+ * @returns {Promise<HTMLCanvasElement | null>}
+ * Resolves with an aligned canvas, or `null` if no face is detected.
+ */
 export async function  getAlignedFaceCanvasFromFile(file, targetW=420, targetH=520) {
   await loadFaceApiModels();
   const img = await loadImageFromFile(file);
@@ -310,7 +410,33 @@ export async function  getAlignedFaceCanvasFromFile(file, targetW=420, targetH=5
   return alignFaceToTemplate(img, det.landmarks, targetW, targetH);
 }
 
-// 2枚の File をアライメントして同一サイズの DataURL 2枚にする（スライダー用）
+/**
+ * Prepares two template-aligned face images for the comparison slider.
+ *
+ * Unlike {@link prepareFacesForSlider}, this variant performs landmark-based
+ * alignment (rotation/scale/translation) so that both faces match the same
+ * canonical framing and output size.
+ *
+ * @param {File} beforeFile
+ * The "before" image file.
+ *
+ * @param {File} afterFile
+ * The "after" image file.
+ *
+ * @param {number} [outW=420]
+ * Output width for both aligned canvases.
+ *
+ * @param {number} [outH=520]
+ * Output height for both aligned canvases.
+ *
+ * @returns {Promise<{
+ *   before: string,
+ *   after: string,
+ *   w: number,
+ *   h: number
+ * } | null>}
+ * Resolves with PNG Data URLs and output dimensions, or `null` if detection/alignment fails.
+ */
 export async function prepareFacesForSliderAligned(beforeFile, afterFile, outW=420, outH=520) {
   const bAligned = await getAlignedFaceCanvasFromFile(beforeFile, outW, outH);
   const aAligned = await getAlignedFaceCanvasFromFile(afterFile, outW, outH);
