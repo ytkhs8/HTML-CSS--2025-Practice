@@ -1171,7 +1171,7 @@ if (contactForm){
 
       // about
       'about.title': 'About the Developer',
-      'about.desc': 'Yuuki, a Tokyo-based junior engineer, created this project as part of his learning journey. He is exploring various web technologies including Java, Spring Boot, and JavaScript, and shares his work as a portfolio.',
+      'about.desc': 'Yuuki, a Tokyo-based junior engineer, created this project as part of his learning journey. He is exploring various web technologies including Java, AWS, and JavaScript, and shares his work as a portfolio.',
       'about.howto': 'Use Cases',
       'about.howto.desc': 'This image comparison slider is useful for comparing landscapes, objects, people, faces, and outcomes.',
 
@@ -1299,7 +1299,7 @@ if (contactForm){
 
       // about
       'about.title': '開発者について',
-      'about.desc': '東京都在住の駆け出しエンジニアYuukiが、学習の一環で制作しています。JavaやSpringBoot、JavaScriptなど幅広くWeb技術を学び、ポートフォリオとして公開中です。',
+      'about.desc': '東京都在住の駆け出しエンジニアYuukiが、学習の一環で制作しています。JavaやAWS、JavaScriptなど幅広くWeb技術を学び、ポートフォリオとして公開中です。',
       'about.howto': '用途概要',
       'about.howto.desc': 'この画像比較スライダーは主に風景画・対象物・人物像・人物の顔・成果物の比較を行いたい際に役立ちます。',
       // contact
