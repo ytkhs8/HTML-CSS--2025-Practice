@@ -1027,6 +1027,121 @@ sliderHandle.addEventListener('keydown', (e) => {
 scheduleSliderUpdate();
 
 /**
+ * ===============================
+ *  Contact Form: Upload Filename UI
+ * ===============================
+ *
+ * Improves usability by showing the selected file name under the upload area.
+ *
+ * This module is intentionally defensive:
+ * - Works whether the upload input is `#contact-upload` or another file input.
+ * - Uses an existing `#contact-upload-name` element if present.
+ * - Otherwise creates a `.upload-file-name` node and injects it under the upload UI.
+ */
+
+/**
+ * Ensures a file-name display element exists for the contact upload UI.
+ *
+ * Priority:
+ * 1) Use an existing element with id `contact-upload-name`.
+ * 2) Create and insert a `<div class="upload-file-name" id="contact-upload-name">` under
+ *    the nearest `.form-upload` container, or directly after the input as a fallback.
+ *
+ * @param {HTMLInputElement} fileInput - The file input used for attachments.
+ * @returns {HTMLElement|null} The display element used to render the selected file name.
+ */
+function ensureContactUploadNameEl(fileInput) {
+  if (!fileInput) return null;
+
+  /** @type {HTMLElement|null} */
+  let nameEl = document.getElementById('contact-upload-name');
+  if (nameEl) return nameEl;
+
+  nameEl = document.createElement('div');
+  nameEl.className = 'upload-file-name';
+  nameEl.id = 'contact-upload-name';
+  nameEl.setAttribute('aria-live', 'polite');
+
+  // Prefer placing it inside the same form-upload block (more stable layout)
+  const container = fileInput.closest('.form-upload');
+  if (container) {
+    container.appendChild(nameEl);
+    return nameEl;
+  }
+
+  // Fallback: insert right after the file input
+  const parent = fileInput.parentElement;
+  if (parent) {
+    parent.insertBefore(nameEl, fileInput.nextSibling);
+    return nameEl;
+  }
+
+  return null;
+}
+
+/**
+ * Updates the file-name display under the contact form's upload UI.
+ *
+ * - When a file is selected: displays the file name.
+ * - When cleared/reset: hides the text.
+ *
+ * @param {HTMLElement|null} nameEl - The element used to display the name.
+ * @param {string} fileName - The selected file's name (empty string to clear).
+ * @returns {void}
+ */
+function setContactUploadFileName(nameEl, fileName) {
+  if (!nameEl) return;
+  const safeName = typeof fileName === 'string' ? fileName : '';
+  nameEl.textContent = safeName;
+  nameEl.style.display = safeName ? 'block' : 'none';
+}
+
+/**
+ * Initializes the contact form upload filename UX.
+ *
+ * Hooks into the attachment `<input type="file">` change event and renders
+ * the selected file name below the upload area.
+ *
+ * Also clears the display when the form is reset programmatically.
+ *
+ * @returns {void}
+ */
+function initContactUploadFilenameUI() {
+  // Prefer the explicit id used by our markup.
+  /** @type {HTMLInputElement|null} */
+  const inputById = /** @type {HTMLInputElement|null} */ (document.getElementById('contact-upload'));
+
+  // Fallback: find any file input under the contact form.
+  const form = document.getElementById('contact-form');
+  /** @type {HTMLInputElement|null} */
+  const inputInForm = form ? /** @type {HTMLInputElement|null} */ (form.querySelector('input[type="file"]')) : null;
+
+  const fileInput = inputById || inputInForm;
+  if (!fileInput) return;
+
+  const nameEl = ensureContactUploadNameEl(fileInput);
+
+  // Initial state: hidden
+  setContactUploadFileName(nameEl, '');
+
+  // Update on file selection
+  fileInput.addEventListener('change', () => {
+    const file = fileInput.files && fileInput.files[0];
+    setContactUploadFileName(nameEl, file ? file.name : '');
+  });
+
+  // Expose a small helper for other flows (submit/reset)
+  window.__clearContactUploadFileName = () => setContactUploadFileName(nameEl, '');
+}
+
+// Initialize after DOM is ready (safe even if called multiple times)
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initContactUploadFilenameUI);
+} else {
+  initContactUploadFilenameUI();
+}
+
+/**
  * Initializes the dummy submit behavior for the contact form.
  *
  * When the user submits the form:
@@ -1047,6 +1162,10 @@ if (contactForm){
     e.preventDefault();
     document.getElementById('contact-success').style.display = 'block';
     contactForm.reset();
+    // Clear selected upload filename (UX)
+    if (typeof window.__clearContactUploadFileName === 'function') {
+      window.__clearContactUploadFileName();
+    }
     setTimeout(() => {
       document.getElementById('contact-success').style.display = 'none';
     }, 3000);
@@ -1177,12 +1296,16 @@ if (contactForm){
 
       // contact
       'contact.title': 'Requests & Bug Reports',
-      'contact.name': 'Name (optional)',
-      'contact.message': 'Message',
+      'contact.email': 'E-mail address',
+      'contact.subject': 'Subject',
+      'contact.description': 'Description',
+      'contact.upload': 'Attached file (optional)',
       'contact.submit': 'Send',
       'contact.success': 'Thank you for your feedback!',
-      'contact.placeholder.name': 'Your name',
-      'contact.placeholder.message': 'Describe your request or bug here'
+      'contact.placeholder.email': 'Please input your e-mail address',
+      'contact.placeholder.subject': 'Please input the subject of your request or bug report',
+      'contact.placeholder.description': 'Describe your request or bug here',
+      'contact.upload-icon': 'Select a file or drag and drop it here'
     },
     ja: {
       // header & menu
@@ -1304,12 +1427,16 @@ if (contactForm){
       'about.howto.desc': 'この画像比較スライダーは主に風景画・対象物・人物像・人物の顔・成果物の比較を行いたい際に役立ちます。',
       // contact
       'contact.title': '要望・バグ報告',
-      'contact.name': 'お名前（任意）',
-      'contact.message': '内容',
+      'contact.email': 'メールアドレス',
+      'contact.subject': '件名',
+      'contact.description': '説明',
+      'contact.upload': '添付ファイル（任意）',
       'contact.submit': '送信',
       'contact.success': 'ご意見ありがとうございます！',
-      'contact.placeholder.name': '氏名',
-      'contact.placeholder.message': '要望や不具合の内容を入力'
+      'contact.placeholder.email': 'メールアドレスを入力してください。',
+      'contact.placeholder.subject': '要望やバグ報告の件名を入力してください',
+      'contact.placeholder.description': '要望や不具合を詳しく説明してください',
+      'contact.upload-icon': 'ファイルを選択するか、ここにドラッグ＆ドロップしてください'
     }
   };
 

@@ -457,27 +457,56 @@
             <h2 data-i18n="contact.title">要望・バグ報告</h2>
             <form id="contact-form">
             <div class="form-field">
-                <label for="name"><span class="i18n-text" data-i18n="contact.name">お名前（任意）</span></label>
+                <label for="email"><span class="i18n-text" data-i18n="contact.email">メールアドレス</span></label>
                 <input 
-                  id="name"
-                  type="text"
-                  name="name"
-                  autocomplete="name"
-                  data-i18n-placeholder="contact.placeholder.name"
-                  placeholder="氏名"
+                  id="email"
+                  type="email"
+                  name="email"
+                  autocomplete="email"
+                  data-i18n-placeholder="contact.placeholder.email"
+                  placeholder="メールアドレス"
+                  required
                 >
             </div>
 
             <div class="form-field">
-                <label for="message"><span class="i18n-text" data-i18n="contact.message">内容</span></label>
+                <label for="subject"><span class="i18n-text" data-i18n="contact.subject">件名</span></label>
+                <input
+                  id="subject"
+                  type="text"
+                  name="subject"
+                  data-i18n-placeholder="contact.placeholder.subject"
+                  placeholder="要望や不具合の件名を入力"
+                  required
+                >
+            </div>
+
+            <div class="form-field">
+                <label for="description"><span class="i18n-text" data-i18n="contact.description">説明</span></label>
                 <textarea
-                  id="message"
-                  name="message"
-                  data-i18n-placeholder="contact.placeholder.message"
-                  placeholder="要望や不具合の内容を入力"
+                  id="description"
+                  name="description"
+                  data-i18n-placeholder="contact.placeholder.description"
+                  placeholder="要望や不具合を詳しく説明してください"
                   required
                 ></textarea>
             </div>
+
+            <div class="form-upload">
+              <label for="contact-upload">
+                <span class="i18n-text" data-i18n="contact.upload">添付ファイル</span>
+              </label>
+
+              <label class="upload-dropzone" for="contact-upload">
+                <input id="contact-upload" class="upload-input" type="file" name="contact-upload" accept="image/*">
+                <span class="upload-dropzone-text" data-i18n="upload.file">
+                  ファイルを選択するか、ここにドラッグ＆ドロップします
+                </span>
+              </label>
+
+              <div class="upload-file-name" id="contact-upload-name" aria-live="polite"></div>
+            </div>
+
                 <button type="submit" data-i18n="contact.submit">送信</button>
             </form>
             <div id="contact-success" style="display:none;" data-i18n="contact.success">ご意見ありがとうございます！</div>

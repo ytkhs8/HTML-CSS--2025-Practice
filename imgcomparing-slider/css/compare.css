@@ -708,6 +708,7 @@ main, .page { scroll-margin-top: var(--anchor-offset); }
 }
 
 /* Make inputs/textarea expand with the container (fix: default narrow width) */
+#contact-form input[type='email'],
 #contact-form input[type='text'],
 #contact-form textarea {
   width: 50%;
@@ -729,11 +730,13 @@ main, .page { scroll-margin-top: var(--anchor-offset); }
   resize: vertical;
 }
 
+#contact-form input[type='email']::placeholder,
 #contact-form input[type='text']::placeholder,
 #contact-form textarea::placeholder {
   color: rgba(17, 24, 39, 0.55);
 }
 
+#contact-form input[type='email']:focus,
 #contact-form input[type='text']:focus,
 #contact-form textarea:focus {
   border-color: rgba(64, 151, 238, 0.85);
@@ -755,7 +758,7 @@ input[type='file'] {
   font-weight: 700;
   cursor: pointer;
   margin-top: 18px;
-  width: 70%; /* easier tap target on mobile */
+  width: 50%; /* easier tap target on mobile */
 }
 
 #contact-form button[type='submit']:hover {
@@ -770,13 +773,103 @@ input[type='file'] {
 #contact-form input,
 #contact-form textarea,
 #contact-form button[type="submit"] {
-  font-size: 16px;   /* recognizable even on smartphone device */
+  font-size: 15px;   /* recognizable even on smartphone device */
 }
 
 #contact-form input,
 #contact-form textarea {
   width: 70%;
   max-width: 100%;
+}
+
+/* =============================
+   Contact form: file upload dropzone (screenshot-like UI)
+   ============================= */
+
+.form-upload {
+  margin-top: 14px;
+}
+
+/* The dashed dropzone box */
+.form-upload .upload-dropzone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 50%;
+  min-height: 55px;
+
+  border: 1px dashed rgba(110, 150, 215, 0.65);
+  border-radius: 10px;
+
+  /* pale blue-gray like the surrounding tone */
+  background: rgba(235, 244, 255, 0.75);
+
+  cursor: pointer;
+  user-select: none;
+
+  transition: border-color 150ms ease, background-color 150ms ease, box-shadow 150ms ease;
+}
+
+/* Hide native file input (keep accessible via label click) */
+.form-upload .upload-dropzone input[type="file"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Center red text like the screenshot */
+.form-upload .upload-dropzone .upload-dropzone-text {
+  display: block;
+  text-align: center;
+  font-size: 14px;
+  letter-spacing: 0.2px;
+  line-height: 1.35;
+  color: #d72638; /* red instruction text */
+  padding: 20px 14px;
+  font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* If the old icon remains inside upload area, hide it */
+.form-upload .upload-dropzone .upload-icon {
+  display: none;
+}
+
+/* Hover / focus */
+.form-upload .upload-dropzone:hover {
+  background: rgba(235, 244, 255, 0.95);
+  border-color: rgba(92, 133, 205, 0.9);
+}
+
+.form-upload .upload-dropzone:focus,
+.form-upload .upload-dropzone:focus-visible,
+.form-upload .upload-dropzone:focus-within {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(110, 150, 215, 0.35);
+  border-color: rgba(92, 133, 205, 1);
+}
+
+/* Optional: JS toggles this class while dragging */
+.form-upload .upload-dropzone.is-dragover {
+  background: rgba(225, 240, 255, 1);
+  border-color: rgba(55, 116, 210, 1);
+  box-shadow: 0 0 0 3px rgba(55, 116, 210, 0.18);
+}
+
+/* Selected file name under the box (optional) */
+.form-upload .upload-file-name {
+  margin-top: 8px;
+  font-size: 13px;
+  line-height: 1.35;
+  color: rgba(17, 24, 39, 0.75);
+  word-break: break-word;
 }
 
 /* === Compare form (top page only) === */
