@@ -1581,7 +1581,7 @@ if (contactForm){
       'contact.placeholder.email': 'メールアドレスを入力してください',
       'contact.placeholder.subject': '要望やバグ報告の件名を入力してください',
       'contact.placeholder.description': '要望や不具合を詳しく説明してください',
-      'contact.upload-icon': 'ファイルを選択するか、ここにドラッグ＆ドロップしてください'
+      'upload.file': 'ファイルを選択するか、ここにドラッグ＆ドロップしてください'
     }
   };
 
