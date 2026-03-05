@@ -260,6 +260,28 @@ body {
     min-width: 220px;
   }
 
+  #contact-form input[type='email']::placeholder,
+  #contact-form input[type='text']::placeholder {
+    color: transparent;
+  }
+
+  #contact-form .field-hint {
+    display: block;
+  }
+
+  /* Upload file list: wrap long file names on narrow devices */
+  .upload-file-item {
+    align-items: flex-start;
+  }
+
+  .upload-file-name {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
 }
 
 @media (max-width: 600px) {
@@ -370,6 +392,28 @@ body {
 
   /* Mobile header-right spacing: tighten gap between dropdown and hamburger */
   .header-right{ gap: 6px; }
+
+  #contact-form input[type='email']::placeholder,
+  #contact-form input[type='text']::placeholder {
+    color: transparent;
+  }
+
+  #contact-form .field-hint {
+    display: block;
+  }
+
+  /* Upload file list: wrap long file names on narrow devices */
+  .upload-file-item {
+    align-items: flex-start;
+  }
+
+  .upload-file-name {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
 }
 
 /* SIDEMENU */
@@ -735,6 +779,9 @@ main, .page { scroll-margin-top: var(--anchor-offset); }
 #contact-form textarea::placeholder {
   color: rgba(17, 24, 39, 0.55);
 }
+#contact-form input[type='text']::placeholder {
+  font-size: 0.80rem;
+}
 
 #contact-form input[type='email']:focus,
 #contact-form input[type='text']:focus,
@@ -757,7 +804,7 @@ input[type='file'] {
   font-size: 1.1rem;
   font-weight: 700;
   cursor: pointer;
-  margin-top: 18px;
+  margin-top: 1.8rem;
   width: 50%; /* easier tap target on mobile */
 }
 
@@ -828,7 +875,7 @@ input[type='file'] {
 .form-upload .upload-dropzone .upload-dropzone-text {
   display: block;
   text-align: center;
-  font-size: 14px;
+  font-size: 0.88rem;
   letter-spacing: 0.2px;
   line-height: 1.35;
   color: #d72638; /* red instruction text */
@@ -856,19 +903,109 @@ input[type='file'] {
   border-color: rgba(92, 133, 205, 1);
 }
 
-/* Optional: JS toggles this class while dragging */
-.form-upload .upload-dropzone.is-dragover {
-  background: rgba(225, 240, 255, 1);
-  border-color: rgba(55, 116, 210, 1);
-  box-shadow: 0 0 0 3px rgba(55, 116, 210, 0.18);
-}
-
 /* Selected file name under the box (optional) */
 .form-upload .upload-file-name {
-  margin-top: 8px;
-  font-size: 13px;
+  font-size: 0.65rem;
   line-height: 1.35;
   color: rgba(17, 24, 39, 0.75);
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* Attachment list under the upload area */
+.upload-file-list {
+  margin-top: 0.2rem;
+}
+
+.upload-file-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2px;
+  width: 50%;
+
+  /* compact height */
+  padding: 8px 10px;
+
+  /* white background to match main */
+  background: #ffffff;
+
+  border: 1px solid rgba(15, 23, 42, 0.14);
+  border-radius: 10px;
+}
+
+.upload-file-item + .upload-file-item{
+  margin-top: 0.5rem;
+}
+
+.upload-file-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.upload-file-icon {
+  font-size: 16px;
+  line-height: 1;
+  opacity: 0.8;
+}
+
+.upload-file-name {
+  font-size: 0.65rem;
+  line-height: 1.2;
+  font-weight: 600;
+  color: #d32f2f; /* your red accent */
+
+  /* truncate long names */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.upload-file-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 32px;
+  height: 32px;
+
+  border: 1px solid rgba(15, 23, 42, 0.14);
+  border-radius: 8px;
+  background: #ffffff;
+
+  cursor: pointer;
+}
+
+.upload-file-remove i {
+  font-size: 16px;
+  line-height: 1;
+  color: #d32f2f;
+}
+
+.upload-item-remove:hover{
+  background: rgba(255, 255, 255, 0.95);
+}
+
+/* optional: subtle visual feedback while dragging over the upload area */
+.form-upload.is-dragover {
+  outline: 2px dashed rgba(59, 130, 246, 0.6);
+  outline-offset: 4px;
+}
+
+/* ==================================================
+ * Contact form: prevent placeholder truncation on small screens
+ * Note: native placeholders do not wrap reliably, so we show a
+ * multi-line hint under the input on small screens.
+ * ================================================== */
+
+.field-hint {
+  display: none;
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 1.35;
+  color: rgba(15, 23, 42, 0.65);
   word-break: break-word;
 }
 
@@ -1221,5 +1358,27 @@ footer {
   .lang-menu-btn .lang-mobile-label {
     width: 48px;
     font-size: 11.5px;
+  }
+
+  #contact-form input[type='email']::placeholder,
+  #contact-form input[type='text']::placeholder {
+    color: transparent;
+  }
+
+  #contact-form .field-hint {
+    display: block;
+  }
+
+  /* Upload file list: wrap long file names on narrow devices */
+  .upload-file-item {
+    align-items: flex-start;
+  }
+
+  .upload-file-name {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
 }

@@ -368,6 +368,11 @@ sideMenu?.addEventListener('click', (e) => {
     document.body.classList.toggle('wide-page', pageId !== 'home');
     document.body.classList.toggle('contact-wide', pageId === 'contact');
 
+    // Leaving the contact page should clear selected attachments.
+    if (pageId !== 'contact' && typeof window.__clearContactUploadFiles === 'function') {
+      window.__clearContactUploadFiles();
+    }
+
     // Re-apply i18n to the newly activated page (includes placeholders).
     if (window.appI18n && typeof window.appI18n.refresh === 'function' && target) {
       window.appI18n.refresh(target);
@@ -439,6 +444,10 @@ if (appTitle) {
     document.getElementById('home')?.classList.add('active');
     document.body.classList.remove('wide-page');
     document.body.classList.remove('contact-wide');
+    // Leaving the contact page via title/home navigation should also clear attachments.
+    if (typeof window.__clearContactUploadFiles === 'function') {
+      window.__clearContactUploadFiles();
+    }
     window.scrollTo(0, 0);
   });
 }
@@ -1027,91 +1036,155 @@ sliderHandle.addEventListener('keydown', (e) => {
 scheduleSliderUpdate();
 
 /**
- * ===============================
- *  Contact Form: Upload Filename UI
- * ===============================
+ * ==========================================
+ *  Contact Form: Attachment Upload UI (List)
+ * ==========================================
  *
- * Improves usability by showing the selected file name under the upload area.
- *
- * This module is intentionally defensive:
- * - Works whether the upload input is `#contact-upload` or another file input.
- * - Uses an existing `#contact-upload-name` element if present.
- * - Otherwise creates a `.upload-file-name` node and injects it under the upload UI.
+ * UX goals:
+ * - Allow multiple attachments (input + drag&drop).
+ * - Show a compact file list under the upload area.
+ * - Allow removing individual files via a trash button.
+ * - Keep <input type="file"> in sync via DataTransfer so the current selection
+ *   is what would be submitted.
  */
 
 /**
- * Ensures a file-name display element exists for the contact upload UI.
+ * Creates (or returns) the attachment list container under the upload UI.
  *
  * Priority:
- * 1) Use an existing element with id `contact-upload-name`.
- * 2) Create and insert a `<div class="upload-file-name" id="contact-upload-name">` under
+ * 1) Use an existing element with id `contact-upload-list`.
+ * 2) Create and insert a `<div class="upload-file-list" id="contact-upload-list">` under
  *    the nearest `.form-upload` container, or directly after the input as a fallback.
  *
  * @param {HTMLInputElement} fileInput - The file input used for attachments.
- * @returns {HTMLElement|null} The display element used to render the selected file name.
+ * @returns {HTMLElement|null} The list container element.
  */
-function ensureContactUploadNameEl(fileInput) {
+function ensureContactUploadListEl(fileInput) {
   if (!fileInput) return null;
 
   /** @type {HTMLElement|null} */
-  let nameEl = document.getElementById('contact-upload-name');
-  if (nameEl) return nameEl;
+  let listEl = document.getElementById('contact-upload-list');
+  if (listEl) return listEl;
 
-  nameEl = document.createElement('div');
-  nameEl.className = 'upload-file-name';
-  nameEl.id = 'contact-upload-name';
-  nameEl.setAttribute('aria-live', 'polite');
+  listEl = document.createElement('div');
+  listEl.className = 'upload-file-list';
+  listEl.id = 'contact-upload-list';
+  listEl.setAttribute('aria-live', 'polite');
 
-  // Prefer placing it inside the same form-upload block (more stable layout)
   const container = fileInput.closest('.form-upload');
   if (container) {
-    container.appendChild(nameEl);
-    return nameEl;
+    container.appendChild(listEl);
+    return listEl;
   }
 
-  // Fallback: insert right after the file input
   const parent = fileInput.parentElement;
   if (parent) {
-    parent.insertBefore(nameEl, fileInput.nextSibling);
-    return nameEl;
+    parent.insertBefore(listEl, fileInput.nextSibling);
+    return listEl;
   }
 
   return null;
 }
 
 /**
- * Updates the file-name display under the contact form's upload UI.
+ * Builds a stable identity key for a File.
  *
- * - When a file is selected: displays the file name.
- * - When cleared/reset: hides the text.
- *
- * @param {HTMLElement|null} nameEl - The element used to display the name.
- * @param {string} fileName - The selected file's name (empty string to clear).
- * @returns {void}
+ * @param {File} f
+ * @returns {string}
  */
-function setContactUploadFileName(nameEl, fileName) {
-  if (!nameEl) return;
-  const safeName = typeof fileName === 'string' ? fileName : '';
-  nameEl.textContent = safeName;
-  nameEl.style.display = safeName ? 'block' : 'none';
+function fileKey(f) {
+  return [f.name, f.size, f.lastModified].join('::');
 }
 
 /**
- * Initializes the contact form upload filename UX.
+ * Syncs the file input's FileList with the current in-memory selection.
  *
- * Hooks into the attachment `<input type="file">` change event and renders
- * the selected file name below the upload area.
+ * @param {HTMLInputElement} fileInput
+ * @param {File[]} files
+ * @returns {void}
+ */
+function syncContactUploadInputFiles(fileInput, files) {
+  if (!fileInput) return;
+
+  // DataTransfer is the only practical way to programmatically set input.files
+  const dt = new DataTransfer();
+  files.forEach((f) => dt.items.add(f));
+  fileInput.files = dt.files;
+
+  // Reset the input value so selecting the same file again still triggers change
+  fileInput.value = '';
+}
+
+/**
+ * Renders the selected files list.
  *
- * Also clears the display when the form is reset programmatically.
+ * @param {HTMLElement|null} listEl
+ * @param {File[]} files
+ * @param {(idx: number) => void} onRemove
+ * @returns {void}
+ */
+function renderContactUploadFileList(listEl, files, onRemove) {
+  if (!listEl) return;
+
+  // Clear
+  listEl.innerHTML = '';
+
+  if (!files.length) {
+    listEl.style.display = 'none';
+    return;
+  }
+
+  listEl.style.display = 'block';
+
+  files.forEach((f, idx) => {
+    const row = document.createElement('div');
+    row.className = 'upload-file-item';
+
+    const left = document.createElement('div');
+    left.className = 'upload-file-left';
+
+    // file icon
+    const icon = document.createElement('i');
+    icon.className = 'bi bi-file-earmark upload-file-icon';
+    icon.setAttribute('aria-hidden', 'true');
+
+    // filename
+    const name = document.createElement('span');
+    name.className = 'upload-file-name';
+    name.textContent = f.name;
+
+    left.appendChild(icon);
+    left.appendChild(name);
+
+    // remove button
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'upload-file-remove';
+    removeBtn.setAttribute('aria-label', `Remove ${f.name}`);
+    removeBtn.innerHTML = '<i class="bi bi-trash" aria-hidden="true"></i>';
+    removeBtn.addEventListener('click', () => onRemove(idx));
+
+    row.appendChild(left);
+    row.appendChild(removeBtn);
+    listEl.appendChild(row);
+  });
+}
+
+/**
+ * Initializes the contact form attachment upload UI.
+ *
+ * Features:
+ * - Multiple file selection (input)
+ * - Multiple file add via drag & drop
+ * - Removable list items
+ * - Input FileList kept in sync
  *
  * @returns {void}
  */
-function initContactUploadFilenameUI() {
-  // Prefer the explicit id used by our markup.
+function initContactUploadFilesUI() {
   /** @type {HTMLInputElement|null} */
   const inputById = /** @type {HTMLInputElement|null} */ (document.getElementById('contact-upload'));
 
-  // Fallback: find any file input under the contact form.
   const form = document.getElementById('contact-form');
   /** @type {HTMLInputElement|null} */
   const inputInForm = form ? /** @type {HTMLInputElement|null} */ (form.querySelector('input[type="file"]')) : null;
@@ -1119,26 +1192,98 @@ function initContactUploadFilenameUI() {
   const fileInput = inputById || inputInForm;
   if (!fileInput) return;
 
-  const nameEl = ensureContactUploadNameEl(fileInput);
+  // Enable multiple attachments (also works if HTML doesn't have multiple="multiple")
+  fileInput.multiple = true;
 
-  // Initial state: hidden
-  setContactUploadFileName(nameEl, '');
+  const listEl = ensureContactUploadListEl(fileInput);
 
-  // Update on file selection
+  /** @type {File[]} */
+  let selectedFiles = [];
+
+  const update = () => {
+    renderContactUploadFileList(listEl, selectedFiles, (idx) => {
+      selectedFiles.splice(idx, 1);
+      syncContactUploadInputFiles(fileInput, selectedFiles);
+      update();
+    });
+  };
+
+  /**
+   * Adds files to selection (dedupe by name/size/lastModified).
+   *
+   * @param {FileList|File[]} incoming
+   * @returns {void}
+   */
+  const addFiles = (incoming) => {
+    const arr = Array.from(incoming || []);
+    if (!arr.length) return;
+
+    const existing = new Set(selectedFiles.map(fileKey));
+    arr.forEach((f) => {
+      if (!f || typeof f.name !== 'string') return;
+      const k = fileKey(f);
+      if (existing.has(k)) return;
+      existing.add(k);
+      selectedFiles.push(f);
+    });
+
+    syncContactUploadInputFiles(fileInput, selectedFiles);
+    update();
+  };
+
+  // Initial state
+  update();
+
+  // Add via file picker
   fileInput.addEventListener('change', () => {
-    const file = fileInput.files && fileInput.files[0];
-    setContactUploadFileName(nameEl, file ? file.name : '');
+    if (!fileInput.files) return;
+    addFiles(fileInput.files);
   });
 
-  // Expose a small helper for other flows (submit/reset)
-  window.__clearContactUploadFileName = () => setContactUploadFileName(nameEl, '');
+  // Drag & drop support on the upload container (or input as fallback)
+  const dropZone = fileInput.closest('.form-upload') || fileInput;
+
+  const setDragOver = (on) => {
+    if (!dropZone || !dropZone.classList) return;
+    dropZone.classList.toggle('is-dragover', !!on);
+  };
+
+  dropZone.addEventListener('dragenter', (e) => {
+    e.preventDefault();
+    setDragOver(true);
+  });
+
+  dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    setDragOver(true);
+  });
+
+  dropZone.addEventListener('dragleave', (e) => {
+    e.preventDefault();
+    if (e.target === dropZone) setDragOver(false);
+  });
+
+  dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    setDragOver(false);
+    const dt = e.dataTransfer;
+    if (!dt || !dt.files || !dt.files.length) return;
+    addFiles(dt.files);
+  });
+
+  // Expose a helper for submit/reset flows
+  window.__clearContactUploadFiles = () => {
+    selectedFiles = [];
+    syncContactUploadInputFiles(fileInput, selectedFiles);
+    update();
+  };
 }
 
 // Initialize after DOM is ready (safe even if called multiple times)
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initContactUploadFilenameUI);
+  document.addEventListener('DOMContentLoaded', initContactUploadFilesUI);
 } else {
-  initContactUploadFilenameUI();
+  initContactUploadFilesUI();
 }
 
 /**
@@ -1163,8 +1308,8 @@ if (contactForm){
     document.getElementById('contact-success').style.display = 'block';
     contactForm.reset();
     // Clear selected upload filename (UX)
-    if (typeof window.__clearContactUploadFileName === 'function') {
-      window.__clearContactUploadFileName();
+    if (typeof window.__clearContactUploadFiles === 'function') {
+      window.__clearContactUploadFiles();
     }
     setTimeout(() => {
       document.getElementById('contact-success').style.display = 'none';
@@ -1305,7 +1450,7 @@ if (contactForm){
       'contact.placeholder.email': 'Please input your e-mail address',
       'contact.placeholder.subject': 'Please input the subject of your request or bug report',
       'contact.placeholder.description': 'Describe your request or bug here',
-      'contact.upload-icon': 'Select a file or drag and drop it here'
+      'upload.file': 'Select a file or drag and drop it here'
     },
     ja: {
       // header & menu
@@ -1433,7 +1578,7 @@ if (contactForm){
       'contact.upload': '添付ファイル（任意）',
       'contact.submit': '送信',
       'contact.success': 'ご意見ありがとうございます！',
-      'contact.placeholder.email': 'メールアドレスを入力してください。',
+      'contact.placeholder.email': 'メールアドレスを入力してください',
       'contact.placeholder.subject': '要望やバグ報告の件名を入力してください',
       'contact.placeholder.description': '要望や不具合を詳しく説明してください',
       'contact.upload-icon': 'ファイルを選択するか、ここにドラッグ＆ドロップしてください'
