@@ -1,77 +1,95 @@
-// js/faceUtils.js  — 共通処理ユーティリティ（ES Modules）
+/**
+ * =====================================================
+ * Face Utility Module (Face API / Canvas Processing)
+ * =====================================================
+ *
+ * @description
+ * Provides shared face-detection and image-processing utilities used by the
+ * image comparison slider.
+ *
+ * This module is responsible for loading face-api.js models, converting image
+ * files into drawable images, detecting/cropping faces, aligning faces to a
+ * comparable template, and generating image data URLs for the slider UI.
+ *
+ * The implementation is intentionally separated from compare.js so the UI layer
+ * can stay focused on user interaction while this module handles face/canvas work.
+ *
+ * @module FaceUtils
+ */
 
 /**
- * Base path for loading Face API models.
- * This path can be overridden externally (e.g., from compare.js)
- * if models are stored in a different directory.
+ * @description
+ * Base path used to load face-api.js model files.
  *
- * @type {string}
+ * The default assumes models are served from the local `./models/` directory.
+ * Other modules can update this value when model files are served from a
+ * different path.
  */
-// モデルパス（必要なら compare.js から上書き可）
 export let FACE_MODEL_PATH = './models/';
 
 /**
- * TinyFaceDetector configuration optimized for stability and performance,
- * especially on Safari and mobile browsers.
+ * @description
+ * Default TinyFaceDetector options.
  *
- * inputSize:
- *   Controls internal resolution used for detection.
- *   Higher values increase accuracy but reduce performance.
+ * These settings are tuned for a practical balance between detection stability
+ * and performance, especially on Safari and mobile browsers.
  *
- * scoreThreshold:
- *   Minimum confidence score required to consider a face detection valid.
+ * `inputSize` controls the internal detection resolution. Higher values may
+ * improve accuracy but increase processing cost.
  *
- * @type {faceapi.TinyFaceDetectorOptions}
+ * `scoreThreshold` defines the minimum confidence score required to accept a
+ * detected face.
  */
-// Safari 安定化向けオプション（必要に応じて調整可）
 export const TINY_OPTS = new faceapi.TinyFaceDetectorOptions({
   inputSize: 512,
   scoreThreshold: 0.35
 });
 
+/**
+ * @description
+ * Tracks whether required face-api.js models have already been loaded.
+ *
+ * This prevents repeated network requests and model initialization work when
+ * multiple comparison flows are executed during the same page session.
+ */
 let faceApiReady = false;
 
 /**
- * Loads the required Face API models if not already loaded.
+ * @description
+ * Loads the required face-api.js models once and caches the loaded state.
  *
- * This function initializes:
- * - TinyFaceDetector (lightweight and fast face detection)
- * - FaceLandmark68Net (facial landmark detection)
+ * The function initializes TinyFaceDetector for lightweight face detection and
+ * FaceLandmark68Net for extracting facial landmarks. After the first successful
+ * load, later calls return immediately.
  *
- * Models are loaded only once and cached using the faceApiReady flag.
- *
- * @param {string} [modelPath=FACE_MODEL_PATH]
- * Path to the directory containing Face API model files.
- *
- * @returns {Promise<void>}
- * Resolves when all required models are successfully loaded.
+ * @example
+ * await loadFaceApiModels();
  */
-// モデル読込
 export async function loadFaceApiModels(modelPath = FACE_MODEL_PATH) {
   if (faceApiReady) return;
-  // 検出器（軽い方）＋ ランドマーク
   await faceapi.nets.tinyFaceDetector.loadFromUri(modelPath);
   await faceapi.nets.faceLandmark68Net.loadFromUri(modelPath);
 
-  // より精度を上げたい場合は SSD Mobilenet V1 も（重くなるため任意）
+  /**
+   * Optional model:
+   * Load SSD Mobilenet V1 when higher detection accuracy is needed,
+   * but keep it disabled by default because it is heavier.
+   */
   // await faceapi.nets.ssdMobilenetv1.loadFromUri(modelPath);
 
   faceApiReady = true;
 }
 
 /**
- * Loads an image file and converts it into an HTMLImageElement.
+ * @description
+ * Converts a user-selected image file into a fully loaded HTMLImageElement.
  *
- * This function reads the file using FileReader and creates an Image object,
- * allowing it to be used in canvas operations or face detection.
+ * The file is read as a Data URL with FileReader, assigned to a new Image
+ * instance, and resolved only after the image has finished loading.
  *
- * @param {File} file
- * The image file selected by the user.
- *
- * @returns {Promise<HTMLImageElement>}
- * Resolves with a fully loaded HTMLImageElement.
+ * @example
+ * const img = await loadImageFromFile(file);
  */
-// 画像FileをImageに読み込むPromise
 export function loadImageFromFile(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -87,24 +105,15 @@ export function loadImageFromFile(file) {
 }
 
 /**
- * Crops a detected face region from an image and returns it as a canvas.
+ * @description
+ * Crops a detected face bounding box from an image into a canvas.
  *
- * The cropped region is scaled proportionally so its width matches targetWidth.
- * High-quality image smoothing is applied to preserve visual quality.
+ * The crop area is clamped to the image bounds, scaled proportionally to match
+ * the requested width, and drawn with high-quality canvas smoothing.
  *
- * @param {HTMLImageElement} img
- * The source image containing the face.
- *
- * @param {faceapi.Box} box
- * The bounding box representing the detected face region.
- *
- * @param {number} [targetWidth=420]
- * Desired output width of the cropped face canvas.
- *
- * @returns {HTMLCanvasElement}
- * A canvas element containing the cropped and scaled face image.
+ * @example
+ * const faceCanvas = cropFaceToCanvas(img, detection.box, 420);
  */
-// 画像と検出結果から顔矩形を切り抜いたCanvasを返す
 export function cropFaceToCanvas(img, box, targetWidth = 420) {
   const sx = Math.max(0, box.x);
   const sy = Math.max(0, box.y);
@@ -126,24 +135,21 @@ export function cropFaceToCanvas(img, box, targetWidth = 420) {
 }
 
 /**
- * Detects a face in an image file and returns a cropped face canvas.
+ * @description
+ * Detects a single face from an image file and returns a cropped face canvas.
  *
- * This function performs the following steps:
- * 1. Loads Face API models if necessary.
- * 2. Converts the file into an HTMLImageElement.
- * 3. Detects a single face using TinyFaceDetector.
- * 4. Crops and scales the detected face region.
+ * Processing flow:
+ * 1. Load face-api.js models if necessary.
+ * 2. Convert the selected file into an image.
+ * 3. Draw the image to a temporary canvas for detection.
+ * 4. Detect one face using TinyFaceDetector.
+ * 5. Crop and scale the detected face region.
  *
- * @param {File} file
- * The image file containing a face.
+ * Returns `null` when no face is detected.
  *
- * @param {number} [targetWidth=420]
- * Desired width of the resulting face canvas.
- *
- * @returns {Promise<HTMLCanvasElement|null>}
- * Resolves with the cropped face canvas, or null if no face is detected.
+ * @example
+ * const faceCanvas = await getFaceCanvasFromFile(file);
  */
-// ファイルから顔切り抜きCanvasを生成（TinyFaceDetectorを使用）
 export async function getFaceCanvasFromFile(file, targetWidth = 420) {
   await loadFaceApiModels();
   const img = await loadImageFromFile(file);
@@ -160,31 +166,17 @@ export async function getFaceCanvasFromFile(file, targetWidth = 420) {
 }
 
 /**
- * Extracts and aligns face canvases from two image files.
+ * @description
+ * Extracts face canvases from two image files and normalizes them to the same size.
  *
- * Each image is processed independently, and the resulting face canvases
- * are resized to match the smallest common dimensions.
+ * Each image is processed independently. The resulting canvases are resized to
+ * the smallest shared width and height so they can be compared or combined safely.
  *
- * This ensures both faces can be compared directly (e.g., in a slider or composite).
+ * Returns `null` when either image does not contain a detectable face.
  *
- * @param {File} beforeFile
- * The "before" image file.
- *
- * @param {File} afterFile
- * The "after" image file.
- *
- * @param {number} [targetWidth=420]
- * Desired width of each face canvas before alignment.
- *
- * @returns {Promise<{
- *   bAligned: HTMLCanvasElement,
- *   aAligned: HTMLCanvasElement,
- *   w: number,
- *   h: number
- * } | null>}
- * Resolves with aligned face canvases and dimensions, or null if detection fails.
+ * @example
+ * const faces = await getAlignedFacesFromFiles(beforeFile, afterFile);
  */
-// 2枚の File から「検出済み・同サイズの顔 Canvas」を返す（共通基盤）
 export async function getAlignedFacesFromFiles(beforeFile, afterFile, targetWidth = 420) {
   const bFace = await getFaceCanvasFromFile(beforeFile, targetWidth);
   const aFace = await getFaceCanvasFromFile(afterFile, targetWidth);
@@ -207,27 +199,18 @@ export async function getAlignedFacesFromFiles(beforeFile, afterFile, targetWidt
 }
 
 /**
- * Prepares two aligned face images for the comparison slider.
+ * @description
+ * Prepares two cropped-and-aligned face images for slider rendering.
  *
- * This is a thin wrapper around {@link getAlignedFacesFromFiles} that converts
- * the aligned face canvases into PNG Data URLs.
+ * This wrapper converts aligned canvases into PNG Data URLs that can be assigned
+ * directly to image elements in the comparison slider.
  *
- * @param {File} beforeFile
- * The "before" image file.
+ * Returns `null` when face detection fails.
  *
- * @param {File} afterFile
- * The "after" image file.
- *
- * @param {number} [targetWidth=420]
- * Desired width of each extracted face canvas prior to alignment.
- *
- * @returns {Promise<{
- *   before: string,
- *   after: string,
- *   w: number,
- *   h: number
- * } | null>}
- * Resolves with PNG Data URLs and the common dimensions, or `null` if face detection fails.
+ * @example
+ * const images = await prepareFacesForSlider(beforeFile, afterFile);
+ * imgBefore.src = images.before;
+ * imgAfter.src = images.after;
  */
 export async function prepareFacesForSlider(beforeFile, afterFile, targetWidth = 420) {
   const faces = await getAlignedFacesFromFiles(beforeFile, afterFile, targetWidth);
@@ -241,23 +224,17 @@ export async function prepareFacesForSlider(beforeFile, afterFile, targetWidth =
 }
 
 /**
- * Composes a single "half-face" image from two input photos.
+ * @description
+ * Creates a half-face composite image from two photos.
  *
- * The output is a PNG Data URL where the left half is taken from the aligned
- * "before" face and the right half from the aligned "after" face.
- * A subtle vertical blend is added at the center boundary to reduce harsh seams.
+ * The output image uses the left half of the aligned "before" face and the right
+ * half of the aligned "after" face. A subtle vertical blend is applied at the
+ * center seam to make the boundary less harsh.
  *
- * @param {File} beforeFile
- * The "before" image file.
+ * Returns `null` when face detection fails.
  *
- * @param {File} afterFile
- * The "after" image file.
- *
- * @param {number} [targetWidth=420]
- * Desired width of each extracted face canvas prior to alignment.
- *
- * @returns {Promise<string | null>}
- * Resolves with a PNG Data URL, or `null` if face detection fails.
+ * @example
+ * const compositeUrl = await composeHalfFace(beforeFile, afterFile);
  */
 export async function composeHalfFace(beforeFile, afterFile, targetWidth = 420) {
   const faces = await getAlignedFacesFromFiles(beforeFile, afterFile, targetWidth);
@@ -272,12 +249,9 @@ export async function composeHalfFace(beforeFile, afterFile, targetWidth = 420) 
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
 
-  // 左半分: Before
   ctx.drawImage(bAligned, 0, 0, half, h, 0, 0, half, h);
-  // 右半分: After
   ctx.drawImage(aAligned, w - half, 0, half, h, w - half, 0, half, h);
 
-  // 中央の境界ぼかし
   const grad = ctx.createLinearGradient(half - 6, 0, half + 6, 0);
   grad.addColorStop(0, 'rgba(255, 255, 255, 0)');
   grad.addColorStop(0.5, 'rgba(255, 255, 255, 0.35)');
@@ -289,15 +263,11 @@ export async function composeHalfFace(beforeFile, afterFile, targetWidth = 420) 
 }
 
 /**
- * Calculates the centroid (average position) of a set of points.
+ * @description
+ * Calculates the center point of a facial landmark group.
  *
- * Used to estimate the center of an eye region from landmark points.
- *
- * @param {Array<{x: number, y: number}>} pts
- * List of points that contain `x` and `y` coordinates.
- *
- * @returns {{x: number, y: number}}
- * The centroid of the provided points.
+ * This helper is used to estimate the center of the left or right eye by
+ * averaging all landmark points in that eye region.
  */
 function eyeCenter(pts) {
   const x = pts.reduce((s, p) => s + p.x, 0) / pts.length;
@@ -306,36 +276,17 @@ function eyeCenter(pts) {
 }
 
 /**
- * Aligns a face to a canonical template using eye landmarks.
+ * @description
+ * Aligns a face image to a canonical template using eye landmarks.
  *
- * The alignment normalizes rotation, scale, and translation so that the midpoint
- * between the eyes is placed at a target position, and the eye-to-eye distance
- * matches a desired pixel distance in the output canvas.
+ * The function normalizes rotation, scale, and translation so that the eye line
+ * becomes horizontal, the eye midpoint moves to the target template position,
+ * and the eye-to-eye distance matches the desired output distance.
  *
- * Internally, this applies an affine transform in the following order:
- * translate to target eye midpoint → rotate to level the eyes → scale to match eye distance
- * → translate so the detected eye midpoint lands on the origin.
+ * This makes two different faces easier to compare in a slider or composite view.
  *
- * @param {HTMLImageElement} img
- * Source image element used for drawing.
- *
- * @param {faceapi.FaceLandmarks68} landmarks
- * Face landmarks (must provide left/right eye points).
- *
- * @param {number} [outW=420]
- * Output canvas width in pixels.
- *
- * @param {number} [outH=520]
- * Output canvas height in pixels.
- *
- * @param {number} [eyeY=0.38]
- * Normalized vertical position (0–1) of the eye line in the output canvas.
- *
- * @param {number} [eyeDist=0.42 * outW]
- * Target distance (in pixels) between the left and right eye centers in the output.
- *
- * @returns {HTMLCanvasElement}
- * A canvas containing the aligned face image.
+ * @example
+ * const alignedCanvas = alignFaceToTemplate(img, detection.landmarks);
  */
 export function alignFaceToTemplate(img, landmarks, outW = 420, outH = 520, eyeY = 0.38, eyeDist = 0.42 * outW) {
   const leftEyePts = landmarks.getLeftEye();
@@ -344,16 +295,13 @@ export function alignFaceToTemplate(img, landmarks, outW = 420, outH = 520, eyeY
   const right = eyeCenter(rightEyePts);
   const mid = { x:(left.x + right.x) / 2, y:(left.y + right.y) / 2};
 
-  // 現在の目間距離と角度
   const dx = right.x - left.x;
   const dy = right.y - left.y;
   const dist = Math.hypot(dx, dy);
-  const angle = Math.atan2(dy, dx); // 右目に向かう角度
+  const angle = Math.atan2(dy, dx);
 
-  // スケール：目間距離をテンプレート値に合わせる
   const scale = eyeDist / Math.max(1, dist);
 
-  // 出力キャンバス
   const out = document.createElement('canvas');
   out.width = outW;
   out.height = outH;
@@ -361,11 +309,9 @@ export function alignFaceToTemplate(img, landmarks, outW = 420, outH = 520, eyeY
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
 
-  // 目の“テンプレート位置”（左右の目中心が outW/2±eyeDist/2, y=eyeY*outH 付近に来るように）
   const targetMidX = outW / 2;
   const targetMidY = outH * eyeY;
 
-  // 変換：出力座標系で 1) 中心へ移動 → 2) 回転補正 → 3) スケール → 4) 画像を “目の中点” に合わせて描画
   ctx.translate(targetMidX, targetMidY);
   ctx.rotate(-angle);
   ctx.scale(scale, scale);
@@ -377,31 +323,24 @@ export function alignFaceToTemplate(img, landmarks, outW = 420, outH = 520, eyeY
 }
 
 /**
- * Extracts face landmarks from an image file and returns an aligned face canvas.
+ * @description
+ * Detects facial landmarks from an image file and returns a template-aligned canvas.
  *
- * This function:
- * 1) ensures Face API models are loaded,
- * 2) loads the image file,
- * 3) detects a face with {@link TINY_OPTS} and extracts 68-point landmarks,
- * 4) aligns the face to a template via {@link alignFaceToTemplate}.
+ * Processing flow:
+ * 1. Load face-api.js models if necessary.
+ * 2. Convert the selected file into an image.
+ * 3. Detect one face and its 68-point landmarks.
+ * 4. Align the face to the canonical template.
  *
- * @param {File} file
- * Image file containing a face.
+ * Returns `null` when no face is detected.
  *
- * @param {number} [targetW=420]
- * Output canvas width.
- *
- * @param {number} [targetH=520]
- * Output canvas height.
- *
- * @returns {Promise<HTMLCanvasElement | null>}
- * Resolves with an aligned canvas, or `null` if no face is detected.
+ * @example
+ * const alignedCanvas = await getAlignedFaceCanvasFromFile(file);
  */
 export async function  getAlignedFaceCanvasFromFile(file, targetW=420, targetH=520) {
   await loadFaceApiModels();
   const img = await loadImageFromFile(file);
 
-  // ランドマーク抽出（TinyFaceDetector + Landmark）
   const det = await faceapi
     .detectSingleFace(img, TINY_OPTS)
     .withFaceLandmarks();
@@ -411,31 +350,19 @@ export async function  getAlignedFaceCanvasFromFile(file, targetW=420, targetH=5
 }
 
 /**
- * Prepares two template-aligned face images for the comparison slider.
+ * @description
+ * Prepares two landmark-aligned face images for slider rendering.
  *
- * Unlike {@link prepareFacesForSlider}, this variant performs landmark-based
- * alignment (rotation/scale/translation) so that both faces match the same
- * canonical framing and output size.
+ * Unlike the simpler crop-based path, this function uses eye landmarks to
+ * normalize rotation, scale, and position before generating PNG Data URLs.
+ * Both output images share the same canonical canvas size.
  *
- * @param {File} beforeFile
- * The "before" image file.
+ * Returns `null` when detection or alignment fails.
  *
- * @param {File} afterFile
- * The "after" image file.
- *
- * @param {number} [outW=420]
- * Output width for both aligned canvases.
- *
- * @param {number} [outH=520]
- * Output height for both aligned canvases.
- *
- * @returns {Promise<{
- *   before: string,
- *   after: string,
- *   w: number,
- *   h: number
- * } | null>}
- * Resolves with PNG Data URLs and output dimensions, or `null` if detection/alignment fails.
+ * @example
+ * const faces = await prepareFacesForSliderAligned(beforeFile, afterFile);
+ * imgBefore.src = faces.before;
+ * imgAfter.src = faces.after;
  */
 export async function prepareFacesForSliderAligned(beforeFile, afterFile, outW=420, outH=520) {
   const bAligned = await getAlignedFaceCanvasFromFile(beforeFile, outW, outH);
