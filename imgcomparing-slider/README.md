@@ -1,157 +1,202 @@
-## 📝 Motivation
+## 📝 開発の動機
 
-While learning front-end development through textbooks, I realized that simply copying the code examples did not help me internalize the concepts.  
-To truly learn, I wanted to **build something on my own using HTML, CSS, and JavaScript** — while also leveraging AI code generation as a coding assistant.  
+技術書を使ってフロントエンド開発を学ぶ中で、サンプルコードをそのまま書き写すだけでは、概念が十分に身につかないと感じました。  
+本当に理解するためには、AIによるコード生成をコーディング支援として活用しながら、**HTML・CSS・JavaScriptを使って自分自身で何かを作る**必要があると考えました。
 
-This way, I could **practice reading and understanding auto-generated code** in parallel with studying technical books, bridging theory and hands-on learning.  
-As a result, I decided to develop this **Image Compare Slider**, a project that can be fully implemented with core front-end technologies.
-
----
-
-## 🎯 Purpose
-
-Although image comparison sliders already exist, most of them are designed for landscapes, objects, or full-body photos.  
-Surprisingly, I found that there were very few sliders that could **focus specifically on faces**, automatically align them, and then allow fair Before/After comparison.  
-
-Therefore, I decided to develop this application as both a **learning project** and a **practical tool** that highlights facial differences more accurately.  
-Another reason was that the app can be deployed on a simple static web server — making it an excellent opportunity to practice **AWS hosting without heavy backend complexity**.  
+この方法なら、技術書での学習と並行して、**自動生成されたコードを読み、理解する練習**ができ、理論と実践を結びつけられます。  
+そこで、フロントエンドの基本技術だけで実装できるプロジェクトとして、この**画像比較スライダー**を開発することにしました。
 
 ---
 
-## 🌍 Use Cases
+## 🎯 目的
 
-This Image Compare Slider can be applied to a wide range of comparisons, such as landscapes, objects, portraits, facial changes, and various before/after results.
+画像比較スライダーはすでに数多く存在しますが、その多くは風景・物・全身写真の比較を目的としています。  
+調べてみると、**顔に特化して自動的に位置を合わせ、公平にビフォー／アフターを比較できる**スライダーは意外に少ないことが分かりました。
 
-- **Landscapes:**  
-  Compare the transformation of a city over time, differences in lifestyles between eras, or Contrasting cityscapes between an international metropolis and Tokyo’s Shibuya district.
-- **Objects:**  
-  Contrast an iPhone 3G with an iPhone 16 Pro, examine the differences between oxford and open-collar shirt, or showcase a chameleon’s color change.
-- **People:**  
-  Show before/after weight loss progress, a child’s growth over time, or the difference between everyday appearance and cosplay.
-- **Faces:**  
-  Compare facial appearance in winter season and summer season, makeup, differences between childhood and adulthood in the same person.  
-- **Outcomes:**  
-  Showcase a cleaned vs. messy bathroom, compare study achievements of artwork, or highlight stain removal on clothing.
+そこで、顔の違いをより正確に捉えられる**学習用プロジェクト**兼**実用的なツール**として、このアプリケーションを開発することにしました。  
+また、シンプルな静的Webサーバーにデプロイできるため、複雑なバックエンドを用意せずに**AWSでのホスティングを練習できる**ことも開発理由の一つです。
 
 ---
 
-# Image Compare Slider (Face Alignment Edition)
+## 🌍 利用例
 
-A web application that allows users to compare **Before / After** images using a smooth slider.  
-It leverages **face-api.js** to detect facial landmarks and aligns faces (rotation, scale, position) to ensure accurate and fair visual comparison.
+この画像比較スライダーは、風景・物・人物・顔の変化・さまざまなビフォー／アフターの結果など、幅広い比較に利用できます。
 
----
-
-## ✨ Features
-
-- **Face-only mode (with slider)**  
-  Detects facial landmarks (eyes) and automatically aligns both images to the same template before sliding.
-- **Half-face composite (optional)**  
-  Combines the left half of the Before image with the right half of the After image into one picture.
-- **Interactive slider**  
-  Drag to smoothly reveal differences between two images.
-- **Local-first & privacy-friendly**  
-  All processing happens directly in the browser. **No server uploads or data storage**.
-- **Internationalization (i18n)**
-  Built-in JP/EN dropdown with persistence across pages (localStorage)
+- **風景：**  
+  時間の経過による都市の変化、時代ごとの生活様式の違い、海外の大都市と東京・渋谷の街並みの対比などを比較できます。
+- **物：**  
+  iPhone 3GとiPhone 16 Proの比較、オックスフォードシャツと開襟シャツの違い、カメレオンの色の変化などを確認できます。
+- **人物：**  
+  減量前後の変化、子どもの成長過程、普段の姿とコスプレ姿の違いなどを表示できます。
+- **顔：**  
+  冬と夏の顔の印象、メイク前後、同一人物の子ども時代と大人時代の違いなどを比較できます。  
+- **成果：**  
+  清掃前後の浴室、絵の練習成果、衣服の染み抜き前後などを比較できます。
 
 ---
 
-## 🔧 Tech Stack
+# 画像比較スライダー（顔位置合わせ版）
+
+滑らかなスライダーを使って、**ビフォー／アフター**画像を比較できるWebアプリケーションです。  
+**face-api.js**で顔のランドマークを検出し、顔の回転・拡大縮小・位置を揃えることで、正確で公平な見た目の比較を可能にします。
+
+---
+
+## ✨ 機能
+
+- **顔のみモード（スライダー付き）**  
+  顔のランドマーク（目）を検出し、スライダーで比較する前に、2枚の画像を同じテンプレートへ自動的に位置合わせします。
+- **顔の左右合成（任意）**  
+  ビフォー画像の左半分とアフター画像の右半分を1枚の画像に合成します。
+- **操作可能なスライダー**  
+  ドラッグ操作で2枚の画像の違いを滑らかに表示します。
+- **ローカル処理・プライバシーへの配慮**  
+  すべての処理をブラウザ内で直接実行します。**サーバーへのアップロードやデータ保存は行いません**。
+- **多言語対応（i18n）**  
+  日本語／英語の切り替えメニューを備え、選択した言語をページ間で維持します（localStorageを使用）。
+
+---
+
+## 🔧 使用技術
 
 - HTML / CSS / JavaScript
-- [face-api.js](https://github.com/justadudewhohacks/face-api.js) (TinyFaceDetector + FaceLandmark68)
+- [face-api.js](https://github.com/justadudewhohacks/face-api.js)（TinyFaceDetector + FaceLandmark68）
 - Canvas 2D API
-- (Development) 
-  - S3: static files
-  - CloudFront: CDN + HTTPS
-  - Route53: custom domain
+- 開発・公開環境
+  - S3：静的ファイル
+  - CloudFront：CDN + HTTPS
+  - Route 53：独自ドメイン
 
 ---
 
-## 🗂 Project Structure
+## 🗂 プロジェクト構成
+
+```text
 imgcomparing-slider/
 ├─ index.html
 ├─ css/
-│  └─ style.css
+│  └─ compare.css          # 画面全体と比較UIのスタイル
 ├─ js/
-│  ├─ compare.js          # UI & interactions
-│  └─ faceUtils.js        # Face detection & alignment utilities
-└─ models/                # face-api.js model files (local setup)
-├─ tiny_face_detector_model-weights_manifest.json
-├─ tiny_face_detector_model-shard1
-├─ face_landmark_68_model-weights_manifest.json
-└─ face_landmark_68_model-shard1
+│  ├─ compare.js          # UIと操作処理
+│  └─ faceUtils.js        # 顔検出と位置合わせのユーティリティ
+└─ models/                # face-api.jsのモデルファイル（ローカル配置）
+   ├─ tiny_face_detector_model-weights_manifest.json
+   ├─ tiny_face_detector_model-shard1
+   ├─ face_landmark_68_model-weights_manifest.json
+   └─ face_landmark_68_model-shard1
+```
 
-> In `faceUtils.js`, the model path is set as `FACE_MODEL_PATH = './models/'`.  
-> This ensures stability by loading model files locally instead of from a CDN.
-
----
-
-## How to use
-
-1.	Open the application in your browser.
-2.	Use the image upload buttons to select the two images you want to compare.
-	•	We serve a wide variety of images on the comparison samples page on the site.
-	•	You can also try device-before.jpg and device-after.jpg for product evolution.
-	•	Or test face-before.jpg and face-after.jpg to experience the face-only alignment mode.
-3.	Once uploaded, the slider will appear automatically.
-	•	In face-only mode, the app will detect and align facial landmarks so both images match in scale and position.
-4.	Drag the slider left or right to reveal differences between the two images.
+> `faceUtils.js`では、モデルのパスを`FACE_MODEL_PATH = './models/'`に設定しています。  
+> CDNではなくローカルのモデルファイルを読み込むことで、安定した動作を確保しています。
 
 ---
 
-## 🧠 How It Works
+## 使い方
 
-1. **Face Detection**  
-   TinyFaceDetector identifies a face, and FaceLandmark68 returns key facial landmarks (eyes, nose, mouth).
-2. **Alignment**  
-   Using eye centers, the app normalizes rotation, scale, and position.  
-   Both images are drawn into the same canvas template (fixed width/height, fixed eye position).
-3. **Slider Comparison**  
-   The aligned Before and After images are displayed inside a draggable slider for intuitive comparison.
-
----
-
-## 🔒 Privacy & Data Handling
-
-- All processing is performed **locally in the browser**.  
-- No image is uploaded to a server or stored externally.  
-- This makes the app safe for sensitive images (e.g., personal portraits, medical use cases).
+1. ブラウザでアプリケーションを開きます。
+2. ビフォー画像を1枚選択し、「次へ」を押します。
+   - サイト内の比較サンプルページには、さまざまな画像を用意しています。
+   - 製品の進化を比較する場合は、`device-before.jpg`と`device-after.jpg`も利用できます。
+   - 顔のみの位置合わせモードを試す場合は、`face-before.jpg`と`face-after.jpg`を利用できます。
+3. アフター画像を1枚選択し、「次へ」を押します。
+4. 顔だけ比較モードをONまたはOFFにし、「次へ」を押します。
+   - ONの場合は、条件が揃った時点で顔検出と位置合わせの事前処理が非同期で始まります。
+   - OFFの場合は、選択した画像をそのまま比較します。
+5. 「比較を開始」を押します。
+   - 顔だけ比較モードの事前処理が完了していれば、その結果をすぐにスライダーへ反映します。
+6. スライダーを左右にドラッグして、2枚の画像の違いを確認します。
 
 ---
 
-## 🛣 Roadmap
+## 🧠 仕組み
 
-- [ x ] Improve mobile UI (larger touch areas, slider handle)
-- [ ] Landmark detection fallback (auto switch to non-aligned mode on failure)
-- [ ] Client+Server UI Improvements ([Milestone](https://github.com/ytkhs8/HTML-CSS--2025-Practice/imgcomparing-slider/Client+ServerUIImprovements/1))
-- [ ] User Accounts & Data Persistence
-- [ ] Cloud alignment option (e.g., Google Vision API) with explicit user consent
-- [ ] Export aligned comparison results (side-by-side or half-face composite)
-- [ x ] Accessibility support (keyboard slider control, ARIA labels)
-- [ x ] Multi-language support (English & Japanese)
-- [ ] Phase 2: Add user accounts and persistent data storage ([Issue #12](link-to-issue))
+1. **顔検出**  
+   TinyFaceDetectorが顔を検出し、FaceLandmark68が目・鼻・口などの主要な顔のランドマークを取得します。
+2. **位置合わせ**  
+   両目の中心を基準に、回転・拡大縮小・位置を正規化します。  
+   2枚の画像を同じCanvasテンプレート（固定の幅・高さ・目の位置）へ描画します。
+3. **スライダー比較**  
+   位置合わせしたビフォー画像とアフター画像をドラッグ可能なスライダー内に表示し、直感的に比較できるようにします。
+
+### 非同期処理による待ち時間の短縮
+
+顔だけ比較モードでは、face-api.jsによるモデルの読み込み、2枚の画像の読み込み、顔の検出、68点のランドマーク解析、Canvas上での位置合わせが必要です。これらを「比較を開始」が押されてからすべて実行すると、ユーザーは操作を終えた後に解析完了まで待たなければなりません。
+
+この待ち時間を短縮するため、画像選択から比較開始までを、あえて次のような段階式の操作にしています。
+
+1. ビフォー画像を選択する
+2. アフター画像を選択する
+3. 顔だけ比較モードのON／OFFを決める
+4. 比較開始前の確認画面へ進む
+5. 「比較を開始」を押す
+
+画像は、最後にまとめて処理するのではなく、ユーザーが各ファイルを選択した時点で`FileReader`を使って読み込み、プレビューへ反映します。さらに、次の3つの条件が揃った時点で、`prepareFacesForSliderAligned()`による顔画像の事前処理をバックグラウンドで開始します。
+
+- ビフォー画像が選択されている
+- アフター画像が選択されている
+- 顔だけ比較モードがONになっている
+
+ユーザーがモードを確認して「次へ」と進み、「比較を開始」を押すまでの時間を、face-api.jsの解析時間として活用する設計です。事前処理が先に完了すると、結果は`precomputedFaces`へ保持されます。「比較を開始」が押されたときは保存済みの結果をスライダーへ設定するだけなので、操作完了後に顔解析をまとめて待つ時間を大幅に減らし、すぐに比較へ移れるUXを実現しています。
+
+事前処理がまだ完了していない場合や、画像・モードが途中で変更された場合にも対応しています。`preloadingId`を処理ごとのトークンとして使い、古くなった非同期処理の結果を画面へ反映しないようにしています。事前処理が間に合わなかった場合は「比較を開始」の時点で処理を完了させ、顔を検出できなかった場合はエラーを表示します。
+
+### `faceUtils.js`内の非同期処理
+
+`faceUtils.js`では、次の処理を`Promise`と`async`／`await`で順番に実行しています。
+
+1. **モデルの読み込み（`loadFaceApiModels()`）**  
+   TinyFaceDetectorとFaceLandmark68Netを非同期で読み込みます。読み込み済みかどうかを`faceApiReady`で記録するため、同じページの利用中にモデルを何度も読み込むことはありません。
+2. **画像ファイルの読み込み（`loadImageFromFile()`）**  
+   `FileReader`で画像をData URLへ変換し、`HTMLImageElement`の読み込みが完了した時点でPromiseを解決します。読み込み途中の画像を顔検出へ渡さないための処理です。
+3. **顔とランドマークの検出（`getAlignedFaceCanvasFromFile()`）**  
+   `detectSingleFace()`と`withFaceLandmarks()`が完了するまで待ち、顔を検出できた場合だけ位置合わせへ進みます。検出できなかった場合は`null`を返します。
+4. **顔の位置合わせ（`alignFaceToTemplate()`）**  
+   左右の目の中心、両目の距離、目を結ぶ線の角度を計算し、Canvasの回転・拡大縮小・移動を使って、顔の向き・大きさ・位置を420×520pxの共通テンプレートへ揃えます。
+5. **2枚の結果の生成（`prepareFacesForSliderAligned()`）**  
+   ビフォー画像とアフター画像をそれぞれ処理し、両方の位置合わせに成功した場合だけPNG形式のData URLを返します。このData URLをスライダーの画像要素へそのまま設定できます。
+
+この構成により、時間のかかる処理をUI操作から分離しながら、各処理の完了順序を保ち、読み込み失敗や顔検出失敗も安全に扱えるようにしています。
 
 ---
 
-## 🙋 Author
+## 🔒 プライバシーとデータの取り扱い
+
+- すべての処理は**ブラウザ内でローカルに実行**されます。  
+- 画像をサーバーへアップロードしたり、外部に保存したりすることはありません。  
+- そのため、個人の顔写真や医療用途など、慎重な取り扱いが必要な画像にも配慮した仕組みです。
+
+---
+
+## 🛣 今後の予定
+
+- [x] モバイルUIの改善（タッチ領域とスライダーハンドルの拡大）
+- [ ] ランドマーク検出失敗時の代替処理（位置合わせなしモードへの自動切り替え）
+- [ ] クライアント／サーバーUIの改善（[マイルストーン](https://github.com/ytkhs8/HTML-CSS--2025-Practice/imgcomparing-slider/Client+ServerUIImprovements/1)）
+- [ ] ユーザーアカウントとデータの永続化
+- [ ] ユーザーの明示的な同意に基づくクラウド位置合わせ機能（例：Google Vision API）
+- [ ] 位置合わせした比較結果の書き出し（横並び、または顔の左右合成）
+- [x] アクセシビリティ対応（キーボードでのスライダー操作、ARIAラベル）
+- [x] 多言語対応（英語・日本語）
+- [ ] フェーズ2：ユーザーアカウントと永続的なデータ保存の追加（[Issue #12](link-to-issue)）
+
+---
+
+## 🙋 作者
 
 - **Yūki Takahashi**  
-- Location: Tokyo, Japan  
-- Links: [Portfolio](#) | [LinkedIn](#) | [Twitter](#)
+- 所在地：日本・東京  
+- リンク：https://image-compare-slider.com
 
 ---
 
-## 📌 Development Practices
+## 📌 開発方針
 
-This project follows the **Conventional Commits** specification for commit messages.  
-By using `feat:`, `fix:`, `refactor:`, `docs:`, and other standardized prefixes, the commit history stays clear and meaningful.  
-This practice is widely adopted in international tech companies and demonstrates consistent version control discipline.
+このプロジェクトでは、コミットメッセージに**Conventional Commits**の仕様を採用しています。  
+`feat:`、`fix:`、`refactor:`、`docs:`などの標準化された接頭辞を使用することで、コミット履歴を明確で分かりやすく保ちます。  
+この方法は海外の技術企業でも広く採用されており、一貫したバージョン管理を行うための実践方法です。
 
 ---
 
+## 📄 ライセンス
 
-## 📄 License
-
-This project is licensed under the MIT License.
+このプロジェクトはMITライセンスのもとで公開されています。

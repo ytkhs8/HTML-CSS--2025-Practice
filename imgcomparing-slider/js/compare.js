@@ -4,34 +4,23 @@ import {
 
 /**
  * ============================================
- * UI Controls: Hamburger Menu & Language Dropdown
+ * UI操作：ハンバーガーメニューと言語ドロップダウン
  * ============================================
  *
- * This section handles core UI interactions for:
+ * 次の主要なUI操作を扱います。
  *
- * 1. Hamburger Menu (Side Navigation)
- *    - Toggles the side menu open/close state
- *    - Controls overlay visibility
- *    - Locks body scrolling when menu is open
- *    - Updates accessibility attributes (aria-expanded)
+ * 1. ハンバーガーメニュー（サイドナビゲーション）
+ *    - サイドメニューの開閉、オーバーレイの表示、背景スクロールの固定を行います。
+ *    - アクセシビリティ属性（aria-expanded）を更新します。
+ * 2. 言語ドロップダウン（Popover API）
+ *    - サイドメニュー表示中の操作可否、ポインター操作による開閉を管理します。
+ *    - 外側のクリックやEscapeキーで閉じ、ボタンを基準に表示位置を決めます。
+ *    - i18nと連携して表示言語を切り替えます。
+ * 3. アクセシビリティと操作性
+ *    - メニュー表示中の背景操作を防ぎ、キーボード操作を可能にします。
+ *    - 操作中のUI状態に不整合が起きないようにします。
  *
- * 2. Language Dropdown (Popover-based)
- *    - Enables/disables interaction when side menu is open
- *    - Handles open/close behavior via pointer events
- *    - Closes on outside click or Escape key
- *    - Positions the dropdown relative to the trigger button
- *    - Integrates with i18n system for language switching
- *
- * 3. Accessibility & UX Considerations
- *    - Prevents background interaction when menu is active
- *    - Ensures keyboard navigation support
- *    - Keeps UI state consistent across interactions
- *
- * Elements referenced:
- * - hamburgerBtn (#hamburger-btn)
- * - sideMenu (#side-menu)
- * - menuOverlay (#menu-overlay)
- * - lang-dropdown related elements
+ * 参照する要素：hamburgerBtn、sideMenu、menuOverlay、言語メニュー関連要素。
  *
  * @module UIControls
  */
@@ -47,19 +36,19 @@ function setLangDropdownEnabled(enabled) {
   if (dropdown) dropdown.classList.toggle('is-disabled', !enabled);
 
   if (btn) {
-    // Use both semantic + visual disabling
+    // 意味上の無効化と見た目の無効化を両方行います
     if (enabled) {
       btn.removeAttribute('aria-disabled');
       btn.disabled = false;
     } else {
       btn.setAttribute('aria-disabled', 'true');
       btn.disabled = true;
-      // Also force the dropdown closed when disabling
+      // 無効化するときはドロップダウンも強制的に閉じます
       btn.setAttribute('aria-expanded', 'false');
     }
   }
 
-  // Force close when disabling (popover-based)
+  // 無効化するときはPopover方式のメニューを強制的に閉じます
   if (!enabled && typeof window.__closeLangMenu === 'function') {
     window.__closeLangMenu();
   } else if (!enabled && menu && typeof menu.hidePopover === 'function') {
@@ -68,11 +57,10 @@ function setLangDropdownEnabled(enabled) {
 }
 
 /**
- * Language dropdown click behavior (Popover API manual mode):
- * - click to toggle
- * - click outside to close
- * - ESC to close
- * - close after selecting a language
+ * 言語ドロップダウンのクリック操作（Popover APIの手動モード）：
+ * - クリックで開閉します。
+ * - メニュー外のクリックまたはEscapeキーで閉じます。
+ * - 言語を選択した後に閉じます。
  */
 function initLangDropdownClick() {
   const dropdown = document.getElementById('lang-dropdown');
@@ -86,32 +74,29 @@ function initLangDropdownClick() {
 
   const toggle = () => (isOpen() ? close() : open());
 
-  /**
-   * Positions the language menu popover directly under the dropdown button.
+/**
+   * 言語メニューのPopoverを、ドロップダウンボタンの直下へ配置します。
    *
-   * Why this is needed:
-   * - Elements using the Popover API are promoted to the browser's top layer.
-   * - Once promoted, CSS `position: absolute` can no longer anchor to `.lang-dropdown`.
-   *
-   * Strategy:
-   * - Read the button's viewport coordinates via `getBoundingClientRect()`.
-   * - Apply `position: fixed` + `left/top` to the menu so it always appears under the button.
-   * - Clamp the horizontal position so the menu stays within the viewport.
+   * Popover APIの要素はブラウザの最上位レイヤーへ移動するため、CSSの
+   * `position: absolute`では`.lang-dropdown`を基準に配置できません。
+   * `getBoundingClientRect()`でボタンの表示領域内座標を取得し、メニューへ
+   * `position: fixed`と`left/top`を設定します。また、小さい画面でも
+   * メニューが表示領域からはみ出さないよう横位置を補正します。
    *
    * @returns {void}
    */
   const positionMenu = () => {
     try {
       const r = btn.getBoundingClientRect();
-      // Ensure we can measure the popover's width.
+      // Popoverの幅を計測できる状態にします。
       const mw = menu.getBoundingClientRect().width || 224;
       const gap = 8;
 
-      // Right-align the menu with the button.
+      // メニューの右端をボタンに合わせます。
       let left = r.right - mw;
       const top = r.bottom + gap;
 
-      // Keep within viewport (small screens)
+      // 小さい画面でも表示領域内に収めます
       const padding = 8;
       left = Math.max(padding, Math.min(left, window.innerWidth - mw - padding));
 
@@ -123,11 +108,9 @@ function initLangDropdownClick() {
     } catch (_) {}
   };
 
-  /**
-   * Repositions the popover only when it is currently open.
-   *
-   * This keeps the menu visually anchored under the button during scroll/resize,
-   * especially when the header layout can move.
+/**
+   * Popoverが開いている場合に限り、表示位置を再計算します。
+   * スクロールや画面サイズ変更でヘッダーが動いても、メニューをボタンの直下に保ちます。
    *
    * @returns {void}
    */
@@ -136,54 +119,23 @@ function initLangDropdownClick() {
     positionMenu();
   };
 
-  /**
+/**
    * =====================================================
-   * Language Dropdown Popover Interaction Controls
+   * 言語ドロップダウンPopoverの操作制御
    * =====================================================
    *
-   * This section controls the language dropdown menu after the
-   * basic Popover API setup and positioning helpers have been defined.
+   * Popover APIの初期設定と配置処理を行った後の、言語メニュー操作を管理します。
    *
-   * Core responsibilities:
+   * 1. 開閉：手動Popoverを開閉し、仮のインライン配置を解除してaria-expandedを更新します。
+   * 2. 外部からの終了：window.__closeLangMenuを公開し、サイドメニューなどから閉じられるようにします。
+   * 3. ポインター操作：pointerdownで開閉し、イベント伝播による即時終了を防ぎます。
+   * 4. 外側のクリック：composedPath()も利用してメニュー外の操作を検出します。
+   * 5. 再配置：メニュー表示中のスクロールと画面サイズ変更に追従します。
+   * 6. キーボード：Escapeキーで閉じます。
+   * 7. 言語選択：選択中の無効項目を除き、window.appI18n.apply()で言語を適用して閉じます。
+   * 8. 初期化：初期状態を閉じた状態にし、DOMContentLoaded後に操作を初期化します。
    *
-   * 1. Open / Close Behavior
-   *    - Opens the manual Popover API menu when the trigger button is activated.
-   *    - Closes the popover and resets temporary inline positioning styles.
-   *    - Updates `aria-expanded` so assistive technologies can follow the state.
-   *
-   * 2. External Close Access
-   *    - Exposes `window.__closeLangMenu` so other UI flows can force-close
-   *      the language menu (for example, when the side navigation opens).
-   *
-   * 3. Pointer-Based Toggle
-   *    - Uses `pointerdown` instead of `click` to align with outside-close handling.
-   *    - Prevents propagation from the trigger/menu to avoid immediate close conflicts.
-   *
-   * 4. Outside Click Detection
-   *    - Detects interactions outside the dropdown and closes the menu.
-   *    - Uses `composedPath()` when available for better compatibility with
-   *      Shadow DOM and browser top-layer behavior.
-   *
-   * 5. Viewport Repositioning
-   *    - Repositions the popover on scroll and resize while it is open.
-   *    - Keeps the menu visually anchored under the trigger button.
-   *
-   * 6. Keyboard Support
-   *    - Closes the language menu when Escape is pressed.
-   *
-   * 7. Language Selection
-   *    - Ignores the currently selected disabled language item.
-   *    - Applies the selected language through `window.appI18n.apply()`.
-   *    - Closes the menu after a valid selection.
-   *
-   * 8. Initialization
-   *    - Ensures the dropdown starts in a closed state.
-   *    - Initializes the click behavior after DOMContentLoaded.
-   *
-   * Notes:
-   * - The former scattered English/Japanese comments have been translated and
-   *   consolidated into this JSDoc block.
-   * - Executable behavior remains unchanged.
+   * 実行される処理内容には変更を加えていません。
    *
    * @module LanguageDropdownPopoverControls
    */
@@ -268,37 +220,16 @@ function initLangDropdownClick() {
 
 /**
  * =====================================================
- * Side Navigation Menu Controls
+ * サイドナビゲーションメニューの制御
  * =====================================================
  *
- * This section controls the hamburger-triggered side navigation menu.
+ * ハンバーガーボタンから開くサイドメニューを管理します。
  *
- * Core responsibilities:
- *
- * 1. Open / Close State
- *    - Opens the slide-in side menu and activates the dark overlay.
- *    - Closes the side menu and hides the overlay.
- *    - Toggles the hamburger button between its default and open (X) states.
- *
- * 2. Accessibility
- *    - Keeps `aria-expanded` synchronized with the current menu state.
- *    - Uses optional chaining for event listeners so missing DOM elements do not throw errors.
- *
- * 3. Scroll Lock
- *    - Adds `menu-open` to the document body while the menu is open.
- *    - Removes `menu-open` when the menu is closed to restore background scrolling.
- *
- * 4. Language Dropdown Coordination
- *    - Disables the language dropdown while the side menu is open.
- *    - Re-enables the language dropdown when the side menu is closed.
- *
- * 5. User Interaction
- *    - Clicking the hamburger button toggles the menu.
- *    - Clicking the dark overlay closes the menu.
- *
- * Notes:
- * - The former Japanese comments for hamburger open/close behavior,
- *   scroll locking, and overlay closing have been translated and consolidated here.
+ * 1. 開閉状態：スライドメニューと暗いオーバーレイを表示・非表示にし、ボタンを通常表示とX表示で切り替えます。
+ * 2. アクセシビリティ：aria-expandedを現在の状態と同期し、要素がない場合もエラーにならないようにします。
+ * 3. スクロール固定：表示中はbodyへmenu-openを追加し、閉じたときに削除します。
+ * 4. 言語メニューとの連携：サイドメニュー表示中は言語ドロップダウンを無効にします。
+ * 5. ユーザー操作：ハンバーガーボタンで開閉し、暗い背景のクリックで閉じます。
  *
  * @module SideNavigationControls
  */
@@ -327,37 +258,19 @@ menuOverlay?.addEventListener('click', closeMenu);
 
 /**
  * ============================================
- * Side Menu Navigation (SPA Behavior)
+ * サイドメニュー内の画面移動（SPA方式）
  * ============================================
  *
- * This section handles navigation interactions inside the side menu
- * in a Single Page Application (SPA) style.
+ * サイドメニュー内のリンクをページ再読み込みなしで処理します。
+ * リンクのdata-pageから移動先IDを取得し、現在のセクションから.activeを外して
+ * 移動先へ.activeを追加します。
  *
- * Core behavior:
- * - Intercepts clicks on <a> elements inside the side menu.
- * - Prevents default browser navigation (no page reload).
- * - Reads the target page ID from `data-page` attribute.
- * - Switches visible content by:
- *   - Removing `.active` from the currently active section.
- *   - Adding `.active` to the target section.
- *
- * Additional UI updates:
- * - Toggles layout-related body classes:
- *   - `wide-page` for non-home pages
- *   - `contact-wide` specifically for the contact page
- * - Scrolls the viewport back to the top after navigation.
- *
- * State cleanup:
- * - Clears contact form attachment files when leaving the contact page.
- * - Re-applies i18n translations for the newly activated section.
- *
- * Accessibility & UX:
- * - Ensures smooth SPA transitions without full reloads.
- * - Keeps UI state consistent after navigation.
- * - Automatically closes the side menu after a selection.
+ * ホーム以外ではwide-page、問い合わせ画面ではcontact-wideをbodyへ設定し、
+ * 移動後は画面上部へスクロールします。問い合わせ画面から離れると添付ファイルを消去し、
+ * 新しく表示したセクションへi18n翻訳を再適用して、サイドメニューを閉じます。
  *
  * @listens HTMLElement#click
- * @param {MouseEvent} e - Click event triggered inside the side menu.
+ * @param {MouseEvent} e - サイドメニュー内で発生したクリックイベント。
  * @returns {void}
  */
 sideMenu?.addEventListener('click', (e) => {
@@ -390,58 +303,17 @@ sideMenu?.addEventListener('click', (e) => {
 
 /**
  * =====================================================
- *  Global UI Interaction: Escape Handling, Navigation,
- *  and Image Comparison Wizard State Management
+ * 全体UI操作、画面移動、画像比較ウィザードの状態管理
  * =====================================================
  *
- * This section centralizes multiple UI behaviors including:
+ * 1. Escapeキー：サイドメニュー、言語メニューの順で閉じます。Popover APIと旧方式の両方に対応します。
+ * 2. ヘッダー移動：アプリ名のクリックでホームへ戻し、レイアウトや添付ファイルを初期状態へ戻します。
+ * 3. ウィザード要素：画像入力、プレビュー、スライダー、顔検出表示、各ボタン、案内文への参照を用意します。
+ * 4. 手順管理：ビフォー選択から比較開始準備までの6段階を管理し、ボタン表示を切り替えます。
+ * 5. 描画制御：allowRenderにより、ユーザーが開始する前の自動描画を防ぎます。
+ * 6. UI同期：i18n対応の案内文と、入力状態に応じたボタンの有効・無効を更新します。
  *
- * 1. Global Escape Key Handling
- *    - Listens for the Escape key across the entire document.
- *    - Prioritizes closing UI layers in the following order:
- *      1) Side navigation menu (modal priority)
- *      2) Language dropdown menu
- *    - Supports both Popover API (`:popover-open`) and legacy visibility handling.
- *    - Falls back to manual DOM updates if no helper functions are available.
- *
- * 2. Header Navigation (SPA Behavior)
- *    - Clicking the application title resets the UI to the "home" page.
- *    - Clears active page states and restores default layout classes.
- *    - Resets contact form attachments if leaving the contact page.
- *    - Scrolls the viewport back to the top.
- *
- * 3. Image Comparison Wizard Core State
- *    - Initializes DOM references for all wizard-related elements:
- *      - Image inputs (before/after)
- *      - Preview images
- *      - Slider UI (overlay, handle, container)
- *      - Face detection UI (checkbox, loading indicator, error message)
- *      - Navigation buttons (Next, Start, Reset)
- *      - Guide text display
- *
- * 4. Wizard Step Management
- *    - Maintains a step-based workflow:
- *      1) Select BEFORE image
- *      2) BEFORE image selected
- *      3) Select AFTER image
- *      4) AFTER image selected
- *      5) Face-only mode selection
- *      6) Ready to start comparison
- *    - Controls UI transitions and button visibility based on the current step.
- *
- * 5. Rendering Control
- *    - Uses a flag (`allowRender`) to prevent automatic comparison rendering
- *      before the user explicitly starts the process.
- *
- * 6. UI Synchronization
- *    - Dynamically updates guide messages (with i18n support).
- *    - Enables/disables navigation buttons based on input readiness.
- *    - Keeps UI consistent across user interactions.
- *
- * Notes:
- * - All behaviors are designed to work in a Single Page Application (SPA) context.
- * - Accessibility is considered via keyboard handling and ARIA attributes.
- * - Japanese inline comments have been translated and consolidated into this block.
+ * SPA内での利用、キーボード操作、ARIA属性を考慮しています。
  *
  * @module GlobalUIAndWizardControl
  */
@@ -449,13 +321,13 @@ sideMenu?.addEventListener('click', (e) => {
 document.addEventListener('keydown', (e) => {
   if (e.key !== 'Escape') return;
 
-  // 1) Close side menu first (modal priority)
+  // 1) モーダルとして優先し、最初にサイドメニューを閉じます
   if (sideMenu.classList.contains('open')) {
     closeMenu();
     return;
   }
 
-  // 2) Close language dropdown if open
+  // 2) 言語ドロップダウンが開いていれば閉じます
   const menu = document.getElementById('lang-menu');
   if (!menu) return;
 
@@ -472,12 +344,12 @@ document.addEventListener('keydown', (e) => {
     return;
   }
 
-  // Fallback: close via Popover API if available
+  // 代替処理：利用できる場合はPopover APIで閉じます
   if (typeof menu.hidePopover === 'function') {
     try { menu.hidePopover(); } catch (_) {}
   }
 
-  // Legacy fallback
+  // 旧方式向けの代替処理
   menu.setAttribute('hidden', 'true');
   const btn = document.getElementById('lang-menu-btn');
   if (btn) btn.setAttribute('aria-expanded', 'false');
@@ -557,66 +429,24 @@ function updateWizardUI(){
 
 /**
  * ==============================================================
- *  Wizard UI, Image Handling, Face Preloading, and State Control
+ * ウィザードUI、画像処理、顔画像の事前処理、状態制御
  * ==============================================================
  *
- * This section manages the core logic of the image comparison wizard,
- * including UI updates, file handling, face detection preloading,
- * and state transitions.
+ * 画像比較ウィザードのUI更新、ファイル処理、顔検出の事前実行、状態遷移を管理します。
  *
- * 1. Guide Text & Internationalization
- *    - Dynamically updates the guide text displayed in the wizard.
- *    - Applies i18n translations using `window.appI18n` when available.
- *    - Falls back to default text for initial rendering.
+ * 1. 案内文と多言語対応：案内文を動的に更新し、利用可能ならwindow.appI18nの翻訳を適用します。
+ * 2. 画像読み込み状態：ビフォー／アフター画像の準備状態を記録し、手順とボタンを制御します。
+ * 3. 顔検出準備：モデルの初期化状態を管理し、準備前の顔比較実行を防ぎます。
+ * 4. スライダー初期化：画像、オーバーレイ、スライダー、プレビュー表示を初期状態へ戻します。
+ * 5. ウィザード状態：選択ファイルと手順を管理し、resetAll()で全体を初期化します。
+ * 6. 顔画像の事前処理：位置合わせを裏側で実行し、古い非同期処理をトークンで無効化します。
+ *    成功結果は開始時の即時表示に使い、失敗時は通常比較へ切り替えます。
+ * 7. ファイル入力：FileReaderでプレビューを生成し、描画せずに次の手順へ進めます。
+ * 8. 顔モード：顔のみ比較の切り替え、キャッシュ消去、条件成立時の事前処理を行います。
+ * 9. 移動ボタン：必須入力を確認し、「次へ」と「比較を開始」の操作を処理します。
+ * 10. 比較実行：事前処理結果または実行時の顔検出を使い、スライダーとスクロール位置を更新します。
  *
- * 2. Image Load State Tracking
- *    - Tracks whether BEFORE and AFTER images are loaded.
- *    - Used to control wizard progression and button states.
- *
- * 3. Face Detection Readiness
- *    - Indicates whether face detection models are initialized.
- *    - Prevents premature execution of face-only comparison.
- *
- * 4. Slider Reset Logic
- *    - Resets visual comparison elements (images, overlay, slider).
- *    - Clears preview images and hides comparison UI.
- *    - Does not reset wizard steps or selected files.
- *
- * 5. Wizard State Management
- *    - Maintains references to selected files (before/after).
- *    - Controls wizard step transitions and UI updates.
- *    - Provides full reset functionality via `resetAll()`.
- *
- * 6. Face Preloading System
- *    - Precomputes face-aligned images in the background.
- *    - Uses a token-based system to cancel outdated async tasks.
- *    - Stores results for instant rendering on "Start".
- *    - Gracefully falls back to normal comparison if detection fails.
- *
- * 7. File Input Handling
- *    - Processes image selection for BEFORE and AFTER inputs.
- *    - Generates preview images using FileReader.
- *    - Advances wizard steps without triggering rendering.
- *
- * 8. Face Mode Toggle
- *    - Enables or disables face-only comparison mode.
- *    - Clears cached results when toggled.
- *    - Triggers background preloading when conditions are met.
- *
- * 9. Wizard Navigation Controls
- *    - Handles "Next" and "Start" button interactions.
- *    - Validates required inputs before progressing.
- *    - Executes comparison logic only when explicitly started.
- *
- * 10. Comparison Execution
- *     - Applies precomputed face results if available.
- *     - Otherwise performs face detection at runtime.
- *     - Updates slider UI and scroll position after rendering.
- *
- * Notes:
- * - Rendering is intentionally deferred until the user presses "Start".
- * - All async operations are safely cancellable to prevent race conditions.
- * - UI state remains consistent across user interactions.
+ * 描画は「比較を開始」が押されるまで行いません。非同期処理の競合を防ぎ、UI状態を保ちます。
  *
  * @module WizardAndComparisonControl
  */
@@ -802,8 +632,8 @@ let sliderRect = null;
 let sliderRafPending = false;
 
 /**
- * Updates the visual state of the slider (handle position and overlay width).
- * All DOM writes are batched inside requestAnimationFrame for smoother rendering.
+ * スライダーの見た目（ハンドル位置とオーバーレイ幅）を更新します。
+ * 滑らかに描画するため、DOMへの書き込みはrequestAnimationFrame内でまとめて行います。
  *
  * @returns {void}
  */
@@ -814,8 +644,8 @@ function updateSliderDom() {
 }
 
 /**
- * Schedules a DOM update for the slider on the next animation frame.
- * This prevents redundant layout/paint work for every pointer event.
+ * 次のアニメーションフレームでスライダーのDOM更新を予約します。
+ * ポインターイベントごとの不要なレイアウト計算と再描画を防ぎます。
  *
  * @returns {void}
  */
@@ -826,11 +656,10 @@ function scheduleSliderUpdate() {
 }
 
 /**
- * Converts a clientX coordinate into a 0–100 percentage
- * relative to the left edge of the slider track.
+ * clientX座標を、スライダー左端を基準とした0〜100%の位置へ変換します。
  *
- * @param {number} clientX - The pointer’s client X coordinate.
- * @returns {number} Percentage position in the range [0, 100].
+ * @param {number} clientX - ポインターのクライアントX座標。
+ * @returns {number} 0〜100の範囲に収めた位置の割合。
  */
 function clientXToPercent(clientX) {
   if (!sliderRect) return sliderPercent;
@@ -840,8 +669,8 @@ function clientXToPercent(clientX) {
 }
 
 /**
- * Common cleanup logic when dragging ends.
- * Resets the dragging flag and restores the default cursor.
+ * ドラッグ終了時に共通して行う後処理です。
+ * ドラッグ中のフラグを解除し、カーソルを元へ戻します。
  *
  * @returns {void}
  */
@@ -853,87 +682,26 @@ function endSliderDrag() {
 
 /**
  * ==============================================================
- *  Slider Interaction & Contact Form Upload System (Unified Doc)
+ * スライダー操作と問い合わせフォームのファイル添付
  * ==============================================================
  *
- * This section combines two major UI systems:
+ * 1. 画像比較スライダー
+ * - マウス、タッチ、ペンのpointerdown／pointermove／pointerupを使ってドラッグを処理します。
+ * - 左ボタンからのみ開始し、ポインターを捕捉してX座標を0〜100%へ変換します。
+ * - requestAnimationFrameで滑らかに描画し、ドラッグ中はカーソルをew-resizeへ変更します。
+ * - tabindex、role、aria-value属性を設定し、左右矢印キーで5%ずつ動かせるようにします。
  *
- * 1. Image Comparison Slider Interaction
- * --------------------------------------------------------------
- * Handles all user interactions with the comparison slider,
- * including pointer-based dragging and keyboard accessibility.
+ * 2. 問い合わせフォームの添付UI
+ * - ファイル選択とドラッグ＆ドロップによる複数ファイル追加に対応します。
+ * - ファイル名の一覧、個別削除ボタン、重複排除、ドロップ領域の強調表示を提供します。
+ * - DataTransfer APIで内部配列とinput.filesを同期し、同じファイルの再選択も可能にします。
+ * - selectedFilesで状態を管理し、外部初期化用の__clearContactUploadFilesを公開します。
  *
- * Core behavior:
- * - Pointer-based drag (mouse, touch, pen):
- *   - Starts dragging only on primary mouse button (left click).
- *   - Captures pointer to ensure smooth dragging.
- *   - Updates slider position based on pointer X coordinate.
+ * 3. 問い合わせフォームの仮送信
+ * - ページ移動を伴う既定の送信を止め、成功表示、フォームと添付の初期化を行います。
+ * - 一定時間後に成功表示を隠します。バックエンドへデータは送信しません。
  *
- * - Dragging lifecycle:
- *   - `pointerdown`: Start dragging and initialize bounds.
- *   - `pointermove`: Continuously update slider percentage.
- *   - `pointerup / pointercancel`: End dragging and restore cursor.
- *
- * - Position handling:
- *   - Converts pointer position into a percentage (0–100).
- *   - Clamps values to prevent overflow.
- *   - Uses requestAnimationFrame for smooth rendering.
- *
- * - Keyboard accessibility:
- *   - Slider is focusable (`tabindex="0"`).
- *   - ArrowLeft / ArrowRight move slider by ±5%.
- *   - ARIA attributes (`aria-valuemin`, `aria-valuemax`, `aria-valuenow`)
- *     ensure screen reader compatibility.
- *
- * - UX considerations:
- *   - Cursor changes to `ew-resize` during drag.
- *   - Initial slider position is centered (50%).
- *
- * 2. Contact Form Attachment Upload UI
- * --------------------------------------------------------------
- * Implements a dynamic file upload interface with enhanced UX.
- *
- * Features:
- * - Multiple file selection via input and drag & drop.
- * - Visual file list rendering under the upload area.
- * - Individual file removal with UI updates.
- * - Deduplication based on file identity (name/size/timestamp).
- *
- * File handling:
- * - Uses DataTransfer API to sync in-memory file list with
- *   `<input type="file">`.
- * - Allows re-selection of the same file by resetting input value.
- *
- * Drag & Drop:
- * - Highlights drop zone during drag interaction.
- * - Supports dropping multiple files at once.
- *
- * UI Rendering:
- * - Displays file name with icon.
- * - Adds accessible remove buttons for each file.
- * - Hides list when no files are selected.
- *
- * State management:
- * - Maintains internal `selectedFiles` array.
- * - Provides `__clearContactUploadFiles` for external reset flows.
- *
- * 3. Contact Form Submission (Mock Behavior)
- * --------------------------------------------------------------
- * Handles form submission in a front-end-only (mock) manner:
- *
- * - Prevents default submission (no page reload).
- * - Displays a temporary success message.
- * - Resets form fields and uploaded files.
- * - Automatically hides the success message after a delay.
- *
- * Notes:
- * - No data is sent to a backend server.
- * - Designed for UX demonstration and prototyping.
- *
- * Accessibility & UX:
- * - Ensures keyboard and pointer compatibility.
- * - Maintains consistent UI state across interactions.
- * - Japanese inline comments have been translated and unified here.
+ * キーボードとポインターの両方に対応し、各操作後のUI状態を同期します。
  *
  * @module SliderAndContactUI
  */
@@ -978,15 +746,14 @@ sliderHandle.addEventListener('keydown', (e) => {
 scheduleSliderUpdate();
 
 /**
- * Creates (or returns) the attachment list container under the upload UI.
+ * アップロードUIの下に、添付ファイル一覧の入れ物を作成して返します。
  *
- * Priority:
- * 1) Use an existing element with id `contact-upload-list`.
- * 2) Create and insert a `<div class="upload-file-list" id="contact-upload-list">` under
- *    the nearest `.form-upload` container, or directly after the input as a fallback.
+ * 優先順位：
+ * 1. 既存の#contact-upload-listを使用します。
+ * 2. なければ.upload-file-list要素を作成し、最も近い.form-upload内、
+ *    または代替としてinputの直後へ追加します。
  *
- * @param {HTMLInputElement} fileInput - The file input used for attachments.
- * @returns {HTMLElement|null} The list container element.
+ * @returns {HTMLElement|null} 一覧の要素。作成できなければnull。
  */
 function ensureContactUploadListEl(fileInput) {
   if (!fileInput) return null;
@@ -1017,50 +784,17 @@ function ensureContactUploadListEl(fileInput) {
 
 /**
  * =====================================================
- * Contact Attachment Upload State & File List UI
+ * 問い合わせ添付ファイルの状態と一覧UI
  * =====================================================
  *
- * This section manages the selected attachment files for the
- * contact/feedback form and keeps the visual file list synchronized
- * with the underlying `<input type="file">` element.
+ * 選択された添付ファイルを内部配列で管理し、画面の一覧とinput.filesを同期します。
+ * ファイル名・サイズ・最終更新日時を組み合わせて重複を防ぎ、各項目の削除ボタンから
+ * 個別に取り除けます。ファイル選択とドラッグ＆ドロップの両方に対応し、
+ * ドラッグ中はドロップ領域を強調します。
  *
- * Core responsibilities:
+ * 外部から添付を初期化できるよう、window.__clearContactUploadFilesを公開します。
  *
- * 1. File Identity & Deduplication
- *    - Builds stable identity keys from file name, size, and last modified time.
- *    - Prevents duplicate files from being added when users select or drop
- *      the same file multiple times.
- *
- * 2. FileList Synchronization
- *    - Uses the DataTransfer API to rebuild the read-only FileList.
- *    - Keeps the native file input aligned with the in-memory selectedFiles array.
- *    - Resets the input value so selecting the same file again can still
- *      trigger a change event.
- *
- * 3. File List Rendering
- *    - Renders selected files as compact list rows.
- *    - Displays a file icon, file name, and remove button for each file.
- *    - Hides the list when no files are selected.
- *
- * 4. Individual File Removal
- *    - Allows users to remove uploaded files one by one.
- *    - Updates both the UI list and the underlying input FileList after removal.
- *
- * 5. Multiple File Selection & Drag-and-Drop
- *    - Enables multiple attachments even if the HTML markup omits `multiple`.
- *    - Supports adding files through both the file picker and drag-and-drop.
- *    - Highlights the upload area while files are dragged over it.
- *
- * 6. External Reset Support
- *    - Exposes `window.__clearContactUploadFiles()` so other flows
- *      (form submit, page navigation, reset actions) can clear all attachments.
- *
- * Notes:
- * - FileList is read-only in the browser, so DataTransfer is used for updates.
- * - This UI is front-end only and does not upload files to a server yet.
- * - Japanese inline comments have been translated and consolidated here.
- *
- * @module ContactAttachmentUploadUI
+ * @module ContactAttachmentUpload
  */
 function fileKey(f) {
   return [f.name, f.size, f.lastModified].join('::');
@@ -1211,25 +945,12 @@ if (document.readyState === 'loading') {
 
 /**
  * =====================================================
- * Contact Form Submission (Front-End Mock Behavior)
+ * 問い合わせフォームの送信（フロントエンドのみの仮動作）
  * =====================================================
  *
- * This section provides a temporary front-end-only submit flow
- * for the contact / feedback form.
- *
- * Current behavior:
- * - Prevents the browser's default form submission.
- * - Displays a temporary success message.
- * - Resets all form fields after submission.
- * - Clears selected attachment files via `window.__clearContactUploadFiles()`.
- * - Automatically hides the success message after 3 seconds.
- *
- * Notes:
- * - This is a mock implementation and does not send data to a back-end server yet.
- * - It is intended to preserve a natural user experience until a Node.js API
- *   or another server-side endpoint is implemented.
- * - The former Japanese comment "フォーム送信ダミー" has been translated and
- *   consolidated into this JSDoc block.
+ * 現在はバックエンドへ送信せず、送信時にページ再読み込みを止めて成功メッセージを表示し、
+ * フォーム項目と添付ファイルを初期化します。成功メッセージは一定時間後に非表示にします。
+ * 将来Node.js APIなどの送信先を実装するまで、自然な操作感を確認するための処理です。
  *
  * @module ContactFormMockSubmit
  */
@@ -1239,7 +960,7 @@ if (contactForm){
     e.preventDefault();
     document.getElementById('contact-success').style.display = 'block';
     contactForm.reset();
-    // Clear selected attachment files after mock submission.
+    // 仮送信後に選択済みの添付ファイルを消去します。
     if (typeof window.__clearContactUploadFiles === 'function') {
       window.__clearContactUploadFiles();
     }
@@ -1249,18 +970,18 @@ if (contactForm){
   });
 }
 
-// ==== Internationalization (default EN + JP dropdown with persistence) ====
+// ==== 多言語対応（初期言語は英語／選択を保存する日英ドロップダウン） ====
 (function(){
   const DICT = {
     en: {
-      // header & menu
+      // ヘッダーとメニュー
       'header.title': 'Image Compare Slider',
       'menu.materials': 'Comparison Samples',
       'menu.info': 'Guide & Notes',
       'menu.about': 'About the Developer',
       'menu.contact': 'Requests & Bug Reports',
 
-      // home
+      // ホーム
       'home.title': 'Image Compare Slider',
       'upload.before': 'Choose Before Image',
       'upload.after': 'Choose After Image',
@@ -1270,7 +991,7 @@ if (contactForm){
       'msg.loading': 'Loading face detection models…',
       'msg.noFace': 'No face detected. Falling back to normal comparison.',
 
-      // wizard
+      // ウィザード
       'wizard.step.selectBefore': 'Select your BEFORE image to get started.',
       'wizard.step.beforeChoosing': 'Your BEFORE image is selected. Proceed when ready.',
       'wizard.step.selectAfter': 'Select your AFTER image next.',
@@ -1281,7 +1002,7 @@ if (contactForm){
       'wizard.start': 'Start Comparison',
       'wizard.hint.reset': 'Use reset if you want to run the comparison again.',
 
-      // materials
+      // 素材
       'materials.title': 'Ready-to-use Comparison Samples',
       'materials.lead': 'We prepared before/after samples across different themes so you can try the comparison slider right away.',
       'materials.category.landscape': 'Landscapes',
@@ -1335,7 +1056,7 @@ if (contactForm){
       'materials.result.clothing.before': 'Garment with stains',
       'materials.result.clothing.after': 'Garment after washing',
 
-      // info
+      // 情報
       'info.title': 'Guide & Notes',
       'info.format': 'Supported formats: JPEG, PNG, WebP',
       'info.size': 'Recommended size: Longest edge within 2000px',
@@ -1343,7 +1064,7 @@ if (contactForm){
       'info.usage': 'We do not misuse or redistribute your images',
       'info.contact': 'For issues or requests, use "Requests & Bug Reports"',
       
-      // privacy
+      // プライバシー
       'privacy.title': 'Privacy Policy',
       'privacy.intro': 'This site collects information only to the extent necessary to provide its services.',
 
@@ -1365,13 +1086,13 @@ if (contactForm){
       'privacy.section.contact': '5. Contact',
       'privacy.contact.item1': 'For privacy-related inquiries, please contact us via the feedback form.',
 
-      // about
+      // 概要
       'about.title': 'About the Developer',
       'about.desc': 'Yuuki, a Tokyo-based junior engineer, created this project as part of his learning journey. He is exploring various web technologies including Java, AWS, and JavaScript, and shares his work as a portfolio.',
       'about.howto': 'Use Cases',
       'about.howto.desc': 'This image comparison slider is useful for comparing landscapes, objects, people, faces, and outcomes.',
 
-      // contact
+      // 問い合わせ
       'contact.title': 'Requests & Bug Reports',
       'contact.email': 'E-mail address',
       'contact.subject': 'Subject',
@@ -1385,14 +1106,14 @@ if (contactForm){
       'upload.file': 'Select a file or drag and drop it here'
     },
     ja: {
-      // header & menu
+      // ヘッダーとメニュー
       'header.title': '画像比較スライダー',
       'menu.materials': '比較用使用素材',
       'menu.info': '利用案内・注意事項',
       'menu.about': '開発者・当サイト紹介',
       'menu.contact': '要望・バグ報告',
 
-      // home
+      // ホーム
       'home.title': '画像比較スライダー',
       'upload.before': 'ビフォー画像を選択',
       'upload.after': 'アフター画像を選択',
@@ -1402,7 +1123,7 @@ if (contactForm){
       'msg.loading': '顔検出モデル読み込み中…',
       'msg.noFace': '顔が見つかりませんでした。通常比較になります。',
 
-      // wizard
+      // ウィザード
       'wizard.step.selectBefore': 'ビフォー画像を選択してください。',
       'wizard.step.beforeChoosing': 'ビフォー画像を選択しました。準備ができたら進んでください。',
       'wizard.step.selectAfter': '次にアフター画像を選択してください。',
@@ -1413,7 +1134,7 @@ if (contactForm){
       'wizard.start': '比較を開始',
       'wizard.hint.reset': 'もう一度比較する場合はリセットボタンを押してください。',
 
-      // materials
+      // 素材
       'materials.title': '比較用使用素材',
       'materials.lead': '当サイトの画像比較スライダーをお試しいただくため、用途別のビフォー／アフター素材をご用意しました。ぜひご活用ください。',
       'materials.category.landscape': '風景画',
@@ -1467,7 +1188,7 @@ if (contactForm){
       'materials.result.clothing.before': '汚れの付いた洋服',
       'materials.result.clothing.after': '汚れを落とした洋服',
 
-      // info
+      // 情報
       'info.title': '利用案内・注意事項',
       'info.format': '対応画像フォーマット：JPEG, PNG, WebP',
       'info.size': '推奨サイズ：長辺2000px以内',
@@ -1475,7 +1196,7 @@ if (contactForm){
       'info.usage': '画像の悪用・転載は一切行いません',
       'info.contact': '不具合・ご要望は「要望・バグ報告」よりご連絡ください',
 
-      // privacy
+      // プライバシー
       'privacy.title': 'プライバシーポリシー',
       'privacy.intro': '当サイトは、サービス提供に必要な範囲で情報を取得します。',
 
@@ -1497,12 +1218,12 @@ if (contactForm){
       'privacy.section.contact': '5. お問い合わせ',
       'privacy.contact.item1': 'プライバシーポリシーに関するお問い合わせは「要望・バグ報告」よりご連絡ください。',
 
-      // about
+      // 概要
       'about.title': '開発者について',
       'about.desc': '東京都在住の駆け出しエンジニアYuukiが、学習の一環で制作しています。JavaやAWS、JavaScriptなど幅広くWeb技術を学び、ポートフォリオとして公開中です。',
       'about.howto': '用途概要',
       'about.howto.desc': 'この画像比較スライダーは主に風景画・対象物・人物像・人物の顔・成果物の比較を行いたい際に役立ちます。',
-      // contact
+      // 問い合わせ
       'contact.title': '要望・バグ報告',
       'contact.email': 'メールアドレス',
       'contact.subject': '件名',
@@ -1518,48 +1239,18 @@ if (contactForm){
   };
 
 
-    /**
+/**
      * =====================================================
-     * Internationalization Core (Dictionary Rendering & Persistence)
+     * 多言語対応の中核処理（辞書描画と設定の保存）
      * =====================================================
      *
-     * This section provides the core i18n behavior for the application.
+     * 1. 言語状態：localStorageのlangから開始し、未保存なら英語を使用して、変更後に保存します。
+     * 2. 安全な文字描画：通常はtextContentを使い、HTML用文字を無害化してから改行だけを<br>へ変換します。
+     * 3. 本文翻訳：data-i18n要素を対象範囲から探し、.i18n-textやフォーム部品を考慮して描画します。
+     * 4. プレースホルダー：data-i18n-placeholderを別に走査し、inputやtextareaへ翻訳を設定します。
+     * 5. 文書とUIの同期：htmlのlang属性と言語メニューの状態を更新し、初期化後はメニューを閉じます。
      *
-     * Core responsibilities:
-     *
-     * 1. Language State & Persistence
-     *    - Initializes the active language from localStorage (`lang`).
-     *    - Falls back to English (`en`) when no saved language exists.
-     *    - Safely handles environments where localStorage may be unavailable.
-     *    - Persists the selected language after applying translations.
-     *
-     * 2. Safe Text Rendering
-     *    - Renders translated strings into DOM nodes.
-     *    - Uses `textContent` by default for safety.
-     *    - Converts newline characters into `<br>` only after escaping HTML-sensitive characters.
-     *    - Prevents accidental HTML injection in translated text.
-     *
-     * 3. Text Translation Pass
-     *    - Finds elements with `data-i18n` within the whole document or an optional scope.
-     *    - Supports direct `.i18n-text` targets.
-     *    - Uses nested `.i18n-text` slots when available.
-     *    - Creates a leading `.i18n-text` slot when an element contains form controls.
-     *    - Falls back to replacing plain text containers directly.
-     *
-     * 4. Placeholder Translation Pass
-     *    - Runs a second pass for `[data-i18n-placeholder]` elements.
-     *    - Updates placeholder attributes on inputs and textareas.
-     *    - Ensures placeholders are translated even when the field itself does not use `data-i18n`.
-     *
-     * 5. Document & UI Synchronization
-     *    - Updates the `<html lang="...">` attribute.
-     *    - Refreshes the language dropdown UI state.
-     *    - Forces the language dropdown to start closed after initialization.
-     *
-     * Notes:
-     * - This section is designed to work with SPA-style page switching.
-     * - `applyI18n(lang, scope)` can translate either the full document or a specific page section.
-     * - Japanese inline comments have been translated and consolidated into this block.
+     * SPAの全体文書だけでなく、指定した画面部分だけを翻訳することもできます。
      *
      * @module InternationalizationCore
      */
@@ -1681,38 +1372,17 @@ if (contactForm){
   }
 
 
-  /**
+/**
    * =====================================================
-   * Language Dropdown UI Synchronization
+   * 言語ドロップダウンUIの同期
    * =====================================================
    *
-   * This section keeps the language dropdown menu visually and
-   * semantically synchronized with the currently active language.
+   * 現在の言語と、言語メニューの見た目および意味上の状態を同期します。
+   * ボタンとメニューを安全に取得し、各data-lang項目をcurrentLangと比較します。
    *
-   * Core responsibilities:
-   *
-   * 1. DOM Element Access
-   *    - Retrieves the language menu trigger button (`#lang-menu-btn`).
-   *    - Retrieves the language menu container (`#lang-menu`).
-   *    - Provides a small helper so later UI sync logic can access both elements safely.
-   *
-   * 2. Current Language State
-   *    - Compares each `[data-lang]` menu item with `currentLang`.
-   *    - Treats the currently selected language as inactive for user interaction.
-   *
-   * 3. Accessibility State
-   *    - Applies `aria-disabled="true"` to the active language item.
-   *    - Uses the native `disabled` attribute for `<button>` menu items.
-   *    - Removes keyboard focus from the current language item via `tabindex="-1"`.
-   *
-   * 4. Visual Disabled State
-   *    - Adds `.is-current-lang` for custom styling.
-   *    - Adds utility classes such as `.opacity-50` and `.cursor-not-allowed`.
-   *    - Disables pointer interaction for `<a>` menu items using `.pointer-events-none`.
-   *
-   * Usage:
-   * - Called after language changes.
-   * - Called after applying or refreshing i18n content.
+   * 選択中の言語にはaria-disabled、buttonのdisabled、tabindex=-1を設定し、
+   * is-current-langなどのクラスで無効状態を表示します。リンクの場合は
+   * pointer-events-noneで操作を止めます。言語の変更・再翻訳後に呼び出します。
    *
    * @module LanguageDropdownSync
    */
@@ -1732,74 +1402,67 @@ if (contactForm){
       const code = item.getAttribute('data-lang');
       const isCurrent = code === currentLang;
 
-      // Accessibility state
+      // アクセシビリティ上の状態
       item.setAttribute('aria-disabled', isCurrent ? 'true' : 'false');
 
-      // If it's a button, use the native disabled attribute.
+      // button要素では標準のdisabled属性を使用します。
       if (item.tagName === 'BUTTON') {
         item.disabled = isCurrent;
       }
 
-      // Prevent focus on the current language item
+      // 選択中の言語項目へフォーカスが移らないようにします
       if (isCurrent) item.setAttribute('tabindex', '-1');
       else item.removeAttribute('tabindex');
 
-      // Visual disabled style (works with Tailwind or plain CSS)
+      // 無効状態の見た目（Tailwindと通常のCSSの両方に対応）
       item.classList.toggle('is-current-lang', isCurrent);
       item.classList.toggle('opacity-50', isCurrent);
       item.classList.toggle('cursor-not-allowed', isCurrent);
 
-      // For <a> elements, disable pointer interaction when current
+      // a要素では、選択中の項目に対するポインター操作を無効にします
       if (item.tagName === 'A') {
         item.classList.toggle('pointer-events-none', isCurrent);
       }
     });
   }
 
-  /**
-   * Global i18n helper exposed on `window.appI18n`.
-   *
-   * Provides a small API for:
-   * - Applying translations to the entire document or a specific scope.
-   * - Refreshing translations using the current language.
-   * - Getting the current language code.
-   * - Fetching a translated string for a given key.
-   * - Reusing the low-level `renderText` utility.
+/**
+   * window.appI18nとして公開する全体用の多言語ヘルパーです。
+   * 文書全体または指定範囲への翻訳適用、現在の言語での再翻訳、言語コードの取得、
+   * キーに対応する翻訳文の取得、低水準のrenderText処理を提供します。
    *
    * @namespace appI18n
    */
   window.appI18n = {
-    /**
-     * Applies translations for the specified language (or current) to the given DOM scope.
-     * Also updates the language dropdown UI.
-     * @param {string} [lang] - Language code to apply.
-     * @param {ParentNode|HTMLElement|Document} [scope] - Optional root node to limit translation updates.
+/**
+     * 指定した言語（省略時は現在の言語）の翻訳を対象範囲へ適用し、言語メニューも更新します。
+     * @param {string} [lang] - 適用する言語コード。
+     * @param {ParentNode|HTMLElement|Document} [scope] - 翻訳範囲を限定する任意のルート要素。
      * @returns {void}
      */
     apply: function(lang, scope){
       applyI18n(typeof lang === 'string' ? lang : currentLang, scope);
       updateLangMenuUI();
     },
-    /**
-     * Refreshes translations using the current language for the given scope.
-     * Also updates the language dropdown UI.
-     * @param {ParentNode|HTMLElement|Document} [scope] - Optional root node to limit translation updates.
+/**
+     * 指定範囲を現在の言語で再翻訳し、言語メニューも更新します。
+     * @param {ParentNode|HTMLElement|Document} [scope] - 翻訳範囲を限定する任意のルート要素。
      * @returns {void}
      */
     refresh: function(scope){
       applyI18n(currentLang, scope);
       updateLangMenuUI();
     },
-    /**
-     * Gets the currently active language code.
+/**
+     * 現在選択されている言語コードを取得します。
      * @returns {string}
      */
     getCurrentLang: function(){
       return currentLang;
     },
-    /**
-     * Gets the translated string for the given key, or null if not found.
-     * @param {string} key - The i18n dictionary key.
+/**
+     * キーに対応する翻訳文を取得します。見つからない場合はnullを返します。
+     * @param {string} key - i18n辞書のキー。
      * @returns {string|null}
      */
     getText: function(key){
@@ -1807,22 +1470,20 @@ if (contactForm){
       const txt = dict[key];
       return (typeof txt === 'string') ? txt : null;
     },
-    /**
-     * Renders translated text into a DOM node.
-     * @param {HTMLElement} node
-     * @param {string} str
+/**
+     * 翻訳済みの文字列をDOM要素へ描画します。
+     * @param {HTMLElement} node - 描画先の要素。
+     * @param {string} str - 描画する文字列。
      * @returns {void}
      */
     renderText: renderText
   };
-  /**
-   * Debug helper for face-related operations.
+/**
+   * 顔処理用のデバッグ補助機能です。
+   * #face-debug要素がある場合、時刻付きのJSONログを先頭へ追加し、件数に上限を設けます。
    *
-   * Appends a timestamped JSON log line into the #face-debug element
-   * (if it exists), keeping the log size bounded.
-   *
-   * @param {string} label - Short label describing the log event.
-   * @param {*} payload - Arbitrary data to be stringified and logged.
+   * @param {string} label - ログの内容を示す短い名前。
+   * @param {*} payload - JSON文字列へ変換して記録する任意のデータ。
    * @returns {void}
    */
   window.faceDebugLog = function(label, payload){
@@ -1839,41 +1500,16 @@ if (contactForm){
 
 /**
  * =====================================================
- * Materials Accordion UI (Expand / Collapse Sections)
+ * 素材画面のアコーディオンUI（展開／折りたたみ）
  * =====================================================
  *
- * This module initializes and manages the accordion behavior
- * used in the "materials" section.
+ * 素材画面で使用するアコーディオンを初期化して管理します。
+ * 各.acc-toggleが対応する.acc-contentを開閉し、scrollHeightを使って
+ * 高さ0からautoまで滑らかにアニメーションします。
  *
- * Core features:
- *
- * 1. Section Toggle Behavior
- *    - Each accordion header (.acc-toggle) controls the visibility
- *      of its associated content panel (.acc-content).
- *    - Clicking the header toggles between open and closed states.
- *
- * 2. Animated Height Transitions
- *    - Uses the element's scrollHeight to smoothly animate
- *      from collapsed (height: 0) to expanded (height: auto).
- *    - Ensures a natural expand/collapse UX without layout jumps.
- *
- * 3. Single-Open Mode
- *    - When opening a new section, all other sections are closed.
- *    - Maintains a clean and readable UI.
- *
- * 4. Accessibility (A11y)
- *    - Uses aria-expanded to reflect the current state.
- *    - Supports keyboard interaction:
- *      - Enter → toggle
- *      - Space → toggle
- *
- * 5. Initial State Handling
- *    - Sections marked with aria-expanded="true" start open.
- *    - Others start collapsed with height: 0.
- *
- * Notes:
- * - This module runs immediately on load (IIFE pattern).
- * - Designed to work within SPA-style navigation.
+ * 新しい項目を開くと他の項目を閉じる単一展開方式です。aria-expandedで状態を示し、
+ * EnterキーとSpaceキーでも操作できます。aria-expanded=trueの項目は最初から開きます。
+ * IIFEとして読み込み時に一度実行され、SPA形式の画面移動にも対応します。
  *
  * @module MaterialsAccordion
  */
@@ -1883,15 +1519,12 @@ if (contactForm){
 
   const toggles = root.querySelectorAll('.acc-toggle');
 
-  /**
-   * Opens or closes a single accordion section.
+/**
+   * 1つのアコーディオン項目を開閉します。
+   * scrollHeightを使って高さを0とautoの間で動かし、表示状態とaria-expandedを同期します。
    *
-   * Uses the panel's scrollHeight to animate the height from 0 to auto
-   * (for opening) and back to 0 (for closing), while keeping
-   * aria-expanded in sync with the visual state.
-   *
-   * @param {HTMLButtonElement} btn - The accordion toggle button.
-   * @param {boolean} open - Whether the section should be opened (true) or closed (false).
+   * @param {HTMLButtonElement} btn - アコーディオンの開閉ボタン。
+   * @param {boolean} open - trueなら開き、falseなら閉じます。
    * @returns {void}
    */
   const setOpen = (btn, open) => {
@@ -1917,12 +1550,11 @@ if (contactForm){
     }
   };
 
-  /**
-   * Closes all accordion sections except the one associated with `btn`.
+/**
+   * `btn`に対応する項目を除き、すべてのアコーディオン項目を閉じます。
+   * 新しい見出しを操作したとき、開いている項目が1つだけになるようにします。
    *
-   * Ensures only a single section remains open when a new header is toggled.
-   *
-   * @param {HTMLButtonElement} btn - The button whose section should remain open.
+   * @param {HTMLButtonElement} btn - 開いたままにする項目のボタン。
    * @returns {void}
    */
   const closeAllExcept = (btn) => {
@@ -1961,49 +1593,17 @@ if (contactForm){
 
 /**
  * =====================================================
- * Materials Lightbox (Image Viewer & Navigation)
+ * 素材画像のライトボックス（画像表示と移動）
  * =====================================================
  *
- * This module provides an interactive lightbox system for
- * viewing images inside the materials section.
+ * 素材画面の画像を拡大表示するライトボックスを提供します。
+ * サムネイルのクリックで同じグリッド内の画像一覧を取得して開き、左右矢印キーで
+ * 循環移動できます。背景、閉じるボタン、Escapeキーで閉じます。
  *
- * Core features:
- *
- * 1. Thumbnail Interaction
- *    - Clicking an image inside `.material-set` opens the lightbox.
- *    - Collects sibling images within the same grid for navigation.
- *
- * 2. Image Navigation
- *    - ArrowLeft / ArrowRight keys navigate between images.
- *    - Navigation wraps around (circular list behavior).
- *
- * 3. Overlay Control
- *    - Opens as a modal overlay.
- *    - Closes via:
- *      - Background click
- *      - Close button
- *      - Escape key
- *
- * 4. Download & External Open
- *    - Provides a download link for the current image.
- *    - Allows opening the image in a new browser tab.
- *
- * 5. Pointer Interaction Enhancements
- *    - Highlights thumbnails during pointerdown and pointermove.
- *    - Supports touch-friendly "drag-over highlight" behavior.
- *
- * 6. Accessibility & UX
- *    - Focus moves to the close button when opened.
- *    - Prevents background scrolling while active.
- *    - Maintains consistent state across interactions.
- *
- * 7. State Management
- *    - Tracks current image list and active index.
- *    - Resets state when the lightbox is closed.
- *
- * Notes:
- * - Implemented as an IIFE (runs once on load).
- * - Works seamlessly with SPA navigation structure.
+ * 表示中の画像はダウンロードまたは別タブで開けます。pointerdown／pointermove中は
+ * サムネイルを強調し、タッチ操作でも指の移動に追従します。表示時は閉じるボタンへ
+ * フォーカスを移し、背景スクロールを止めます。閉じたときは画像一覧と位置を初期化します。
+ * IIFEとして読み込み時に一度実行され、SPA形式の画面構成で動作します。
  *
  * @module MaterialsLightbox
  */
@@ -2024,14 +1624,11 @@ if (contactForm){
   let lastActiveThumb = null; // currently highlighted thumbnail for touch/pointer
   let isPointerDown = false; // flag for pointer down state
 
-  /**
-   * Configures the download link for the currently displayed image.
+/**
+   * 現在表示している画像のダウンロードリンクを設定します。
+   * URLからクエリ文字列を除いた適切なファイル名を取得し、専用リンクのhrefとdownloadへ設定します。
    *
-   * Derives a reasonable filename from the image URL (stripping any query
-   * parameters) and sets both the `href` and `download` attributes on the
-   * dedicated download link element.
-   *
-   * @param {string} src - The image URL to be used for downloading.
+   * @param {string} src - ダウンロード対象の画像URL。
    * @returns {void}
    */
   const setDownloadLink = (src) => {
@@ -2046,13 +1643,11 @@ if (contactForm){
     }
   };
 
-  /**
-   * Opens the lightbox at the specified index within the current image list.
+/**
+   * 現在の画像一覧にある指定位置の画像をライトボックスで開きます。
+   * 位置を有効範囲に収め、画像のsrcとalt、ダウンロードリンクを更新してオーバーレイを表示します。
    *
-   * Clamps the index to a valid range, updates the main lightbox image
-   * (src and alt), configures the download link, and shows the overlay.
-   *
-   * @param {number} idx - Index of the image to display from `currentList`.
+   * @param {number} idx - currentList内で表示する画像の位置。
    * @returns {void}
    */
   const openAt = (idx) => {
@@ -2071,11 +1666,9 @@ if (contactForm){
     closeBtn.focus();
   };
 
-  /**
-   * Closes the lightbox overlay and clears its current state.
-   *
-   * Hides the overlay, removes the image src, restores body scrolling,
-   * and resets the current image list and index.
+/**
+   * ライトボックスを閉じ、現在の状態を初期化します。
+   * オーバーレイを隠して画像のsrcを削除し、背景スクロールを戻して画像一覧と位置を消去します。
    *
    * @returns {void}
    */
@@ -2088,14 +1681,12 @@ if (contactForm){
     currentIndex = -1;
   };
 
-  /**
-  * Opens the lightbox using a clicked thumbnail image as the starting point.
+/**
+  * クリックされたサムネイルを起点にライトボックスを開きます。
+  * 同じ.materials-grid内のサムネイルをすべて取得して現在の一覧へ保存し、
+  * クリックされた画像の位置から表示します。
   *
-  * Collects all sibling thumbnails within the same `.materials-grid`,
-  * stores them as the current image list, and opens the lightbox at the
-  * index of the clicked thumbnail.
-  *
-  * @param {HTMLImageElement} thumb - The thumbnail image that was clicked.
+  * @param {HTMLImageElement} thumb - クリックされたサムネイル画像。
   * @returns {void}
   */
   const openFromThumb = (thumb) => {
@@ -2106,16 +1697,13 @@ if (contactForm){
     openAt(idx >= 0 ? idx : 0);
   };
 
-  /**
-  * Highlights the thumbnail currently touched by the user (pointerdown).
-  *
-  * Intended to provide immediate visual feedback, especially on touch devices.
-  * When the pointer goes down on a thumbnail, this function marks it with the
-  * `.is-active-thumb` class and removes the highlight from any previously active
-  * thumbnail.
+/**
+  * pointerdownされたサムネイルを強調表示します。
+  * 特にタッチ端末で即座に反応が分かるよう、対象へ.is-active-thumbを追加し、
+  * 以前の対象から強調表示を削除します。
   *
   * @listens PointerEvent#pointerdown
-  * @param {PointerEvent} e - The pointer event triggered when touching a thumbnail.
+  * @param {PointerEvent} e - サムネイルに触れたときのポインターイベント。
   * @returns {void}
   */
   materialsRoot.addEventListener('pointerdown', (e) => {
@@ -2132,19 +1720,13 @@ if (contactForm){
     lastActiveThumb = t;
   });
 
-  /**
-  * Continuously updates the highlighted thumbnail while the pointer moves.
-  *
-  * When the pointer moves across multiple thumbnails (for example, when the user
-  * slides their finger across the screen), this handler adds `.is-active-thumb`
-  * to the thumbnail currently under the pointer and removes it from the previous
-  * one. This enables a “tracking highlight” gesture that feels more natural on
-  * touch screens.
-  *
-  * Ignores movement when no active pointerdown has occurred.
+/**
+  * ポインターの移動中、強調表示するサムネイルを継続的に更新します。
+  * 指などが複数の画像上を移動すると、現在の画像へ.is-active-thumbを追加し、
+  * 以前の画像から削除します。pointerdownされていないときの移動は無視します。
   *
   * @listens PointerEvent#pointermove
-  * @param {PointerEvent} e - The pointer event triggered during pointer movement.
+  * @param {PointerEvent} e - ポインター移動中に発生したイベント。
   * @returns {void}
   */
   materialsRoot.addEventListener('pointermove', (e) => {
@@ -2160,13 +1742,11 @@ if (contactForm){
     lastActiveThumb = el;
   });
 
-  // When the pointer is released or cancelled, remove the active highlight
-  /**
-  * Clears the active highlight state for thumbnails and
-  * stops pointer tracking. Used on pointerup / pointercancel.
-  *
-  * This version does not rely on the event target being an <img>,
-  * so it also works when the pointer is released outside the thumbnail.
+  // ポインター操作が終了または中止されたら強調表示を解除します
+/**
+  * サムネイルの強調状態を解除し、ポインター追跡を終了します。
+  * pointerup／pointercancelで使用します。イベント対象がimgでなくてもよいため、
+  * サムネイル外で指やボタンを離した場合にも動作します。
   */
   const clearActiveThumb = () => {
     isPointerDown = false;
@@ -2179,14 +1759,12 @@ if (contactForm){
   materialsRoot.addEventListener('pointerup', clearActiveThumb);
   materialsRoot.addEventListener('pointercancel', clearActiveThumb);
 
-  /**
-  * Delegated click handler for all thumbnails inside the materials section.
+/**
+  * 素材画面内の全サムネイルを対象とするイベント委譲のクリック処理です。
+  * .material-set内のimgがクリックされたことを検出し、その画像からライトボックスを開きます。
+  * 既定のリンク移動は停止し、ライトボックスでの表示を優先します。
   *
-  * Detects clicks on <img> elements that belong to a `.material-set`
-  * and opens the lightbox starting from that thumbnail. Prevents any
-  * default link navigation so that the lightbox takes over the UX.
-  *
-  * @param {MouseEvent} e - The click event originating from the materials root.
+  * @param {MouseEvent} e - 素材画面のルートから届いたクリックイベント。
   * @returns {void}
   */
   materialsRoot.addEventListener('click', (e) => {
@@ -2197,14 +1775,14 @@ if (contactForm){
     }
   });
 
-  // Close behaviors
+  // 閉じる操作
   overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
   closeBtn.addEventListener('click', close);
 
-  // Open in new tab
+  // 新しいタブで開きます
   openBtn.addEventListener('click', () => { if (imgEl.src) window.open(imgEl.src, '_blank', 'noopener'); });
 
-  // Keyboard controls inside lightbox
+  // ライトボックス内のキーボード操作
   window.addEventListener('keydown', (e) => {
     if (!overlay.classList.contains('open')) return;
     if (e.key === 'Escape') { e.preventDefault(); close(); return; }

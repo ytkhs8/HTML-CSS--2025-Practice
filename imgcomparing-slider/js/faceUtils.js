@@ -1,44 +1,41 @@
 /**
  * =====================================================
- * Face Utility Module (Face API / Canvas Processing)
+ * 顔処理ユーティリティモジュール（Face API／Canvas処理）
  * =====================================================
  *
  * @description
- * Provides shared face-detection and image-processing utilities used by the
- * image comparison slider.
+ * 画像比較スライダーで使用する、顔検出と画像処理の共通機能を提供します。
  *
- * This module is responsible for loading face-api.js models, converting image
- * files into drawable images, detecting/cropping faces, aligning faces to a
- * comparable template, and generating image data URLs for the slider UI.
+ * face-api.jsのモデル読み込み、画像ファイルの描画可能な画像への変換、顔の検出・
+ * 切り抜き、比較用テンプレートへの位置合わせ、スライダーUIで使用する画像の
+ * Data URL生成を担当します。
  *
- * The implementation is intentionally separated from compare.js so the UI layer
- * can stay focused on user interaction while this module handles face/canvas work.
+ * UI層のcompare.jsがユーザー操作に集中できるよう、顔処理とCanvas処理を
+ * このモジュールに分離しています。
  *
  * @module FaceUtils
  */
 
 /**
  * @description
- * Base path used to load face-api.js model files.
+ * face-api.jsのモデルファイルを読み込む基準パスです。
  *
- * The default assumes models are served from the local `./models/` directory.
- * Other modules can update this value when model files are served from a
- * different path.
+ * 初期値ではローカルの`./models/`ディレクトリから配信されることを想定しています。
+ * 別の場所からモデルを配信する場合は、他のモジュールからこの値を変更できます。
  */
 export let FACE_MODEL_PATH = './models/';
 
 /**
  * @description
- * Default TinyFaceDetector options.
+ * TinyFaceDetectorの初期設定です。
  *
- * These settings are tuned for a practical balance between detection stability
- * and performance, especially on Safari and mobile browsers.
+ * 特にSafariやモバイルブラウザで、検出の安定性と処理性能のバランスが取れるよう
+ * 調整しています。
  *
- * `inputSize` controls the internal detection resolution. Higher values may
- * improve accuracy but increase processing cost.
+ * `inputSize`は内部の検出解像度を制御します。値を大きくすると精度が上がる場合が
+ * ありますが、処理負荷も増加します。
  *
- * `scoreThreshold` defines the minimum confidence score required to accept a
- * detected face.
+ * `scoreThreshold`は、検出した顔を採用するために必要な信頼度の最小値です。
  */
 export const TINY_OPTS = new faceapi.TinyFaceDetectorOptions({
   inputSize: 512,
@@ -47,20 +44,19 @@ export const TINY_OPTS = new faceapi.TinyFaceDetectorOptions({
 
 /**
  * @description
- * Tracks whether required face-api.js models have already been loaded.
+ * 必要なface-api.jsのモデルが読み込み済みかを記録します。
  *
- * This prevents repeated network requests and model initialization work when
- * multiple comparison flows are executed during the same page session.
+ * 同じページの利用中に複数回比較しても、通信とモデルの初期化を繰り返さずに済みます。
  */
 let faceApiReady = false;
 
 /**
  * @description
- * Loads the required face-api.js models once and caches the loaded state.
+ * 必要なface-api.jsのモデルを一度だけ読み込み、読み込み済みの状態を保持します。
  *
- * The function initializes TinyFaceDetector for lightweight face detection and
- * FaceLandmark68Net for extracting facial landmarks. After the first successful
- * load, later calls return immediately.
+ * 軽量な顔検出を行うTinyFaceDetectorと、顔のランドマークを取得する
+ * FaceLandmark68Netを初期化します。最初の読み込み成功後は、以降の呼び出しを
+ * すぐに終了します。
  *
  * @example
  * await loadFaceApiModels();
@@ -71,9 +67,9 @@ export async function loadFaceApiModels(modelPath = FACE_MODEL_PATH) {
   await faceapi.nets.faceLandmark68Net.loadFromUri(modelPath);
 
   /**
-   * Optional model:
-   * Load SSD Mobilenet V1 when higher detection accuracy is needed,
-   * but keep it disabled by default because it is heavier.
+   * 任意のモデル：
+   * より高い検出精度が必要な場合はSSD Mobilenet V1を読み込みます。
+   * 処理が重いため、初期状態では無効にしています。
    */
   // await faceapi.nets.ssdMobilenetv1.loadFromUri(modelPath);
 
@@ -82,10 +78,10 @@ export async function loadFaceApiModels(modelPath = FACE_MODEL_PATH) {
 
 /**
  * @description
- * Converts a user-selected image file into a fully loaded HTMLImageElement.
+ * ユーザーが選択した画像ファイルを、読み込み済みのHTMLImageElementへ変換します。
  *
- * The file is read as a Data URL with FileReader, assigned to a new Image
- * instance, and resolved only after the image has finished loading.
+ * FileReaderでファイルをData URLとして読み込み、新しいImageオブジェクトへ設定します。
+ * 画像の読み込みが完了してからPromiseを解決します。
  *
  * @example
  * const img = await loadImageFromFile(file);
@@ -106,10 +102,10 @@ export function loadImageFromFile(file) {
 
 /**
  * @description
- * Crops a detected face bounding box from an image into a canvas.
+ * 検出した顔の境界ボックスを画像から切り抜き、Canvasへ描画します。
  *
- * The crop area is clamped to the image bounds, scaled proportionally to match
- * the requested width, and drawn with high-quality canvas smoothing.
+ * 切り抜き範囲が画像の外へ出ないよう補正し、指定した幅に合わせて縦横比を保ったまま
+ * 拡大縮小し、高品質なスムージングを使って描画します。
  *
  * @example
  * const faceCanvas = cropFaceToCanvas(img, detection.box, 420);
@@ -136,16 +132,16 @@ export function cropFaceToCanvas(img, box, targetWidth = 420) {
 
 /**
  * @description
- * Detects a single face from an image file and returns a cropped face canvas.
+ * 画像ファイルから1つの顔を検出し、切り抜いた顔のCanvasを返します。
  *
- * Processing flow:
- * 1. Load face-api.js models if necessary.
- * 2. Convert the selected file into an image.
- * 3. Draw the image to a temporary canvas for detection.
- * 4. Detect one face using TinyFaceDetector.
- * 5. Crop and scale the detected face region.
+ * 処理の流れ：
+ * 1. 必要に応じてface-api.jsのモデルを読み込みます。
+ * 2. 選択されたファイルを画像へ変換します。
+ * 3. 検出用の一時Canvasへ画像を描画します。
+ * 4. TinyFaceDetectorで1つの顔を検出します。
+ * 5. 検出した顔の範囲を切り抜き、拡大縮小します。
  *
- * Returns `null` when no face is detected.
+ * 顔を検出できなかった場合は`null`を返します。
  *
  * @example
  * const faceCanvas = await getFaceCanvasFromFile(file);
@@ -167,12 +163,12 @@ export async function getFaceCanvasFromFile(file, targetWidth = 420) {
 
 /**
  * @description
- * Extracts face canvases from two image files and normalizes them to the same size.
+ * 2つの画像ファイルから顔のCanvasを作成し、同じ大きさに揃えます。
  *
- * Each image is processed independently. The resulting canvases are resized to
- * the smallest shared width and height so they can be compared or combined safely.
+ * 各画像を個別に処理し、結果のCanvasを共通する最小の幅と高さへ変更することで、
+ * 安全に比較または合成できるようにします。
  *
- * Returns `null` when either image does not contain a detectable face.
+ * どちらかの画像で顔を検出できなかった場合は`null`を返します。
  *
  * @example
  * const faces = await getAlignedFacesFromFiles(beforeFile, afterFile);
@@ -200,12 +196,12 @@ export async function getAlignedFacesFromFiles(beforeFile, afterFile, targetWidt
 
 /**
  * @description
- * Prepares two cropped-and-aligned face images for slider rendering.
+ * スライダー描画用に、切り抜いて大きさを揃えた2つの顔画像を準備します。
  *
- * This wrapper converts aligned canvases into PNG Data URLs that can be assigned
- * directly to image elements in the comparison slider.
+ * 大きさを揃えたCanvasを、比較スライダーの画像要素へ直接設定できるPNG形式の
+ * Data URLへ変換します。
  *
- * Returns `null` when face detection fails.
+ * 顔検出に失敗した場合は`null`を返します。
  *
  * @example
  * const images = await prepareFacesForSlider(beforeFile, afterFile);
@@ -225,13 +221,12 @@ export async function prepareFacesForSlider(beforeFile, afterFile, targetWidth =
 
 /**
  * @description
- * Creates a half-face composite image from two photos.
+ * 2枚の写真から、顔を左右半分ずつ組み合わせた画像を作成します。
  *
- * The output image uses the left half of the aligned "before" face and the right
- * half of the aligned "after" face. A subtle vertical blend is applied at the
- * center seam to make the boundary less harsh.
+ * 出力画像には、位置を揃えた「ビフォー」の顔の左半分と「アフター」の顔の右半分を
+ * 使用します。中央の境界に薄い縦方向のぼかしを加え、つなぎ目を自然に見せます。
  *
- * Returns `null` when face detection fails.
+ * 顔検出に失敗した場合は`null`を返します。
  *
  * @example
  * const compositeUrl = await composeHalfFace(beforeFile, afterFile);
@@ -264,10 +259,9 @@ export async function composeHalfFace(beforeFile, afterFile, targetWidth = 420) 
 
 /**
  * @description
- * Calculates the center point of a facial landmark group.
+ * 顔のランドマーク群の中心座標を計算します。
  *
- * This helper is used to estimate the center of the left or right eye by
- * averaging all landmark points in that eye region.
+ * 左目または右目の領域にある全ランドマーク座標の平均を取り、目の中心を求めます。
  */
 function eyeCenter(pts) {
   const x = pts.reduce((s, p) => s + p.x, 0) / pts.length;
@@ -277,13 +271,12 @@ function eyeCenter(pts) {
 
 /**
  * @description
- * Aligns a face image to a canonical template using eye landmarks.
+ * 目のランドマークを使い、顔画像を基準テンプレートへ位置合わせします。
  *
- * The function normalizes rotation, scale, and translation so that the eye line
- * becomes horizontal, the eye midpoint moves to the target template position,
- * and the eye-to-eye distance matches the desired output distance.
+ * 両目を結ぶ線が水平になり、両目の中点がテンプレートの目標位置へ移動し、目と目の
+ * 距離が指定した出力距離と一致するように、回転・拡大縮小・移動を正規化します。
  *
- * This makes two different faces easier to compare in a slider or composite view.
+ * これにより、異なる2つの顔をスライダーや合成表示で比較しやすくします。
  *
  * @example
  * const alignedCanvas = alignFaceToTemplate(img, detection.landmarks);
@@ -324,15 +317,15 @@ export function alignFaceToTemplate(img, landmarks, outW = 420, outH = 520, eyeY
 
 /**
  * @description
- * Detects facial landmarks from an image file and returns a template-aligned canvas.
+ * 画像ファイルから顔のランドマークを検出し、テンプレートへ位置合わせしたCanvasを返します。
  *
- * Processing flow:
- * 1. Load face-api.js models if necessary.
- * 2. Convert the selected file into an image.
- * 3. Detect one face and its 68-point landmarks.
- * 4. Align the face to the canonical template.
+ * 処理の流れ：
+ * 1. 必要に応じてface-api.jsのモデルを読み込みます。
+ * 2. 選択されたファイルを画像へ変換します。
+ * 3. 1つの顔と68点のランドマークを検出します。
+ * 4. 顔を基準テンプレートへ位置合わせします。
  *
- * Returns `null` when no face is detected.
+ * 顔を検出できなかった場合は`null`を返します。
  *
  * @example
  * const alignedCanvas = await getAlignedFaceCanvasFromFile(file);
@@ -351,13 +344,13 @@ export async function  getAlignedFaceCanvasFromFile(file, targetW=420, targetH=5
 
 /**
  * @description
- * Prepares two landmark-aligned face images for slider rendering.
+ * スライダー描画用に、ランドマークで位置を揃えた2つの顔画像を準備します。
  *
- * Unlike the simpler crop-based path, this function uses eye landmarks to
- * normalize rotation, scale, and position before generating PNG Data URLs.
- * Both output images share the same canonical canvas size.
+ * 単純な切り抜き方式とは異なり、目のランドマークを使って回転・大きさ・位置を
+ * 正規化してからPNG形式のData URLを生成します。2つの出力画像は同じ基準Canvasの
+ * 大きさになります。
  *
- * Returns `null` when detection or alignment fails.
+ * 検出または位置合わせに失敗した場合は`null`を返します。
  *
  * @example
  * const faces = await prepareFacesForSliderAligned(beforeFile, afterFile);
