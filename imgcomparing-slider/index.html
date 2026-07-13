@@ -15,6 +15,31 @@
     <!-- App CSS (keep last so it can override utilities when needed) -->
     <link rel="stylesheet" href="css/compare.css" />
 
+    <style>
+      #contact-form .form-error {
+        min-height: 1.5em;
+        margin: 6px 0 0;
+        color: #b91c1c;
+        font-size: 0.9rem;
+        line-height: 1.5;
+      }
+
+      #contact-form [aria-invalid="true"] {
+        border-color: #dc2626;
+        box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15);
+      }
+
+      #contact-form [aria-invalid="true"]:focus {
+        border-color: #b91c1c;
+        box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.2);
+      }
+
+      #contact-form .upload-dropzone.is-invalid {
+        border-color: #dc2626;
+        background: #fef2f2;
+      }
+    </style>
+
     <!-- favicon -->
      <link rel="icon" href="favicon/favicon.ico" sizes="16x16" type="image/x-icon">
      <link rel="icon" href="favicon/favicon-32x32.png" sizes="32x32" type="image/png">
@@ -455,7 +480,7 @@
         </section>
         <section id="contact" class="page">
             <h2 data-i18n="contact.title">要望・バグ報告</h2>
-            <form id="contact-form">
+            <form id="contact-form" novalidate>
             <div class="form-field">
                 <label for="email"><span class="i18n-text" data-i18n="contact.email">メールアドレス</span></label>
                 <input 
@@ -465,9 +490,13 @@
                   autocomplete="email"
                   data-i18n-placeholder="contact.placeholder.email"
                   placeholder="メールアドレス"
+                  maxlength="254"
+                  aria-describedby="email-error"
+                  aria-invalid="false"
                   required
                 >
                 <div class="field-hint i18n-text" data-i18n="contact.placeholder.email" aria-hidden="true">メールアドレス</div>
+                <p class="form-error" id="email-error" aria-live="polite"></p>
             </div>
 
             <div class="form-field">
@@ -478,9 +507,14 @@
                   name="subject"
                   data-i18n-placeholder="contact.placeholder.subject"
                   placeholder="要望や不具合の件名を入力"
+                  minlength="3"
+                  maxlength="80"
+                  aria-describedby="subject-error"
+                  aria-invalid="false"
                   required
                 >
                 <div class="field-hint i18n-text" data-i18n="contact.placeholder.subject" aria-hidden="true">要望や不具合の件名を入力</div>
+                <p class="form-error" id="subject-error" aria-live="polite"></p>
             </div>
 
             <div class="form-field">
@@ -490,8 +524,13 @@
                   name="description"
                   data-i18n-placeholder="contact.placeholder.description"
                   placeholder="要望や不具合を詳しく説明してください"
+                  minlength="10"
+                  maxlength="1000"
+                  aria-describedby="description-error"
+                  aria-invalid="false"
                   required
                 ></textarea>
+                <p class="form-error" id="description-error" aria-live="polite"></p>
             </div>
 
             <div class="form-upload">
@@ -500,13 +539,14 @@
               </label>
 
               <label class="upload-dropzone" for="contact-upload">
-                <input id="contact-upload" class="upload-input" type="file" name="contact-upload" accept="image/*">
+                <input id="contact-upload" class="upload-input" type="file" name="contact-upload" accept="image/jpeg,image/png,image/webp" multiple aria-describedby="contact-upload-error" aria-invalid="false">
                 <span class="upload-dropzone-text" data-i18n="upload.file">
                   ファイルを選択するか、ここにドラッグ＆ドロップします
                 </span>
               </label>
 
               <div class="upload-file-name" id="contact-upload-name" aria-live="polite"></div>
+              <p class="form-error" id="contact-upload-error" aria-live="polite"></p>
             </div>
 
                 <button type="submit" data-i18n="contact.submit">送信</button>
@@ -534,5 +574,179 @@
 
 <!-- JavaScript -->
     <script type="module" src="js/compare.js"></script>
+    <script type="module">
+      const contactForm = document.getElementById('contact-form');
+
+      if (contactForm) {
+        const emailInput = document.getElementById('email');
+        const subjectInput = document.getElementById('subject');
+        const descriptionInput = document.getElementById('description');
+        const uploadInput = document.getElementById('contact-upload');
+        const uploadDropzone = uploadInput?.closest('.upload-dropzone');
+
+        const limits = {
+          subjectMin: 3,
+          descriptionMin: 10,
+          maxFiles: 5,
+          maxFileSize: 5 * 1024 * 1024
+        };
+
+        const messages = {
+          ja: {
+            emailRequired: 'メールアドレスを入力してください。',
+            emailInvalid: '有効なメールアドレスを入力してください。',
+            subjectRequired: '件名を入力してください。',
+            subjectShort: `件名は${limits.subjectMin}文字以上で入力してください。`,
+            descriptionRequired: '要望または不具合の内容を入力してください。',
+            descriptionShort: `説明は${limits.descriptionMin}文字以上で入力してください。`,
+            fileCount: `添付できる画像は${limits.maxFiles}枚までです。`,
+            fileType: '添付できる形式はJPEG、PNG、WebPです。',
+            fileSize: '画像1枚のサイズは5MB以下にしてください。'
+          },
+          en: {
+            emailRequired: 'Enter your email address.',
+            emailInvalid: 'Enter a valid email address.',
+            subjectRequired: 'Enter a subject.',
+            subjectShort: `Enter at least ${limits.subjectMin} characters for the subject.`,
+            descriptionRequired: 'Describe your request or bug report.',
+            descriptionShort: `Enter at least ${limits.descriptionMin} characters in the description.`,
+            fileCount: `You can attach up to ${limits.maxFiles} images.`,
+            fileType: 'Attach JPEG, PNG, or WebP images only.',
+            fileSize: 'Each image must be 5 MB or smaller.'
+          }
+        };
+
+        const getMessages = () => {
+          const lang = document.documentElement.lang === 'ja' ? 'ja' : 'en';
+          return messages[lang];
+        };
+
+        const setFieldError = (field, message = '') => {
+          const errorId = field.getAttribute('aria-describedby');
+          const errorElement = errorId ? document.getElementById(errorId) : null;
+          const invalid = Boolean(message);
+
+          field.setAttribute('aria-invalid', String(invalid));
+          if (errorElement) errorElement.textContent = message;
+
+          if (field === uploadInput) {
+            uploadDropzone?.classList.toggle('is-invalid', invalid);
+          }
+
+          return !invalid;
+        };
+
+        const validateEmail = () => {
+          const value = emailInput.value.trim();
+          const text = getMessages();
+
+          if (!value) return setFieldError(emailInput, text.emailRequired);
+          emailInput.value = value;
+          if (!emailInput.validity.valid) return setFieldError(emailInput, text.emailInvalid);
+          return setFieldError(emailInput);
+        };
+
+        const validateSubject = () => {
+          const length = subjectInput.value.trim().length;
+          const text = getMessages();
+
+          if (!length) return setFieldError(subjectInput, text.subjectRequired);
+          if (length < limits.subjectMin) return setFieldError(subjectInput, text.subjectShort);
+          return setFieldError(subjectInput);
+        };
+
+        const validateDescription = () => {
+          const length = descriptionInput.value.trim().length;
+          const text = getMessages();
+
+          if (!length) return setFieldError(descriptionInput, text.descriptionRequired);
+          if (length < limits.descriptionMin) {
+            return setFieldError(descriptionInput, text.descriptionShort);
+          }
+          return setFieldError(descriptionInput);
+        };
+
+        const validateFiles = (fileList = null, includeExisting = false) => {
+          const files = Array.from(fileList || []);
+          const text = getMessages();
+          const allowedTypes = new Set(['image/jpeg', 'image/png', 'image/webp']);
+          const existingCount = includeExisting
+            ? document.querySelectorAll('#contact-upload-list .upload-file-item').length
+            : 0;
+          const totalCount = fileList
+            ? existingCount + files.length
+            : document.querySelectorAll('#contact-upload-list .upload-file-item').length;
+
+          if (totalCount > limits.maxFiles) {
+            return setFieldError(uploadInput, text.fileCount);
+          }
+          if (files.some((file) => !allowedTypes.has(file.type))) {
+            return setFieldError(uploadInput, text.fileType);
+          }
+          if (files.some((file) => file.size > limits.maxFileSize)) {
+            return setFieldError(uploadInput, text.fileSize);
+          }
+          return setFieldError(uploadInput);
+        };
+
+        const validators = new Map([
+          [emailInput, validateEmail],
+          [subjectInput, validateSubject],
+          [descriptionInput, validateDescription]
+        ]);
+
+        validators.forEach((validate, field) => {
+          field.addEventListener('blur', validate);
+          field.addEventListener('input', () => {
+            if (field.getAttribute('aria-invalid') === 'true') validate();
+          });
+        });
+
+        uploadInput?.addEventListener('change', (event) => {
+          if (!validateFiles(event.target.files, true)) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            uploadInput.value = '';
+          }
+        }, { capture: true });
+
+        uploadDropzone?.addEventListener('drop', (event) => {
+          if (!validateFiles(event.dataTransfer?.files, true)) {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+          }
+        }, { capture: true });
+
+        contactForm.addEventListener('submit', (event) => {
+          const results = [
+            validateEmail(),
+            validateSubject(),
+            validateDescription(),
+            validateFiles()
+          ];
+
+          if (results.every(Boolean)) {
+            emailInput.value = emailInput.value.trim();
+            subjectInput.value = subjectInput.value.trim();
+            descriptionInput.value = descriptionInput.value.trim();
+            return;
+          }
+
+          event.preventDefault();
+          event.stopImmediatePropagation();
+
+          const firstInvalid = contactForm.querySelector('[aria-invalid="true"]');
+          firstInvalid?.focus();
+        }, { capture: true });
+
+        contactForm.addEventListener('reset', () => {
+          requestAnimationFrame(() => {
+            [emailInput, subjectInput, descriptionInput, uploadInput].forEach((field) => {
+              if (field) setFieldError(field);
+            });
+          });
+        });
+      }
+    </script>
 </body>
 </html>
