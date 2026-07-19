@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>Image Compare - 画像比較スライダー</title>
+    <meta name="description" content="画像比較スライダーのページです。" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Bootstrap Icons (self-hosted) -->
+
+    <!-- Tailwind (self-hosted build output) -->
+
+    <!-- App CSS (keep last so it can override utilities when needed) -->
+
+    <style>
+      #contact-form .form-error {
+        min-height: 1.5em;
+        margin: 6px 0 0;
+        color: #b91c1c;
+        font-size: 0.9rem;
+        line-height: 1.5;
+      }
+
+      #contact-form [aria-invalid="true"] {
+        border-color: #dc2626;
+        box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15);
+      }
+
+      #contact-form [aria-invalid="true"]:focus {
+        border-color: #b91c1c;
+        box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.2);
+      }
+
+      #contact-form .upload-dropzone.is-invalid {
+        border-color: #dc2626;
+        background: #fef2f2;
+      }
+    </style>
+
+    <!-- favicon -->
+     <link rel="icon" href="/assets/favicon-09xyz6_K.ico" sizes="16x16" type="image/x-icon">
+     <link rel="icon" href="/assets/favicon-32x32-B4rdH-4-.png" sizes="32x32" type="image/png">
+     <link rel="icon" href="favicon/android-icon-48x48.png" sizes="48x48" type="image/png">
+     <link rel="icon" href="/assets/favicon-96x96-DUO7dRHL.png" sizes="96x96" type="image/png">
+     <link rel="apple-touch-icon" href="/assets/apple-icon-180x180-DPPnuiM4.png" sizes="180x180">
+     <link rel="apple-touch-icon" href="/assets/apple-icon-CW4dmuOB.png" sizes="192x192">
+  <script type="module" crossorigin src="/assets/index-BA06MjIk.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-CPgwUOxY.css">
+</head>
+
+<body>
+    <header class="header">
+        <div class="header-left">
+            <img src="/assets/A_flat-style_digital_illustration_features_an_icon-BevvCzHr.png" alt="Image Compare Icon" class="app-icon">
+            <div class="app-title" data-i18n="header.title">Image Compare</div>
+        </div>
+        <div class="header-right">
+          <!-- Language dropdown (Tailwind Plus Elements: el-dropdown / el-menu) -->
+          <el-dropdown id="lang-dropdown" class="relative inline-block">
+          <button
+            id="lang-menu-btn"
+            type="button"
+            aria-haspopup="menu"
+            aria-expanded="false"
+            class="lang-menu-btn inline-flex items-center justify-center gap-x-2 rounded-md bg-gray-700/5 px-3 py-2 text-sm font-serif font-light text-gray-900 ring-1 ring-inset ring-gray-900/10 hover:bg-gray-900/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900/30 disabled:opacity-50"
+          >
+            <!-- Desktop / Tablet layout -->
+            <i class="bi bi-globe2 lang-icon-desktop hidden sm:inline text-xl" aria-hidden="true"></i>
+            <span class="lang-label hidden sm:inline">LANGUAGE</span>
+            <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"
+              class="hidden sm:inline -mr-1 h-5 w-5 text-gray-500">
+              <path fill-rule="evenodd"
+                d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z"
+                clip-rule="evenodd" />
+            </svg>
+
+            <!-- Mobile layout -->
+            <div class="flex flex-col items-center justify-center sm:hidden">
+              <i class="bi bi-translate lang-icon-mobile" aria-hidden="true"></i>
+              <span class="lang-mobile-label">Language</span>
+            </div>
+          </button>
+
+          <!-- Dropdown menu -->
+          <el-menu
+            id="lang-menu"
+            anchor="bottom end"
+            popover="manual"
+            role="menu"
+            aria-label="Language menu"
+            class="z-4000 mt-2 w-56 origin-top-right divide-y divide-white/30 rounded-md bg-gray-300 shadow-lg outline-1 -outline-offset-1 outline-white/10 transition transition-discrete [--anchor-gap:--spacing(2)] data-closed:scale-95 data-closed:transform data-closed:opacity-0 data-enter:duration-100 data-enter:ease-out data-leave:duration-75 data-leave:ease-in"
+          >
+            <div class="py-1">
+              <button
+                type="button"
+                class="lang-item block w-full px-4 py-2 text-left text-sm text-gray-800 hover:bg-white/10 focus:bg-white/10 focus:text-white focus:outline-none"
+                role="menuitem"
+                data-lang="en"
+              >
+                English
+              </button>
+            </div>
+            <div class="py-1">
+              <button
+                type="button"
+                class="lang-item block w-full px-4 py-2 text-left text-sm text-gray-800 hover:bg-white/10 focus:bg-white/10 focus:text-white focus:outline-none"
+                role="menuitem"
+                data-lang="ja"
+              >
+                日本語
+              </button>
+            </div>
+          </el-menu>
+          </el-dropdown>
+
+          <!-- Hamburger Menu Button -->
+          <button class="hamburger" id="hamburger-btn" aria-label="メニューを開く" aria-controls="side-menu" aria-expanded="false">
+              <span></span>
+              <span></span>
+              <span></span>
+          </button>
+        </div>
+        <nav class="side-menu" id="side-menu">
+            <ul>
+                <li><a href="#" data-page="materials" data-i18n="menu.materials">比較用使用素材</a></li>
+                <li><a href="#" data-page="info" data-i18n="menu.info">利用案内・注意事項</a></li>
+                <li><a href="#" data-page="about" data-i18n="menu.about">開発者・当サイト紹介</a></li>
+                <li><a href="#" data-page="contact" data-i18n="menu.contact">要望・バグ報告</a></li>
+            </ul>
+        </nav>
+        <div class="overlay" id="menu-overlay"></div>
+    </header>
+
+    <main>
+        <section id="home" class="page active">
+            <h1 data-i18n="home.title">画像比較スライダー</h1>
+            <form id="compare-form" autocomplete="off">
+                <!-- Wizard Guide (Step-by-step helper) -->
+                <div id="wizard-guide" class="wizard-guide" aria-live="polite">
+                    <span id="guide-text" class="i18n-text" data-i18n="wizard.step.selectBefore">
+                        ビフォー画像を選択してください
+                    </span>
+                    <div class="wizard-actions">
+                        <!-- After selecting BEFORE image -->
+                        <button id="next-btn-1" class="btn-secondary" style="display:none" type="button" data-i18n="wizard.next">次へ</button>
+                        <!-- After selecting AFTER image -->
+                        <button id="next-btn-2" class="btn-secondary" style="display:none" type="button" data-i18n="wizard.next">次へ</button>
+                        <!-- After choosing face-only toggle -->
+                        <button id="next-btn-3" class="btn-secondary" style="display:none" type="button" data-i18n="wizard.next">次へ</button>
+                        <!-- Final: Start Compare (enabled only when both images selected) -->
+                        <button id="start-compare-btn" class="btn-primary" type="button" disabled data-i18n="wizard.start">比較を開始</button>
+                    </div>
+                </div>
+                <div class="upload-area">
+                    <label class="big-upload">
+                        <input type="file" id="before-img" accept="image/*" hidden>
+                        <span data-i18n="upload.before">
+                            <img src="https://cdn-icons-png.flaticon.com/128/1828/1828925.png" alt="" class="upload-icon">
+                            ビフォー画像を選択
+                        </span>
+                    </label>
+                    <label class="big-upload">
+                        <input type="file" id="after-img" accept="image/*" hidden>
+                        <span data-i18n="upload.after">
+                            <img src="https://cdn-icons-png.flaticon.com/128/1828/1828925.png" alt="" class="upload-icon">
+                            アフター画像を選択
+                        </span>
+                    </label>
+                </div>
+                <div class="face-only-option">
+                    <label>
+                        <input type="checkbox" id="face-only">
+                        <span data-i18n="face.only">顔だけ比較モード</span>
+                    </label>
+                </div>
+
+                    <button type="button" id="reset-btn" data-i18n="btn.reset">リセット</button>
+                    <span id="reset-hint" class="reset-hint i18n-text" data-i18n="wizard.hint.reset">
+                        比較をやり直す場合はリセットボタンをクリック
+                    </span>
+                
+            </form>
+
+            <div id="half-face-result" class="half-face" style="display:none;">
+                    <img id="half-face-img" alt="Half Face Composite">
+                    <div class="half-face-caption" data-i18n="caption.halfface">左：Before / 右：After</div>
+            </div>
+
+            <div class="slider-container" id="slider-container" style="display:none;">
+                <div class="compare-slider">
+                    <img id="img-before" src="" alt="Before Image">
+                    <div class="img-overlay">
+                        <img id="img-after" src="" alt="After Image">
+                    </div>
+                    <div class="slider-handle" id="slider-handle"></div>
+                </div>
+            </div>
+            <div id="face-loading" style="display: none;" data-i18n="msg.loading">顔検出モデル読み込み中...</div>
+            <div id="face-error" style="display: none;color:crimson;margin-top:8px;" data-i18n="msg.noFace">顔が見つかりませんでした。通常比較になります。</div>
+        </section>
+        <section id="materials" class="page">
+            <h2 data-i18n="materials.title">比較用使用素材</h2>
+            <p data-i18n="materials.lead">
+                当サイトの画像比較スライダーを皆様に体験して頂く目的で様々な用途の素材をこちらで用意しました。是非素材をダウンロードして当サイトの画像比較をお楽しみください。
+            </p>
+
+            <div class="materials-section">
+            <button class="acc-toggle" aria-expanded="false">
+                <span data-i18n="materials.category.landscape">風景画</span>
+                <svg class="icon-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5z"></path></svg>
+            </button>
+              <div class="acc-content">
+                <div class="materials-grid">
+                  <article class="material-set">
+                    <h4 data-i18n="materials.landscape.city.title">現在と昔の渋谷の変貌</h4>
+                    <figure>
+                        <figcaption data-i18n="materials.landscape.city.before">現在の渋谷駅周辺</figcaption>
+                        <img src="/assets/city-before-DOjWIsBa.png" alt="現在の渋谷駅周辺の高層ビルと交差点">
+                    </figure>
+                    <figure>
+                        <figcaption data-i18n="materials.landscape.city.after">昔の渋谷駅周辺</figcaption>
+                        <img src="/assets/city-after-B6lhb3Hl.png" alt="昔の渋谷駅周辺の街並み">
+                    </figure>
+                  </article>
+                  <article class="material-set">
+                    <h4 data-i18n="materials.landscape.lifestyle.title">現在と昔の人々の暮らしの違い</h4>
+                    <figure>
+                        <figcaption data-i18n="materials.landscape.lifestyle.before">現代の暮らし</figcaption>
+                        <img src="/assets/lifestyle-before-C9WlAtia.png" alt="現代の街角でスマートフォンを使う人々">
+                    </figure>
+                    <figure>
+                        <figcaption data-i18n="materials.landscape.lifestyle.after">昔の暮らし</figcaption>
+                        <img src="/assets/lifestyle-after-CsU7o4T3.png" alt="昔の市場で買い物をする人々">
+                    </figure>
+                  </article>
+                  <article class="material-set">
+                    <h4 data-i18n="materials.landscape.resolution.title">アメリカのシリコンバレーと東京の街並みの対比</h4>
+                    <figure>
+                        <figcaption data-i18n="materials.landscape.town.before">アメリカのシリコンバレー</figcaption>
+                        <img src="/assets/landscape-before-B8nr1dS_.jpg" alt="アメリカのシリコンバレーの街並み">
+                    </figure>
+                    <figure>
+                        <figcaption data-i18n="materials.landscape.town.after">日本の東京</figcaption>
+                        <img src="/assets/landscape-after-BYQj4RVt.jpg" alt="日本の東京の街並み">
+                    </figure>
+                  </article>
+                </div>
+              </div>
+            </div>
+
+            <div class="materials-section">
+            <button class="acc-toggle" aria-expanded="false">
+              <span data-i18n="materials.category.objects">対象物</span>
+              <svg class="icon-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5z"></path></svg>
+            </button>
+            <div class="acc-content">
+              <div class="materials-grid">
+                <article class="material-set">
+                　<h4 data-i18n="materials.objects.iphone.title">iPhone3GとiPhone17 Proの外観の対比</h4>
+                　<figure>
+                    <figcaption data-i18n="materials.objects.iphone.before">iPhone3Gの外観</figcaption>
+                    <img src="/assets/device-before-CdqsdN39.png" alt="黒いiPhone3G">
+                  </figure>
+                  <figure>
+                    <figcaption data-i18n="materials.objects.iphone.after">iPhone16 Proの外観</figcaption>
+                    <img src="/assets/device-after-Bgjx6ESt.png" alt="iPhone16 Pro">
+                  </figure>
+                </article>
+                <article class="material-set">
+                  <h4 data-i18n="materials.objects.shirt.title">オックスフォードシャツとオープンカラーシャツの対比</h4>
+                  <figure>
+                    <figcaption data-i18n="materials.objects.shirt.oxford">オックスフォードシャツ</figcaption>
+                    <img src="/assets/shirt-oxford-6Z3jG7Ek.png" alt="ボタンダウンの白いオックスフォードシャツ">
+                  </figure>
+                  <figure>
+                    <figcaption data-i18n="materials.objects.shirt.opencollar">オープンカラーシャツ</figcaption>
+                    <img src="/assets/shirt-opencollar-u7vgxuAN.png" alt="開襟のオープンカラーシャツ">
+                  </figure>
+                </article>
+                <article class="material-set">
+                  <h4 data-i18n="materials.objects.chameleon.title">カメレオンの体の色の変化</h4>
+                  <figure>
+                    <figcaption data-i18n="materials.objects.chameleon.before">緑色のカメレオン</figcaption>
+                    <img src="https://images.unsplash.com/photo-1617540021016-72023b487e99?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=3174" alt="緑色のカメレオン">
+                  </figure>
+                  <figure>
+                    <figcaption data-i18n="materials.objects.chameleon.after">鮮やかな色のカメレオン</figcaption>
+                    <img src="https://images.unsplash.com/photo-1633507733525-fb5960cba41d?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=2940" alt="鮮やかな色のカメレオン">
+                  </figure>
+                </article>
+              </div>
+            </div>
+            </div>
+
+            <div class="materials-section">
+            <button class="acc-toggle" aria-expanded="false">
+              <span data-i18n="materials.category.people">人物像</span>
+              <svg class="icon-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5z"></path></svg>
+            </button>
+            <div class="acc-content">
+              <div class="materials-grid">
+                <article class="material-set">
+                  <h4 data-i18n="materials.people.diet.title">ダイエット前とダイエット後の姿の対比</h4>
+                  <figure>
+                    <figcaption data-i18n="materials.people.diet.before">ダイエット前の姿</figcaption>
+                    <img src="/assets/diet-before-7YVa-HoF.jpeg" alt="ダイエット前の全身写真">
+                  </figure>
+                  <figure>
+                    <figcaption data-i18n="materials.people.diet.after">ダイエット後の姿</figcaption>
+                    <img src="/assets/diet-after-DA0hCyYO.jpeg" alt="ダイエット後の全身写真">
+                  </figure>
+                </article>
+                <article class="material-set">
+                  <h4 data-i18n="materials.people.growth.title">子どもの成長前後の比較</h4>
+                  <figure>
+                    <figcaption data-i18n="materials.people.growth.before">７歳の頃</figcaption>
+                    <img src="/assets/growth-before-CypAUpjI.png" alt="幼少期の写真">
+                  </figure>
+                  <figure>
+                    <figcaption data-i18n="materials.people.growth.after">２０歳の頃</figcaption>
+                    <img src="/assets/growth-after-AsWJB1_I.png" alt="成長後の写真">
+                  </figure>
+                </article>
+                <article class="material-set">
+                  <h4 data-i18n="materials.people.cosplay.title">普段の自分とハロウィンのコスプレをした自分の対比</h4>
+                  <figure>
+                    <figcaption data-i18n="materials.people.cosplay.before">普段着の自分</figcaption>
+                    <img src="/assets/cosplay-before-BvG6VGSk.png" alt="普段着の写真">
+                  </figure>
+                  <figure>
+                    <figcaption data-i18n="materials.people.cosplay.after">ハロウィンのコスプレ</figcaption>
+                    <img src="/assets/cosplay-after-DoW9gDdB.png" alt="ハロウィンコスプレの写真">
+                  </figure>
+                </article>
+              </div>
+            </div>
+            </div>
+
+            <div class="materials-section">
+            <button class="acc-toggle" aria-expanded="false">
+              <span data-i18n="materials.category.faces">人物の顔</span>
+              <svg class="icon-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5z"></path></svg>
+            </button>
+            <div class="acc-content">
+              <div class="materials-grid">
+                <article class="material-set">
+                  <h4 data-i18n="materials.face.season.title">冬季と夏季の顔の対比</h4>
+                  <figure>
+                    <figcaption data-i18n="materials.face.season.winter">冬季</figcaption>
+                    <img src="/assets/season-winter-CWKRQnBc.png" alt="冬季の顔">
+                  </figure>
+                  <figure>
+                    <figcaption data-i18n="materials.face.season.summer">夏季</figcaption>
+                    <img src="/assets/season-summer-DMXH70cR.png" alt="夏季の顔">
+                  </figure>
+                </article>
+                <article class="material-set">
+                  <h4 data-i18n="materials.face.makeup.title">メイク前後の自分の顔の比較</h4>
+                  <figure>
+                    <figcaption data-i18n="materials.face.makeup.before">すっぴん</figcaption>
+                    <img src="/assets/face-before-CUf9wA4u.png" alt="すっぴんの女性">
+                  </figure>
+                  <figure>
+                    <figcaption data-i18n="materials.face.makeup.after">メイク時</figcaption>
+                    <img src="/assets/face-after-BzhAh3Zm.png" alt="メイク時の女性">
+                  </figure>
+                </article>
+                <article class="material-set">
+                  <h4 data-i18n="materials.face.age.title">幼少期と成人の同一人物の顔の対比</h4>
+                  <figure>
+                    <figcaption data-i18n="materials.face.age.before">３歳の顔</figcaption>
+                    <img src="/assets/age-before-D9458GyB.png" alt="３歳頃の顔写真">
+                  </figure>
+                  <figure>
+                    <figcaption data-i18n="materials.face.age.after">２３歳の頃</figcaption>
+                    <img src="/assets/age-after-X2zvkDJC.png" alt="２３歳頃の顔写真">
+                  </figure>
+                </article>
+              </div>
+            </div>
+            </div>
+
+            <div class="materials-section">
+            <button class="acc-toggle" aria-expanded="false">
+              <span data-i18n="materials.category.results">成果物</span>
+              <svg class="icon-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5z"></path></svg>
+            </button>
+            <div class="acc-content">
+              <div class="materials-grid">
+                <article class="material-set">
+                  <h4 data-i18n="materials.result.cleaning.title">掃除をした箇所のビフォーアフター</h4>
+                  <figure>
+                    <figcaption data-i18n="materials.result.cleaning.before">掃除前の状態</figcaption>
+                    <img src="/assets/cleaning-before-D-GeQphR.png" alt="古くじめっとした浴室">
+                  </figure>
+                  <figure>
+                    <figcaption data-i18n="materials.result.cleaning.after">掃除後の状態</figcaption>
+                    <img src="/assets/cleaning-after-BrXm-r8_.png" alt="ピカピカに磨かれた浴室">
+                  </figure>
+                </article>
+                <article class="material-set">
+                  <h4 data-i18n="materials.result.learning.title">学習前後の成果物の対比</h4>
+                  <figure>
+                    <figcaption data-i18n="materials.result.learning.before">学習前の作品</figcaption>
+                    <img src="/assets/learning-before-BXK5pXgj.png" alt="練習中の絵画">
+                  </figure>
+                  <figure>
+                    <figcaption data-i18n="materials.result.learning.after">学習後の作品</figcaption>
+                    <img src="/assets/learning-after-BvznRW91.png" alt="プロ並みの腕前の絵画">
+                  </figure>
+                </article>
+                <article class="material-set">
+                  <h4 data-i18n="materials.result.clothing.title">洋服の汚れ落としのビフォーアフター</h4>
+                  <figure>
+                    <figcaption data-i18n="materials.result.clothing.before">汚れの付いた洋服</figcaption>
+                    <img src="/assets/clothing-before-B77ew1pt.png" alt="汚れの付いた白いシャツ">
+                  </figure>
+                  <figure>
+                    <figcaption data-i18n="materials.result.clothing.after">汚れを落とした洋服</figcaption>
+                    <img src="/assets/clothing-after-Ctf1Gq21.png" alt="汚れが落ちた白いシャツ">
+                  </figure>
+                </article>
+              </div>
+            </div>
+            </div>
+        </section>
+        <section id="info" class="page">
+            <h2 data-i18n="info.title">利用案内・注意事項</h2>
+            <ul>
+                <li data-i18n="info.format">対応画像フォーマット：JPEG, PNG, WebP</li>
+                <li data-i18n="info.size">推奨サイズ：長辺2000px以内</li>
+                <li data-i18n="info.storage">アップロードされた画像はサーバに保存されません</li>
+                <li data-i18n="info.usage">画像の悪用・転載は一切行いません</li>
+                <li data-i18n="info.contact">不具合・ご要望は「要望・バグ報告」よりご連絡ください</li>
+                <li data-i18n="info.privacypolicy">
+                  <hr>
+                  <h2 data-i18n="privacy.title">プライバシーポリシー</h2>
+                  <p data-i18n="privacy.intro">当サイトは、サービス提供に必要な範囲で情報を取得します。</p>
+
+                  <h3 data-i18n="privacy.section.purpose">1. 利用目的</h3>
+                  <ul>
+                    <li data-i18n="privacy.purpose.item1">画像比較機能の提供</li>
+                    <li data-i18n="privacy.purpose.item2">サービス改善・不正利用の防止</li>
+                  </ul>
+
+                  <p class="i18n-text" data-i18n="privacy.storage.title"></p>
+                  <ul>
+                    <li class="i18n-text" data-i18n="privacy.storage.item1"></li>
+                    <li class="i18n-text" data-i18n="privacy.storage.item2"></li>
+                  </ul>
+
+                  <p class="i18n-text" data-i18n="privacy.thirdparty.title"></p>
+                  <ul>
+                    <li class="i18n-text" data-i18n="privacy.thirdparty.item1"></li>
+                  </ul>
+
+                  <p class="i18n-text" data-i18n="privacy.external.title"></p>
+                  <ul>
+                    <li class="i18n-text" data-i18n="privacy.external.item1"></li>
+                    <li class="i18n-text" data-i18n="privacy.external.item2"></li>
+                  </ul>
+
+                  <p class="i18n-text" data-i18n="privacy.contact.title"></p>
+                  <ul>
+                    <li class="i18n-text" data-i18n="privacy.contact.item1"></li>
+                  </ul>
+                </li>
+            </ul>
+        </section>
+        <section id="about" class="page">
+            <h2 data-i18n="about.title">開発者について</h2>
+            <p data-i18n="about.desc">東京都在住の駆け出しエンジニアYuukiが、学習の一環で制作しています。<br>
+            JavaやAWS、JavaScriptなど幅広くWeb技術を学び、ポートフォリオとして公開中です。</p>
+            <h2 data-i18n="about.howto">用途概要</h2>
+            <p data-i18n="about.howto.desc">この画像比較スライダーは主に風景画・対象物・人物像・人物の顔・成果物の比較を行いたい際に役立ちます。</p>
+        </section>
+        <section id="contact" class="page">
+            <h2 data-i18n="contact.title">要望・バグ報告</h2>
+            <form id="contact-form" novalidate>
+            <div class="form-field">
+                <label for="email"><span class="i18n-text" data-i18n="contact.email">メールアドレス</span></label>
+                <input 
+                  id="email"
+                  type="email"
+                  name="email"
+                  autocomplete="email"
+                  data-i18n-placeholder="contact.placeholder.email"
+                  placeholder="メールアドレス"
+                  maxlength="254"
+                  aria-describedby="email-error"
+                  aria-invalid="false"
+                  required
+                >
+                <div class="field-hint i18n-text" data-i18n="contact.placeholder.email" aria-hidden="true">メールアドレス</div>
+                <p class="form-error" id="email-error" aria-live="polite"></p>
+            </div>
+
+            <div class="form-field">
+                <label for="subject"><span class="i18n-text" data-i18n="contact.subject">件名</span></label>
+                <input
+                  id="subject"
+                  type="text"
+                  name="subject"
+                  data-i18n-placeholder="contact.placeholder.subject"
+                  placeholder="要望や不具合の件名を入力"
+                  minlength="3"
+                  maxlength="80"
+                  aria-describedby="subject-error"
+                  aria-invalid="false"
+                  required
+                >
+                <div class="field-hint i18n-text" data-i18n="contact.placeholder.subject" aria-hidden="true">要望や不具合の件名を入力</div>
+                <p class="form-error" id="subject-error" aria-live="polite"></p>
+            </div>
+
+            <div class="form-field">
+                <label for="description"><span class="i18n-text" data-i18n="contact.description">説明</span></label>
+                <textarea
+                  id="description"
+                  name="description"
+                  data-i18n-placeholder="contact.placeholder.description"
+                  placeholder="要望や不具合を詳しく説明してください"
+                  minlength="10"
+                  maxlength="1000"
+                  aria-describedby="description-error"
+                  aria-invalid="false"
+                  required
+                ></textarea>
+                <p class="form-error" id="description-error" aria-live="polite"></p>
+            </div>
+
+            <div class="form-upload">
+              <label for="contact-upload">
+                <span class="i18n-text" data-i18n="contact.upload">添付ファイル</span>
+              </label>
+
+              <label class="upload-dropzone" for="contact-upload">
+                <input id="contact-upload" class="upload-input" type="file" name="contact-upload" accept="image/jpeg,image/png,image/webp" multiple aria-describedby="contact-upload-error" aria-invalid="false">
+                <span class="upload-dropzone-text" data-i18n="upload.file">
+                  ファイルを選択するか、ここにドラッグ＆ドロップします
+                </span>
+              </label>
+
+              <div class="upload-file-name" id="contact-upload-name" aria-live="polite"></div>
+              <p class="form-error" id="contact-upload-error" aria-live="polite"></p>
+            </div>
+
+                <button type="submit" data-i18n="contact.submit">送信</button>
+            </form>
+            <div id="contact-success" style="display:none;" data-i18n="contact.success">ご意見ありがとうございます！</div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+     <footer class="site-footer">
+        <p><small>Copyright ©︎ 2026 Yuuki</small></p>
+     </footer>
+     
+    <!-- Lightbox root  -->
+    <div id="lightbox" class="lightbox-overlay" aria-modal="true" role="dialog" aria-label="Image preview" hidden>
+      <div class="lightbox-inner">
+        <img id="lightbox-img" class="lightbox-img" alt="">
+        <div class="lightbox-actions">
+          <a id="lightbox-download" class="lightbox-btn" download>保存</a>
+          <button id="lightbox-open" class="lightbox-btn" type="button">新しいタブで開く</button>
+        </div>
+        <button id="lightbox-close" class="lightbox-btn lightbox-close" type="button" aria-label="閉じる">閉じる</button>
+      </div>
+    </div>
+
+<!-- JavaScript -->
+</body>
+</html>
