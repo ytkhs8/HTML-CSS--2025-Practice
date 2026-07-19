@@ -463,7 +463,7 @@ function setGuide(key, fallback){
   }
 }
 let beforeLoaded = false, afterLoaded = false;
-let faceApiReady = false;
+
 function resetSlider() {
   beforeInput.value = '';
   afterInput.value = '';
@@ -1081,7 +1081,7 @@ if (contactForm){
 
       'privacy.section.external': '4. External Services',
       'privacy.external.item1': 'External services such as CDNs may be used.',
-      'privacy.external.item2': 'Image processing is performed locally in the user’s browser using face-api.js.',
+      'privacy.external.item2': 'Face landmark detection and image processing are performed locally in the user’s browser using MediaPipe Face Landmarker.',
 
       'privacy.section.contact': '5. Contact',
       'privacy.contact.item1': 'For privacy-related inquiries, please contact us via the feedback form.',
@@ -1213,7 +1213,7 @@ if (contactForm){
 
       'privacy.section.external': '4. 外部サービス',
       'privacy.external.item1': 'CDN等の外部サービスを利用する場合があります。',
-      'privacy.external.item2': '画像の処理は利用者のブラウザ内で face-api.js を用いてブラウザ内で行われます。',
+      'privacy.external.item2': '顔ランドマークの検出と画像処理は、MediaPipe Face Landmarkerを用いて利用者のブラウザ内で行われます。',
 
       'privacy.section.contact': '5. お問い合わせ',
       'privacy.contact.item1': 'プライバシーポリシーに関するお問い合わせは「要望・バグ報告」よりご連絡ください。',

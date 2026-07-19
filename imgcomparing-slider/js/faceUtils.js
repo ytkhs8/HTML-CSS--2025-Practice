@@ -1,79 +1,89 @@
 /**
  * =====================================================
- * 顔処理ユーティリティモジュール（Face API／Canvas処理）
+ * 顔画像処理ユーティリティモジュール
+ * （MediaPipe Face Landmarker / Canvas 処理）
  * =====================================================
  *
  * @description
- * 画像比較スライダーで使用する、顔検出と画像処理の共通機能を提供します。
+ * 画像比較スライダーで再利用する、顔検出および画像処理用のユーティリティを提供します。
  *
- * face-api.jsのモデル読み込み、画像ファイルの描画可能な画像への変換、顔の検出・
- * 切り抜き、比較用テンプレートへの位置合わせ、スライダーUIで使用する画像の
- * Data URL生成を担当します。
+ * MediaPipe Face Landmarker の初期化、アップロード画像を描画可能な画像への変換、
+ * 顔ランドマークの検出、共通テンプレートへの顔位置合わせ、スライダー UI 用 Data URL の
+ * 生成を行います。
  *
- * UI層のcompare.jsがユーザー操作に集中できるよう、顔処理とCanvas処理を
- * このモジュールに分離しています。
+ * 顔検出と Canvas 処理をこのモジュールに分離することで、compare.js はユーザー操作と
+ * UI 状態の管理に専念できます。
  *
  * @module FaceUtils
  */
 
-/**
- * @description
- * face-api.jsのモデルファイルを読み込む基準パスです。
- *
- * 初期値ではローカルの`./models/`ディレクトリから配信されることを想定しています。
- * 別の場所からモデルを配信する場合は、他のモジュールからこの値を変更できます。
- */
-export let FACE_MODEL_PATH = './models/';
+
+import {
+  FilesetResolver,
+  FaceLandmarker
+} from "@mediapipe/tasks-vision";
+
+/** MediaPipe の WebAssembly 関連ファイルを配置したパスです。 */
+const MEDIAPIPE_WASM_PATH = '/mediapipe/wasm';
+/** Face Landmarker モデルファイルのパスです。 */
+const FACE_LANDMARKER_MODEL_PATH =
+  '/models/face_landmarker.task';
+
+/** 初期化済みの Face Landmarker インスタンスを保持します。 */
+let faceLandmarker = null;
+/** Face Landmarker の初期化処理中に共有する Promise を保持します。 */
+let faceLandmarkerPromise = null;
 
 /**
- * @description
- * TinyFaceDetectorの初期設定です。
+ * MediaPipe Face Landmarker を初期化し、結果をキャッシュします。
  *
- * 特にSafariやモバイルブラウザで、検出の安定性と処理性能のバランスが取れるよう
- * 調整しています。
+ * 同時に複数回呼び出された場合でも、進行中の初期化処理を共有します。
  *
- * `inputSize`は内部の検出解像度を制御します。値を大きくすると精度が上がる場合が
- * ありますが、処理負荷も増加します。
- *
- * `scoreThreshold`は、検出した顔を採用するために必要な信頼度の最小値です。
+ * @returns {Promise<FaceLandmarker>} 初期化済みの Face Landmarker インスタンス。
+ * @throws {Error} MediaPipe の初期化またはモデルの読み込みに失敗した場合。
  */
-export const TINY_OPTS = new faceapi.TinyFaceDetectorOptions({
-  inputSize: 512,
-  scoreThreshold: 0.35
-});
+export async function loadMediaPipeFaceLandmarker(){
 
-/**
- * @description
- * 必要なface-api.jsのモデルが読み込み済みかを記録します。
- *
- * 同じページの利用中に複数回比較しても、通信とモデルの初期化を繰り返さずに済みます。
- */
-let faceApiReady = false;
+  if(faceLandmarker){
+    return faceLandmarker;
+  }
 
-/**
- * @description
- * 必要なface-api.jsのモデルを一度だけ読み込み、読み込み済みの状態を保持します。
- *
- * 軽量な顔検出を行うTinyFaceDetectorと、顔のランドマークを取得する
- * FaceLandmark68Netを初期化します。最初の読み込み成功後は、以降の呼び出しを
- * すぐに終了します。
- *
- * @example
- * await loadFaceApiModels();
- */
-export async function loadFaceApiModels(modelPath = FACE_MODEL_PATH) {
-  if (faceApiReady) return;
-  await faceapi.nets.tinyFaceDetector.loadFromUri(modelPath);
-  await faceapi.nets.faceLandmark68Net.loadFromUri(modelPath);
+  if (faceLandmarkerPromise) {
+    return faceLandmarkerPromise;
+  }
 
-  /**
-   * 任意のモデル：
-   * より高い検出精度が必要な場合はSSD Mobilenet V1を読み込みます。
-   * 処理が重いため、初期状態では無効にしています。
-   */
-  // await faceapi.nets.ssdMobilenetv1.loadFromUri(modelPath);
+  faceLandmarkerPromise = (async () => {
 
-  faceApiReady = true;
+    const vision = await FilesetResolver.forVisionTasks(
+      MEDIAPIPE_WASM_PATH
+    );
+
+    const instance = await FaceLandmarker.createFromOptions(
+      vision,
+      {
+        baseOptions: {
+          modelAssetPath: FACE_LANDMARKER_MODEL_PATH,
+          delegate: 'CPU'
+        },
+        runningMode: 'IMAGE',
+        numFaces: 1,
+        minFaceDetectionConfidence: 0.5,
+        minFacePresenceConfidence: 0.5,
+        outputFaceBlendshapes: false,
+        outputFacialTransformationMatrixes: false
+      }
+    );
+
+    faceLandmarker = instance;
+    return faceLandmarker;
+  })();
+
+  try {
+    return await faceLandmarkerPromise;
+  } catch (error) {
+    faceLandmarkerPromise = null;
+    throw error;
+  }
 }
 
 /**
@@ -83,10 +93,18 @@ export async function loadFaceApiModels(modelPath = FACE_MODEL_PATH) {
  * FileReaderでファイルをData URLとして読み込み、新しいImageオブジェクトへ設定します。
  * 画像の読み込みが完了してからPromiseを解決します。
  *
+ * @param {File} file - 読み込む画像ファイル。
+ * @returns {Promise<HTMLImageElement>} 読み込み済みの画像要素。
+ * @throws {TypeError} 有効な画像ファイル以外が指定された場合。
  * @example
  * const img = await loadImageFromFile(file);
  */
 export function loadImageFromFile(file) {
+  if (!(file instanceof File) || !file.type.startsWith('image/')) {
+    return Promise.reject(
+      new TypeError('A valid image file is required.')
+    );
+  }
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = ev => {
@@ -101,10 +119,63 @@ export function loadImageFromFile(file) {
 }
 
 /**
+ * MediaPipe の正規化済みランドマークを、face-api.js 風のランドマークオブジェクトへ変換します。
+ *
+ * このアダプターにより、compare.js を変更せずに既存の位置合わせ処理を再利用できます。
+ *
+ * @param {Array<{x: number, y: number}>} landmarks - MediaPipe が返す顔のランドマーク群。
+ * @param {number} width - 元画像の幅です。
+ * @param {number} height - 元画像の高さです。
+ * @returns {{getLeftEye: () => Array<{x: number, y: number}>, getRightEye: () => Array<{x: number, y: number}>}} 左右の目の座標を取得できるオブジェクト。
+ * @throws {Error} 顔の位置合わせに必要な数のランドマークがない場合。
+ */
+function convertMediaPipeLandmarks(landmarks, width, height) {
+  if (!Array.isArray(landmarks) || landmarks.length < 388) {
+    throw new Error('MediaPipe returned insufficient face landmarks.');
+  }
+
+  const points = landmarks.map(point => ({
+    x: point.x * width,
+    y: point.y * height
+  }));
+
+
+  return {
+
+    getLeftEye(){
+
+      return [
+        points[33],
+        points[160],
+        points[158],
+        points[133],
+        points[153],
+        points[144]
+      ];
+    },
+
+    getRightEye(){
+
+      return [
+        points[362],
+        points[385],
+        points[387],
+        points[263],
+        points[373],
+        points[380]
+      ];
+    }
+  };
+}
+
+/**
  * @description
  * 顔のランドマーク群の中心座標を計算します。
  *
  * 左目または右目の領域にある全ランドマーク座標の平均を取り、目の中心を求めます。
+ *
+ * @param {Array<{x: number, y: number}>} pts - 目を構成するランドマーク座標の配列。
+ * @returns {{x: number, y: number}} 目の中心座標。
  */
 function eyeCenter(pts) {
   const x = pts.reduce((s, p) => s + p.x, 0) / pts.length;
@@ -121,8 +192,19 @@ function eyeCenter(pts) {
  *
  * これにより、異なる2つの顔をスライダーや合成表示で比較しやすくします。
  *
+ * @param {CanvasImageSource} img - 位置合わせの対象となる画像。
+ * @param {{getLeftEye: () => Array<{x: number, y: number}>, getRightEye: () => Array<{x: number, y: number}>}} landmarks - 左右の目のランドマークを取得するオブジェクト。
+ * @param {number} [outW=420] - 出力する Canvas の幅。
+ * @param {number} [outH=520] - 出力する Canvas の高さ。
+ * @param {number} [eyeY=0.38] - 出力 Canvas の高さに対する目の中心位置の比率。
+ * @param {number} [eyeDist=0.42 * outW] - 出力 Canvas 上における両目の目標距離。
+ * @returns {HTMLCanvasElement} 位置合わせ済みの顔画像を描画した Canvas。
+ *
  * @example
- * const alignedCanvas = alignFaceToTemplate(img, detection.landmarks);
+ * const alignedCanvas = alignFaceToTemplate(
+ *   img,
+ *   convertedLandmarks
+ * );
  */
 export function alignFaceToTemplate(img, landmarks, outW = 420, outH = 520, eyeY = 0.38, eyeDist = 0.42 * outW) {
   const leftEyePts = landmarks.getLeftEye();
@@ -159,30 +241,46 @@ export function alignFaceToTemplate(img, landmarks, outW = 420, outH = 520, eyeY
 }
 
 /**
- * @description
- * 画像ファイルから顔のランドマークを検出し、テンプレートへ位置合わせしたCanvasを返します。
+ * 画像ファイルから顔を検出し、基準テンプレートへ位置合わせした Canvas を生成します。
  *
- * 処理の流れ：
- * 1. 必要に応じてface-api.jsのモデルを読み込みます。
- * 2. 選択されたファイルを画像へ変換します。
- * 3. 1つの顔と68点のランドマークを検出します。
- * 4. 顔を基準テンプレートへ位置合わせします。
+ * 顔を検出できない場合は `null` を返します。
  *
- * 顔を検出できなかった場合は`null`を返します。
- *
- * @example
- * const alignedCanvas = await getAlignedFaceCanvasFromFile(file);
+ * @param {File} file - 顔を検出する画像ファイル。
+ * @param {number} [targetW=420] - 出力 Canvas の幅。
+ * @param {number} [targetH=520] - 出力 Canvas の高さ。
+ * @returns {Promise<HTMLCanvasElement|null>} 位置合わせ済みの Canvas、または顔を検出できない場合は `null`。
+ * @throws {Error} MediaPipe の初期化、画像の読み込み、またはランドマークの変換に失敗した場合。
  */
-export async function  getAlignedFaceCanvasFromFile(file, targetW=420, targetH=520) {
-  await loadFaceApiModels();
+export async function getAlignedFaceCanvasFromFile(
+  file,
+  targetW = 420,
+  targetH = 520
+){
+
+  const landmarker = await loadMediaPipeFaceLandmarker();
   const img = await loadImageFromFile(file);
 
-  const det = await faceapi
-    .detectSingleFace(img, TINY_OPTS)
-    .withFaceLandmarks();
-  if (!det) return null;
+  const result = landmarker.detect(img);
 
-  return alignFaceToTemplate(img, det.landmarks, targetW, targetH);
+
+  if (!result.faceLandmarks?.length) {
+    return null;
+  }
+
+
+  const landmarks = convertMediaPipeLandmarks(
+    result.faceLandmarks[0],
+    img.naturalWidth || img.width,
+    img.naturalHeight || img.height
+  );
+
+
+  return alignFaceToTemplate(
+    img,
+    landmarks,
+    targetW,
+    targetH
+  );
 }
 
 /**
@@ -194,6 +292,12 @@ export async function  getAlignedFaceCanvasFromFile(file, targetW=420, targetH=5
  * 大きさになります。
  *
  * 検出または位置合わせに失敗した場合は`null`を返します。
+ *
+ * @param {File} beforeFile - 比較前の顔画像ファイル。
+ * @param {File} afterFile - 比較後の顔画像ファイル。
+ * @param {number} [outW=420] - 出力画像の幅。
+ * @param {number} [outH=520] - 出力画像の高さ。
+ * @returns {Promise<{before: string, after: string, w: number, h: number}|null>} PNG 形式の Data URL と出力サイズを含むオブジェクト、または処理できない場合は `null`。
  *
  * @example
  * const faces = await prepareFacesForSliderAligned(beforeFile, afterFile);

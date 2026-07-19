@@ -38,7 +38,7 @@
 # 画像比較スライダー（顔位置合わせ版）
 
 滑らかなスライダーを使って、**ビフォー／アフター**画像を比較できるWebアプリケーションです。  
-**face-api.js**で顔のランドマークを検出し、顔の回転・拡大縮小・位置を揃えることで、正確で公平な見た目の比較を可能にします。
+[MediaPipe Face Landmarker](https://www.npmjs.com/package/@mediapipe/tasks-vision)で顔のランドマークを検出し、顔の回転・拡大縮小・位置を揃えることで、正確で公平な見た目の比較を可能にします。
 
 ---
 
@@ -60,7 +60,7 @@
 ## 🔧 使用技術
 
 - HTML / CSS / JavaScript
-- [face-api.js](https://github.com/justadudewhohacks/face-api.js)（TinyFaceDetector + FaceLandmark68）
+- [MediaPipe Tasks Vision](https://www.npmjs.com/package/@mediapipe/tasks-vision)（Face Landmarker）
 - Canvas 2D API
 - 開発・公開環境
   - S3：静的ファイル
@@ -79,15 +79,15 @@ imgcomparing-slider/
 ├─ js/
 │  ├─ compare.js          # UIと操作処理
 │  └─ faceUtils.js        # 顔検出と位置合わせのユーティリティ
-└─ models/                # face-api.jsのモデルファイル（ローカル配置）
-   ├─ tiny_face_detector_model-weights_manifest.json
-   ├─ tiny_face_detector_model-shard1
-   ├─ face_landmark_68_model-weights_manifest.json
-   └─ face_landmark_68_model-shard1
+├─ public/
+│  ├─ mediapipe/wasm/     # MediaPipe の WebAssembly 関連ファイル
+│  └─ models/
+│     └─ face_landmarker.task  # Face Landmarker モデルファイル
+└─ package.json
 ```
 
-> `faceUtils.js`では、モデルのパスを`FACE_MODEL_PATH = './models/'`に設定しています。  
-> CDNではなくローカルのモデルファイルを読み込むことで、安定した動作を確保しています。
+> `faceUtils.js`では、WebAssembly 関連ファイルを`/mediapipe/wasm`、モデルファイルを`/models/face_landmarker.task`から読み込みます。
+> `npm run dev`および`npm run build`は、実行前に`@mediapipe/tasks-vision`の WebAssembly ファイルを`public/mediapipe/wasm/`へコピーします。モデルファイルとあわせてローカルから配信することで、CDNに依存せずに動作します。
 
 ---
 
@@ -111,7 +111,7 @@ imgcomparing-slider/
 ## 🧠 仕組み
 
 1. **顔検出**  
-   TinyFaceDetectorが顔を検出し、FaceLandmark68が目・鼻・口などの主要な顔のランドマークを取得します。
+   MediaPipe Face Landmarkerが画像から顔を検出し、目・鼻・口などを含む顔のランドマークを取得します。位置合わせには、左右の目の領域のランドマークを使用します。
 2. **位置合わせ**  
    両目の中心を基準に、回転・拡大縮小・位置を正規化します。  
    2枚の画像を同じCanvasテンプレート（固定の幅・高さ・目の位置）へ描画します。
@@ -120,7 +120,7 @@ imgcomparing-slider/
 
 ### 非同期処理による待ち時間の短縮
 
-顔だけ比較モードでは、face-api.jsによるモデルの読み込み、2枚の画像の読み込み、顔の検出、68点のランドマーク解析、Canvas上での位置合わせが必要です。これらを「比較を開始」が押されてからすべて実行すると、ユーザーは操作を終えた後に解析完了まで待たなければなりません。
+顔だけ比較モードでは、MediaPipe Face Landmarkerの初期化、WebAssembly・モデルファイルの読み込み、2枚の画像の読み込み、顔とランドマークの検出、Canvas上での位置合わせが必要です。これらを「比較を開始」が押されてからすべて実行すると、ユーザーは操作を終えた後に解析完了まで待たなければなりません。
 
 この待ち時間を短縮するため、画像選択から比較開始までを、あえて次のような段階式の操作にしています。
 
@@ -136,7 +136,7 @@ imgcomparing-slider/
 - アフター画像が選択されている
 - 顔だけ比較モードがONになっている
 
-ユーザーがモードを確認して「次へ」と進み、「比較を開始」を押すまでの時間を、face-api.jsの解析時間として活用する設計です。事前処理が先に完了すると、結果は`precomputedFaces`へ保持されます。「比較を開始」が押されたときは保存済みの結果をスライダーへ設定するだけなので、操作完了後に顔解析をまとめて待つ時間を大幅に減らし、すぐに比較へ移れるUXを実現しています。
+ユーザーがモードを確認して「次へ」と進み、「比較を開始」を押すまでの時間を、MediaPipe Face Landmarkerによる解析時間として活用する設計です。事前処理が先に完了すると、結果は`precomputedFaces`へ保持されます。「比較を開始」が押されたときは保存済みの結果をスライダーへ設定するだけなので、操作完了後に顔解析をまとめて待つ時間を大幅に減らし、すぐに比較へ移れるUXを実現しています。
 
 事前処理がまだ完了していない場合や、画像・モードが途中で変更された場合にも対応しています。`preloadingId`を処理ごとのトークンとして使い、古くなった非同期処理の結果を画面へ反映しないようにしています。事前処理が間に合わなかった場合は「比較を開始」の時点で処理を完了させ、顔を検出できなかった場合はエラーを表示します。
 
@@ -144,12 +144,12 @@ imgcomparing-slider/
 
 `faceUtils.js`では、次の処理を`Promise`と`async`／`await`で順番に実行しています。
 
-1. **モデルの読み込み（`loadFaceApiModels()`）**  
-   TinyFaceDetectorとFaceLandmark68Netを非同期で読み込みます。読み込み済みかどうかを`faceApiReady`で記録するため、同じページの利用中にモデルを何度も読み込むことはありません。
+1. **Face Landmarkerの初期化（`loadMediaPipeFaceLandmarker()`）**
+   `FilesetResolver`でMediaPipeのWebAssemblyファイルを読み込み、`FaceLandmarker.createFromOptions()`でモデルを初期化します。初期化済みのインスタンスと進行中のPromiseをキャッシュするため、同じページの利用中に初期化処理を何度も実行しません。
 2. **画像ファイルの読み込み（`loadImageFromFile()`）**  
    `FileReader`で画像をData URLへ変換し、`HTMLImageElement`の読み込みが完了した時点でPromiseを解決します。読み込み途中の画像を顔検出へ渡さないための処理です。
 3. **顔とランドマークの検出（`getAlignedFaceCanvasFromFile()`）**  
-   `detectSingleFace()`と`withFaceLandmarks()`が完了するまで待ち、顔を検出できた場合だけ位置合わせへ進みます。検出できなかった場合は`null`を返します。
+   `landmarker.detect()`で顔のランドマークを検出し、位置合わせに必要な左右の目の座標へ変換します。顔を検出できなかった場合は`null`を返します。
 4. **顔の位置合わせ（`alignFaceToTemplate()`）**  
    左右の目の中心、両目の距離、目を結ぶ線の角度を計算し、Canvasの回転・拡大縮小・移動を使って、顔の向き・大きさ・位置を420×520pxの共通テンプレートへ揃えます。
 5. **2枚の結果の生成（`prepareFacesForSliderAligned()`）**  
