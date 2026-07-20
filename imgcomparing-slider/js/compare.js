@@ -976,6 +976,7 @@ if (contactForm){
     en: {
       // ヘッダーとメニュー
       'header.title': 'Image Compare Slider',
+      'language.label': 'LANGUAGE',
       'menu.materials': 'Comparison Samples',
       'menu.info': 'Guide & Notes',
       'menu.about': 'About the Developer',
@@ -1004,7 +1005,13 @@ if (contactForm){
 
       // 素材
       'materials.title': 'Ready-to-use Comparison Samples',
-      'materials.lead': 'We prepared before/after samples across different themes so you can try the comparison slider right away.',
+      'materials.eyebrow': 'TRY THE SLIDER',
+      'materials.lead': 'Explore themed before/after samples and experience how the slider reveals change at your own pace. Open a category, choose a pair, and start comparing.',
+      'materials.guide.title': 'How to use these samples',
+      'materials.guide.step1': 'Open a category and choose the before/after pair you want to explore.',
+      'materials.guide.step2': 'Save the images, then select each file in the comparison screen.',
+      'materials.guide.step3': 'For face samples, turn on face-only comparison to align the images around the eyes before comparing them.',
+      'materials.guide.note': 'These images are provided as comparison samples. When using photographs of people, make sure you have permission from the photographer and everyone pictured.',
       'materials.category.landscape': 'Landscapes',
       'materials.landscape.city.title': 'Shibuya: Then and Now',
       'materials.landscape.city.before': 'Present-day Shibuya Station area',
@@ -1058,14 +1065,20 @@ if (contactForm){
 
       // 情報
       'info.title': 'Guide & Notes',
+      'info.eyebrow': 'BEFORE YOU COMPARE',
+      'info.lead': 'Here are a few practical tips for a smooth comparison, along with a clear summary of how this site handles your data.',
+      'info.basics.title': 'For a smoother comparison',
+      'info.care.title': 'A few things to keep in mind',
       'info.format': 'Supported formats: JPEG, PNG, WebP',
       'info.size': 'Recommended size: Longest edge within 2000px',
+      'info.face': 'For face-only comparison, use a photo where the face is close to front-facing and the eye area is visible.',
       'info.storage': 'Uploaded images are not stored on the server',
       'info.usage': 'We do not misuse or redistribute your images',
       'info.contact': 'For issues or requests, use "Requests & Bug Reports"',
       
       // プライバシー
       'privacy.title': 'Privacy Policy',
+      'privacy.eyebrow': 'YOUR PRIVACY',
       'privacy.intro': 'This site collects information only to the extent necessary to provide its services.',
 
       'privacy.section.purpose': '1. Purpose of Use',
@@ -1087,10 +1100,20 @@ if (contactForm){
       'privacy.contact.item1': 'For privacy-related inquiries, please contact us via the feedback form.',
 
       // 概要
-      'about.title': 'About the Developer',
-      'about.desc': 'Yuuki, a Tokyo-based junior engineer, created this project as part of his learning journey. He is exploring various web technologies including Java, AWS, and JavaScript, and shares his work as a portfolio.',
-      'about.howto': 'Use Cases',
-      'about.howto.desc': 'This image comparison slider is useful for comparing landscapes, objects, people, faces, and outcomes.',
+      'about.eyebrow': 'ABOUT THIS PROJECT',
+      'about.title': 'About the Developer & This Site',
+      'about.desc': 'This image comparison tool grew from a small learning project with one goal: make before-and-after changes easy to see at a glance.',
+      'about.developer.title': 'About the developer',
+      'about.developer.desc': 'Yuuki is an engineer based in Tokyo, building this project while learning Java, AWS, JavaScript, and related web technologies. It is a portfolio that grows through real releases and ongoing usability improvements.',
+      'about.project.title': 'What this site aims to do',
+      'about.project.desc': 'The experience is designed to stay simple: choose two images and begin comparing. Face-only comparison uses MediaPipe Face Landmarker to align images around the eyes, helping you focus on the change rather than the framing.',
+      'about.howto': 'Useful ways to compare',
+      'about.howto.desc': 'Use the slider whenever you want to examine a change from the same viewpoint: a place, a product, a person, a face, or a piece of work.',
+      'about.usecase.landscape': 'Changes in streetscapes and seasons',
+      'about.usecase.objects': 'Differences in products, clothes, and belongings',
+      'about.usecase.people': 'Growth and style changes',
+      'about.usecase.faces': 'Makeup, expressions, and facial impressions',
+      'about.usecase.results': 'Cleaning, practice, and creative outcomes',
 
       // 問い合わせ
       'contact.title': 'Requests & Bug Reports',
@@ -1108,6 +1131,7 @@ if (contactForm){
     ja: {
       // ヘッダーとメニュー
       'header.title': '画像比較スライダー',
+      'language.label': '言語',
       'menu.materials': '比較用使用素材',
       'menu.info': '利用案内・注意事項',
       'menu.about': '開発者・当サイト紹介',
@@ -1136,7 +1160,13 @@ if (contactForm){
 
       // 素材
       'materials.title': '比較用使用素材',
-      'materials.lead': '当サイトの画像比較スライダーをお試しいただくため、用途別のビフォー／アフター素材をご用意しました。ぜひご活用ください。',
+      'materials.eyebrow': 'TRY THE SLIDER',
+      'materials.lead': '画像比較スライダーの使い心地をすぐに試せるよう、テーマ別のビフォー／アフター素材を用意しています。気になるカテゴリを開き、画像を選んで比較してみてください。',
+      'materials.guide.title': '素材を使って比較するには',
+      'materials.guide.step1': 'カテゴリを開き、比較したいビフォー／アフター画像を選びます。',
+      'materials.guide.step2': '画像を保存するか、画像選択画面でそれぞれのファイルを指定します。',
+      'materials.guide.step3': '顔の素材では「顔だけ比較モード」を有効にすると、目の位置を基準に整列して比較できます。',
+      'materials.guide.note': '画像は比較方法を試すためのサンプルです。人物写真を扱う際は、撮影者や写っている方の許可を確認してください。',
       'materials.category.landscape': '風景画',
       'materials.landscape.city.title': '現在と昔の渋谷の変貌',
       'materials.landscape.city.before': '現在の渋谷駅周辺',
@@ -1190,14 +1220,20 @@ if (contactForm){
 
       // 情報
       'info.title': '利用案内・注意事項',
+      'info.eyebrow': 'BEFORE YOU COMPARE',
+      'info.lead': '画像を気持ちよく、安全に比較していただくための目安と、当サイトのデータの取り扱いをまとめています。',
+      'info.basics.title': '快適に比較するために',
+      'info.care.title': 'ご利用時のお願い',
       'info.format': '対応画像フォーマット：JPEG, PNG, WebP',
       'info.size': '推奨サイズ：長辺2000px以内',
+      'info.face': '顔だけ比較モードでは、顔が正面に近く、目元が見える写真をおすすめします。',
       'info.storage': 'アップロードされた画像はサーバに保存されません',
       'info.usage': '画像の悪用・転載は一切行いません',
       'info.contact': '不具合・ご要望は「要望・バグ報告」よりご連絡ください',
 
       // プライバシー
       'privacy.title': 'プライバシーポリシー',
+      'privacy.eyebrow': 'YOUR PRIVACY',
       'privacy.intro': '当サイトは、サービス提供に必要な範囲で情報を取得します。',
 
       'privacy.section.purpose': '1. 利用目的',
@@ -1219,10 +1255,20 @@ if (contactForm){
       'privacy.contact.item1': 'プライバシーポリシーに関するお問い合わせは「要望・バグ報告」よりご連絡ください。',
 
       // 概要
-      'about.title': '開発者について',
-      'about.desc': '東京都在住の駆け出しエンジニアYuukiが、学習の一環で制作しています。JavaやAWS、JavaScriptなど幅広くWeb技術を学び、ポートフォリオとして公開中です。',
-      'about.howto': '用途概要',
-      'about.howto.desc': 'この画像比較スライダーは主に風景画・対象物・人物像・人物の顔・成果物の比較を行いたい際に役立ちます。',
+      'about.eyebrow': 'ABOUT THIS PROJECT',
+      'about.title': '開発者・当サイト紹介',
+      'about.desc': 'このサイトは、ビフォー／アフター画像の違いを直感的に見比べられる、小さな学習プロジェクトから生まれた画像比較ツールです。',
+      'about.developer.title': '開発者について',
+      'about.developer.desc': '東京都在住のエンジニア Yuuki が、Java・AWS・JavaScriptなどを学ぶ過程で制作しています。実装した機能を実際に公開し、使いやすさを見直しながら育てているポートフォリオです。',
+      'about.project.title': 'このサイトで大切にしていること',
+      'about.project.desc': '難しい操作を増やさず、画像を選ぶだけで比較を始められることを目指しています。顔だけ比較モードでは、MediaPipe Face Landmarker を使って目元を基準に位置を整え、変化に目を向けやすくします。',
+      'about.howto': 'こんな比較に役立ちます',
+      'about.howto.desc': '風景や製品、人物、顔、制作物など、時間や手を加えることで生まれた変化を、同じ視点で確かめたい場面に使えます。',
+      'about.usecase.landscape': '街並みや季節の移り変わり',
+      'about.usecase.objects': '製品・衣類・持ち物の違い',
+      'about.usecase.people': '成長やスタイルの変化',
+      'about.usecase.faces': 'メイクや表情など、顔の印象の比較',
+      'about.usecase.results': '清掃・練習・制作の成果',
       // 問い合わせ
       'contact.title': '要望・バグ報告',
       'contact.email': 'メールアドレス',
@@ -1244,7 +1290,7 @@ if (contactForm){
      * 多言語対応の中核処理（辞書描画と設定の保存）
      * =====================================================
      *
-     * 1. 言語状態：localStorageのlangから開始し、未保存なら英語を使用して、変更後に保存します。
+     * 1. 言語状態：専用の設定キーから開始し、未保存または旧キーのみの場合は日本語を使用して、変更後に保存します。
      * 2. 安全な文字描画：通常はtextContentを使い、HTML用文字を無害化してから改行だけを<br>へ変換します。
      * 3. 本文翻訳：data-i18n要素を対象範囲から探し、.i18n-textやフォーム部品を考慮して描画します。
      * 4. プレースホルダー：data-i18n-placeholderを別に走査し、inputやtextareaへ翻訳を設定します。
@@ -1254,10 +1300,13 @@ if (contactForm){
      *
      * @module InternationalizationCore
      */
+    const LANGUAGE_PREFERENCE_KEY = 'image-compare-slider.language';
+
     let currentLang = (function(){
       try {
-        return localStorage.getItem('lang') || 'en'; }
-        catch(e){ return 'en'; }
+        const savedLang = localStorage.getItem(LANGUAGE_PREFERENCE_KEY);
+        return savedLang === 'en' || savedLang === 'ja' ? savedLang : 'ja'; }
+        catch(e){ return 'ja'; }
       })();
 
     function renderText(node, str) {
@@ -1346,7 +1395,7 @@ if (contactForm){
       }
 
       document.documentElement.setAttribute('lang', lang);
-      try { localStorage.setItem('lang', lang); } catch(e){}
+      try { localStorage.setItem(LANGUAGE_PREFERENCE_KEY, lang); } catch(e){}
       currentLang = lang;
     }
 

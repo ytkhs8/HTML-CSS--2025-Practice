@@ -40,20 +40,22 @@
       }
     </style>
 
-    <!-- favicon -->
-     <link rel="icon" href="favicon/favicon.ico" sizes="16x16" type="image/x-icon">
-     <link rel="icon" href="favicon/favicon-32x32.png" sizes="32x32" type="image/png">
-     <link rel="icon" href="favicon/android-icon-48x48.png" sizes="48x48" type="image/png">
-     <link rel="icon" href="favicon/favicon-96x96.png" sizes="96x96" type="image/png">
-     <link rel="apple-touch-icon" href="favicon/apple-icon-180x180.png" sizes="180x180">
-     <link rel="apple-touch-icon" href="favicon/apple-icon.png" sizes="192x192">
+    <!-- Favicon and home screen icons -->
+    <link rel="icon" href="/favicon/favicon.ico" sizes="any">
+    <link rel="icon" type="image/png" href="/favicon/favicon-16x16.png" sizes="16x16">
+    <link rel="icon" type="image/png" href="/favicon/favicon-32x32.png" sizes="32x32">
+    <link rel="icon" type="image/png" href="/favicon/favicon-48x48.png" sizes="48x48">
+    <link rel="icon" type="image/png" href="/favicon/favicon-96x96.png" sizes="96x96">
+    <link rel="apple-touch-icon" href="/favicon/apple-touch-icon.png" sizes="180x180">
+    <link rel="manifest" href="/favicon/site.webmanifest">
+    <meta name="theme-color" content="#f8fbfc">
 </head>
 
 <body>
     <header class="header">
         <div class="header-left">
-            <img src="images/A_flat-style_digital_illustration_features_an_icon.png" alt="Image Compare Icon" class="app-icon">
-            <div class="app-title" data-i18n="header.title">Image Compare</div>
+            <img src="images/image-compare-slider-icon-liquid-glass.png" alt="画像比較スライダーのアイコン" class="app-icon">
+            <div class="app-title" data-i18n="header.title">画像比較スライダー</div>
         </div>
         <div class="header-right">
           <!-- Language dropdown (Tailwind Plus Elements: el-dropdown / el-menu) -->
@@ -67,7 +69,7 @@
           >
             <!-- Desktop / Tablet layout -->
             <i class="bi bi-globe2 lang-icon-desktop hidden sm:inline text-xl" aria-hidden="true"></i>
-            <span class="lang-label hidden sm:inline">LANGUAGE</span>
+            <span class="lang-label hidden sm:inline" data-i18n="language.label">言語</span>
             <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"
               class="hidden sm:inline -mr-1 h-5 w-5 text-gray-500">
               <path fill-rule="evenodd"
@@ -78,7 +80,7 @@
             <!-- Mobile layout -->
             <div class="flex flex-col items-center justify-center sm:hidden">
               <i class="bi bi-translate lang-icon-mobile" aria-hidden="true"></i>
-              <span class="lang-mobile-label">Language</span>
+              <span class="lang-mobile-label" data-i18n="language.label">言語</span>
             </div>
           </button>
 
@@ -200,12 +202,25 @@
             <div id="face-error" style="display: none;color:crimson;margin-top:8px;" data-i18n="msg.noFace">顔が見つかりませんでした。通常比較になります。</div>
         </section>
         <section id="materials" class="page">
-            <h2 data-i18n="materials.title">比較用使用素材</h2>
-            <p data-i18n="materials.lead">
-                当サイトの画像比較スライダーを皆様に体験して頂く目的で様々な用途の素材をこちらで用意しました。是非素材をダウンロードして当サイトの画像比較をお楽しみください。
-            </p>
+            <div class="page-intro">
+              <p class="page-eyebrow" data-i18n="materials.eyebrow">TRY THE SLIDER</p>
+              <h2 data-i18n="materials.title">比較用使用素材</h2>
+              <p class="page-lead" data-i18n="materials.lead">
+                画像比較スライダーの使い心地をすぐに試せるよう、テーマ別のビフォー／アフター素材を用意しています。気になるカテゴリを開き、画像を選んで比較してみてください。
+              </p>
+            </div>
 
-            <div class="materials-section">
+            <aside class="materials-guide" aria-labelledby="materials-guide-title">
+              <h3 id="materials-guide-title" data-i18n="materials.guide.title">素材を使って比較するには</h3>
+              <ol class="guide-steps">
+                <li data-i18n="materials.guide.step1">カテゴリを開き、比較したいビフォー／アフター画像を選びます。</li>
+                <li data-i18n="materials.guide.step2">画像を保存するか、画像選択画面でそれぞれのファイルを指定します。</li>
+                <li data-i18n="materials.guide.step3">顔の素材では「顔だけ比較モード」を有効にすると、目の位置を基準に整列して比較できます。</li>
+              </ol>
+              <p class="guide-note" data-i18n="materials.guide.note">画像は比較方法を試すためのサンプルです。人物写真を扱う際は、撮影者や写っている方の許可を確認してください。</p>
+            </aside>
+
+            <div class="materials-section materials-section-landscape">
             <button class="acc-toggle" aria-expanded="false">
                 <span data-i18n="materials.category.landscape">風景画</span>
                 <svg class="icon-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5z"></path></svg>
@@ -249,7 +264,7 @@
               </div>
             </div>
 
-            <div class="materials-section">
+            <div class="materials-section materials-section-objects">
             <button class="acc-toggle" aria-expanded="false">
               <span data-i18n="materials.category.objects">対象物</span>
               <svg class="icon-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5z"></path></svg>
@@ -293,7 +308,7 @@
             </div>
             </div>
 
-            <div class="materials-section">
+            <div class="materials-section materials-section-people">
             <button class="acc-toggle" aria-expanded="false">
               <span data-i18n="materials.category.people">人物像</span>
               <svg class="icon-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5z"></path></svg>
@@ -337,7 +352,7 @@
             </div>
             </div>
 
-            <div class="materials-section">
+            <div class="materials-section materials-section-faces">
             <button class="acc-toggle" aria-expanded="false">
               <span data-i18n="materials.category.faces">人物の顔</span>
               <svg class="icon-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5z"></path></svg>
@@ -381,7 +396,7 @@
             </div>
             </div>
 
-            <div class="materials-section">
+            <div class="materials-section materials-section-results">
             <button class="acc-toggle" aria-expanded="false">
               <span data-i18n="materials.category.results">成果物</span>
               <svg class="icon-arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10l5 5 5-5z"></path></svg>
@@ -426,54 +441,99 @@
             </div>
         </section>
         <section id="info" class="page">
-            <h2 data-i18n="info.title">利用案内・注意事項</h2>
-            <ul>
-                <li data-i18n="info.format">対応画像フォーマット：JPEG, PNG, WebP</li>
-                <li data-i18n="info.size">推奨サイズ：長辺2000px以内</li>
-                <li data-i18n="info.storage">アップロードされた画像はサーバに保存されません</li>
-                <li data-i18n="info.usage">画像の悪用・転載は一切行いません</li>
-                <li data-i18n="info.contact">不具合・ご要望は「要望・バグ報告」よりご連絡ください</li>
-                <li data-i18n="info.privacypolicy">
-                  <hr>
-                  <h2 data-i18n="privacy.title">プライバシーポリシー</h2>
-                  <p data-i18n="privacy.intro">当サイトは、サービス提供に必要な範囲で情報を取得します。</p>
+            <div class="page-intro">
+              <p class="page-eyebrow" data-i18n="info.eyebrow">BEFORE YOU COMPARE</p>
+              <h2 data-i18n="info.title">利用案内・注意事項</h2>
+              <p class="page-lead" data-i18n="info.lead">画像を気持ちよく、安全に比較していただくための目安と、当サイトのデータの取り扱いをまとめています。</p>
+            </div>
 
+            <div class="info-grid">
+              <article class="info-card">
+                <h3 data-i18n="info.basics.title">快適に比較するために</h3>
+                <ul class="check-list">
+                  <li data-i18n="info.format">対応画像フォーマット：JPEG, PNG, WebP</li>
+                  <li data-i18n="info.size">推奨サイズ：長辺2000px以内</li>
+                  <li data-i18n="info.face">顔だけ比較モードでは、顔が正面に近く、目元が見える写真をおすすめします。</li>
+                </ul>
+              </article>
+              <article class="info-card info-card-accent">
+                <h3 data-i18n="info.care.title">ご利用時のお願い</h3>
+                <ul class="check-list">
+                  <li data-i18n="info.storage">アップロードされた画像はサーバに保存されません</li>
+                  <li data-i18n="info.usage">画像の悪用・転載は一切行いません</li>
+                  <li data-i18n="info.contact">不具合・ご要望は「要望・バグ報告」よりご連絡ください</li>
+                </ul>
+              </article>
+            </div>
+
+            <section class="privacy-card" aria-labelledby="privacy-heading">
+              <div class="privacy-card-heading">
+                <p class="page-eyebrow" data-i18n="privacy.eyebrow">YOUR PRIVACY</p>
+                <h2 id="privacy-heading" data-i18n="privacy.title">プライバシーポリシー</h2>
+                <p data-i18n="privacy.intro">当サイトは、サービス提供に必要な範囲で情報を取得します。</p>
+              </div>
+              <div class="privacy-grid">
+                <article class="privacy-item">
                   <h3 data-i18n="privacy.section.purpose">1. 利用目的</h3>
                   <ul>
                     <li data-i18n="privacy.purpose.item1">画像比較機能の提供</li>
                     <li data-i18n="privacy.purpose.item2">サービス改善・不正利用の防止</li>
                   </ul>
-
-                  <p class="i18n-text" data-i18n="privacy.storage.title"></p>
+                </article>
+                <article class="privacy-item">
+                  <h3 data-i18n="privacy.section.storage">2. 保存・削除</h3>
                   <ul>
-                    <li class="i18n-text" data-i18n="privacy.storage.item1"></li>
-                    <li class="i18n-text" data-i18n="privacy.storage.item2"></li>
+                    <li data-i18n="privacy.storage.item1">画像は比較処理のために一時的に利用し、処理後は速やかに削除します。</li>
+                    <li data-i18n="privacy.storage.item2">サーバには一切保存されません。</li>
                   </ul>
-
-                  <p class="i18n-text" data-i18n="privacy.thirdparty.title"></p>
+                </article>
+                <article class="privacy-item">
+                  <h3 data-i18n="privacy.section.thirdparty">3. 第三者提供</h3>
                   <ul>
-                    <li class="i18n-text" data-i18n="privacy.thirdparty.item1"></li>
+                    <li data-i18n="privacy.thirdparty.item1">法令に基づく場合を除き、第三者に提供することはありません。</li>
                   </ul>
-
-                  <p class="i18n-text" data-i18n="privacy.external.title"></p>
+                </article>
+                <article class="privacy-item">
+                  <h3 data-i18n="privacy.section.external">4. 外部サービス</h3>
                   <ul>
-                    <li class="i18n-text" data-i18n="privacy.external.item1"></li>
-                    <li class="i18n-text" data-i18n="privacy.external.item2"></li>
+                    <li data-i18n="privacy.external.item1">CDN等の外部サービスを利用する場合があります。</li>
+                    <li data-i18n="privacy.external.item2">顔ランドマークの検出と画像処理は、MediaPipe Face Landmarkerを用いて利用者のブラウザ内で行われます。</li>
                   </ul>
-
-                  <p class="i18n-text" data-i18n="privacy.contact.title"></p>
-                  <ul>
-                    <li class="i18n-text" data-i18n="privacy.contact.item1"></li>
-                  </ul>
-                </li>
-            </ul>
+                </article>
+                <article class="privacy-item privacy-item-wide">
+                  <h3 data-i18n="privacy.section.contact">5. お問い合わせ</h3>
+                  <p data-i18n="privacy.contact.item1">プライバシーポリシーに関するお問い合わせは「要望・バグ報告」よりご連絡ください。</p>
+                </article>
+              </div>
+            </section>
         </section>
         <section id="about" class="page">
-            <h2 data-i18n="about.title">開発者について</h2>
-            <p data-i18n="about.desc">東京都在住の駆け出しエンジニアYuukiが、学習の一環で制作しています。<br>
-            JavaやAWS、JavaScriptなど幅広くWeb技術を学び、ポートフォリオとして公開中です。</p>
-            <h2 data-i18n="about.howto">用途概要</h2>
-            <p data-i18n="about.howto.desc">この画像比較スライダーは主に風景画・対象物・人物像・人物の顔・成果物の比較を行いたい際に役立ちます。</p>
+            <div class="page-intro">
+              <p class="page-eyebrow" data-i18n="about.eyebrow">ABOUT THIS PROJECT</p>
+              <h2 data-i18n="about.title">開発者・当サイト紹介</h2>
+              <p class="page-lead" data-i18n="about.desc">このサイトは、ビフォー／アフター画像の違いを直感的に見比べられる、小さな学習プロジェクトから生まれた画像比較ツールです。</p>
+            </div>
+            <div class="about-grid">
+              <article class="about-card">
+                <h3 data-i18n="about.developer.title">開発者について</h3>
+                <p data-i18n="about.developer.desc">東京都在住のエンジニア Yuuki が、Java・AWS・JavaScriptなどを学ぶ過程で制作しています。実装した機能を実際に公開し、使いやすさを見直しながら育てているポートフォリオです。</p>
+              </article>
+              <article class="about-card">
+                <h3 data-i18n="about.project.title">このサイトで大切にしていること</h3>
+                <p data-i18n="about.project.desc">難しい操作を増やさず、画像を選ぶだけで比較を始められることを目指しています。顔だけ比較モードでは、MediaPipe Face Landmarker を使って目元を基準に位置を整え、変化に目を向けやすくします。</p>
+              </article>
+            </div>
+            <section class="usecase-section" aria-labelledby="usecase-heading">
+              <h3 id="usecase-heading" data-i18n="about.howto">こんな比較に役立ちます</h3>
+              <p data-i18n="about.howto.desc">風景や製品、人物、顔、制作物など、時間や手を加えることで生まれた変化を、同じ視点で確かめたい場面に使えます。</p>
+              <ul class="usecase-list">
+                <li data-i18n="about.usecase.landscape">街並みや季節の移り変わり</li>
+                <li data-i18n="about.usecase.objects">製品・衣類・持ち物の違い</li>
+                <li data-i18n="about.usecase.people">成長やスタイルの変化</li>
+                <li data-i18n="about.usecase.faces">メイクや表情など、顔の印象の比較</li>
+                <li data-i18n="about.usecase.results">清掃・練習・制作の成果</li>
+              </ul>
+            </section>
         </section>
         <section id="contact" class="page">
             <h2 data-i18n="contact.title">要望・バグ報告</h2>
