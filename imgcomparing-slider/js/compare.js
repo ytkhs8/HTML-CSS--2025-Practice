@@ -1,6 +1,8 @@
 import {
   prepareFacesForSliderAligned
 } from './faceUtils.js';
+import lightAppIconUrl from '../images/image-compare-slider-icon-liquid-glass.png';
+import darkAppIconUrl from '../images/image-compare-slider-icon-liquid-glass-dark.png';
 
 /**
  * ============================================
@@ -28,6 +30,61 @@ import {
 const hamburgerBtn = document.getElementById('hamburger-btn');
 const sideMenu = document.getElementById('side-menu');
 const menuOverlay = document.getElementById('menu-overlay');
+const sideMenuCloseBtn = document.getElementById('side-menu-close');
+const themeToggle = document.getElementById('theme-toggle');
+let menuTriggerElement = null;
+
+/**
+ * 表示テーマを切り替え、次回以降も同じ設定を利用します。
+ * 保存済みの設定がない初回だけは端末の配色設定に合わせます。
+ *
+ * @param {'light'|'dark'} theme - 適用するテーマ。
+ * @returns {void}
+ */
+function applyTheme(theme) {
+  const isDark = theme === 'dark';
+  const isEnglish = document.documentElement.lang === 'en';
+  const toggleLabel = isEnglish
+    ? (isDark ? 'Switch to light mode' : 'Switch to dark mode')
+    : (isDark ? 'ライトモードに切り替える' : 'ダークモードに切り替える');
+  document.documentElement.dataset.theme = isDark ? 'dark' : 'light';
+  document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
+
+  if (themeToggle) {
+    themeToggle.setAttribute('aria-pressed', String(isDark));
+    themeToggle.setAttribute('aria-label', toggleLabel);
+    themeToggle.setAttribute('title', toggleLabel);
+  }
+
+  const themeColor = document.querySelector('meta[name="theme-color"]');
+  if (themeColor) themeColor.setAttribute('content', isDark ? '#101a2b' : '#eaf6fc');
+
+  const appIcon = document.getElementById('app-icon');
+  if (appIcon) appIcon.src = isDark ? darkAppIconUrl : lightAppIconUrl;
+
+  const faviconRoot = isDark ? '/favicon/dark' : '/favicon';
+  const faviconPaths = {
+    'favicon-ico': `${faviconRoot}/favicon.ico`,
+    'favicon-16': `${faviconRoot}/favicon-16x16.png`,
+    'favicon-32': `${faviconRoot}/favicon-32x32.png`,
+    'favicon-48': `${faviconRoot}/favicon-48x48.png`,
+    'favicon-96': `${faviconRoot}/favicon-96x96.png`,
+    'apple-touch-icon': `${faviconRoot}/apple-touch-icon.png`,
+    'site-manifest': `${faviconRoot}/site${isDark ? '-dark' : ''}.webmanifest`
+  };
+  Object.entries(faviconPaths).forEach(([id, href]) => {
+    const link = document.getElementById(id);
+    if (link) link.setAttribute('href', href);
+  });
+
+  try { localStorage.setItem('image-compare-slider.theme', isDark ? 'dark' : 'light'); } catch (_) {}
+}
+
+const initialTheme = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
+applyTheme(initialTheme);
+themeToggle?.addEventListener('click', () => {
+  applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
+});
 function setLangDropdownEnabled(enabled) {
   const dropdown = document.getElementById('lang-dropdown');
   const btn = document.getElementById('lang-menu-btn');
@@ -234,27 +291,48 @@ function initLangDropdownClick() {
  * @module SideNavigationControls
  */
 function openMenu(){
+  if (!hamburgerBtn || !sideMenu || !menuOverlay) return;
+
+  menuTriggerElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
   sideMenu.classList.add('open');
+  sideMenu.removeAttribute('inert');
+  sideMenu.setAttribute('aria-hidden', 'false');
   menuOverlay.classList.add('active');
+  menuOverlay.setAttribute('aria-hidden', 'false');
   hamburgerBtn.classList.add('is-open');
   hamburgerBtn.setAttribute('aria-expanded', 'true');
   document.body.classList.add('menu-open');
   setLangDropdownEnabled(false);
+
+  sideMenuCloseBtn?.focus({ preventScroll: true });
 }
 function closeMenu(){
+  if (!hamburgerBtn || !sideMenu || !menuOverlay) return;
+
+  const wasOpen = sideMenu.classList.contains('open');
   sideMenu.classList.remove('open');
+  sideMenu.setAttribute('inert', '');
+  sideMenu.setAttribute('aria-hidden', 'true');
   menuOverlay.classList.remove('active');
+  menuOverlay.setAttribute('aria-hidden', 'true');
   hamburgerBtn.classList.remove('is-open');
   hamburgerBtn.setAttribute('aria-expanded', 'false');
   document.body.classList.remove('menu-open');
   setLangDropdownEnabled(true);
+
+  if (wasOpen && menuTriggerElement?.isConnected) {
+    menuTriggerElement.focus({ preventScroll: true });
+  }
+  menuTriggerElement = null;
 }
 function toggleMenu(){
+  if (!sideMenu) return;
   if (sideMenu.classList.contains('open')) closeMenu();
   else openMenu();
 }
 hamburgerBtn?.addEventListener('click', toggleMenu);
 menuOverlay?.addEventListener('click', closeMenu);
+sideMenuCloseBtn?.addEventListener('click', closeMenu);
 
 /**
  * ============================================
@@ -322,7 +400,8 @@ document.addEventListener('keydown', (e) => {
   if (e.key !== 'Escape') return;
 
   // 1) モーダルとして優先し、最初にサイドメニューを閉じます
-  if (sideMenu.classList.contains('open')) {
+  if (sideMenu?.classList.contains('open')) {
+    e.preventDefault();
     closeMenu();
     return;
   }
@@ -1395,6 +1474,7 @@ if (contactForm){
       }
 
       document.documentElement.setAttribute('lang', lang);
+      applyTheme(document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light');
       try { localStorage.setItem(LANGUAGE_PREFERENCE_KEY, lang); } catch(e){}
       currentLang = lang;
     }

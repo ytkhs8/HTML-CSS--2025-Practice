@@ -5,6 +5,17 @@
     <title>Image Compare - 画像比較スライダー</title>
     <meta name="description" content="画像比較スライダーのページです。" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      try {
+        const savedTheme = localStorage.getItem('image-compare-slider.theme');
+        const theme = savedTheme === 'light' || savedTheme === 'dark'
+          ? savedTheme
+          : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        document.documentElement.dataset.theme = theme;
+      } catch (_) {
+        document.documentElement.dataset.theme = 'light';
+      }
+    </script>
 
     <!-- Bootstrap Icons (self-hosted) -->
     <link rel="stylesheet" href="css/vendor/bootstrap-icons/bootstrap-icons.min.css" />
@@ -41,20 +52,20 @@
     </style>
 
     <!-- Favicon and home screen icons -->
-    <link rel="icon" href="/favicon/favicon.ico" sizes="any">
-    <link rel="icon" type="image/png" href="/favicon/favicon-16x16.png" sizes="16x16">
-    <link rel="icon" type="image/png" href="/favicon/favicon-32x32.png" sizes="32x32">
-    <link rel="icon" type="image/png" href="/favicon/favicon-48x48.png" sizes="48x48">
-    <link rel="icon" type="image/png" href="/favicon/favicon-96x96.png" sizes="96x96">
-    <link rel="apple-touch-icon" href="/favicon/apple-touch-icon.png" sizes="180x180">
-    <link rel="manifest" href="/favicon/site.webmanifest">
-    <meta name="theme-color" content="#f8fbfc">
+    <link id="favicon-ico" rel="icon" href="/favicon/favicon.ico" sizes="any">
+    <link id="favicon-16" rel="icon" type="image/png" href="/favicon/favicon-16x16.png" sizes="16x16">
+    <link id="favicon-32" rel="icon" type="image/png" href="/favicon/favicon-32x32.png" sizes="32x32">
+    <link id="favicon-48" rel="icon" type="image/png" href="/favicon/favicon-48x48.png" sizes="48x48">
+    <link id="favicon-96" rel="icon" type="image/png" href="/favicon/favicon-96x96.png" sizes="96x96">
+    <link id="apple-touch-icon" rel="apple-touch-icon" href="/favicon/apple-touch-icon.png" sizes="180x180">
+    <link id="site-manifest" rel="manifest" href="/favicon/site.webmanifest">
+    <meta name="theme-color" content="#eaf6fc">
 </head>
 
 <body>
     <header class="header">
         <div class="header-left">
-            <img src="images/image-compare-slider-icon-liquid-glass.png" alt="画像比較スライダーのアイコン" class="app-icon">
+            <img id="app-icon" src="images/image-compare-slider-icon-liquid-glass.png" alt="画像比較スライダーのアイコン" class="app-icon">
             <div class="app-title" data-i18n="header.title">画像比較スライダー</div>
         </div>
         <div class="header-right">
@@ -116,6 +127,11 @@
           </el-menu>
           </el-dropdown>
 
+          <button class="theme-toggle" id="theme-toggle" type="button" aria-pressed="false" aria-label="ダークモードに切り替える">
+            <i class="bi bi-sun-fill theme-icon theme-icon-sun" aria-hidden="true"></i>
+            <i class="bi bi-moon-stars-fill theme-icon theme-icon-moon" aria-hidden="true"></i>
+          </button>
+
           <!-- Hamburger Menu Button -->
           <button class="hamburger" id="hamburger-btn" aria-label="メニューを開く" aria-controls="side-menu" aria-expanded="false">
               <span></span>
@@ -123,16 +139,24 @@
               <span></span>
           </button>
         </div>
-        <nav class="side-menu" id="side-menu">
-            <ul>
-                <li><a href="#" data-page="materials" data-i18n="menu.materials">比較用使用素材</a></li>
-                <li><a href="#" data-page="info" data-i18n="menu.info">利用案内・注意事項</a></li>
-                <li><a href="#" data-page="about" data-i18n="menu.about">開発者・当サイト紹介</a></li>
-                <li><a href="#" data-page="contact" data-i18n="menu.contact">要望・バグ報告</a></li>
-            </ul>
-        </nav>
-        <div class="overlay" id="menu-overlay"></div>
     </header>
+
+    <!--
+      ヘッダーの backdrop-filter / overflow に影響されないよう、メニューは
+      body 直下のビューポートレイヤーとして配置します。
+    -->
+    <div class="overlay" id="menu-overlay" aria-hidden="true"></div>
+    <nav class="side-menu" id="side-menu" aria-label="サイトメニュー" aria-hidden="true" inert>
+        <button class="side-menu-close" id="side-menu-close" type="button" aria-label="メニューを閉じる">
+            <span aria-hidden="true"></span>
+        </button>
+        <ul>
+            <li><a href="#" data-page="materials" data-i18n="menu.materials">比較用使用素材</a></li>
+            <li><a href="#" data-page="info" data-i18n="menu.info">利用案内・注意事項</a></li>
+            <li><a href="#" data-page="about" data-i18n="menu.about">開発者・当サイト紹介</a></li>
+            <li><a href="#" data-page="contact" data-i18n="menu.contact">要望・バグ報告</a></li>
+        </ul>
+    </nav>
 
     <main>
         <section id="home" class="page active">
@@ -552,7 +576,6 @@
                   aria-invalid="false"
                   required
                 >
-                <div class="field-hint i18n-text" data-i18n="contact.placeholder.email" aria-hidden="true">メールアドレス</div>
                 <p class="form-error" id="email-error" aria-live="polite"></p>
             </div>
 
@@ -570,7 +593,6 @@
                   aria-invalid="false"
                   required
                 >
-                <div class="field-hint i18n-text" data-i18n="contact.placeholder.subject" aria-hidden="true">要望や不具合の件名を入力</div>
                 <p class="form-error" id="subject-error" aria-live="polite"></p>
             </div>
 
