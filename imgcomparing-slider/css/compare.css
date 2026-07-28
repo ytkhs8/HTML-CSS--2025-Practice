@@ -615,7 +615,7 @@ body::after {
     padding: 10px 8px 18px;
   }
   .slider-handle {
-    width: 38px;
+    width: 52px;
   }
   .slider-handle::after {
     width: 28px;
@@ -1344,6 +1344,8 @@ main, .page { scroll-margin-top: var(--anchor-offset); }
   background: var(--color-surface-slider);
   box-shadow: 0 8px 20px rgba(31, 94, 151, 0.14), inset 0 1px 0 var(--color-glass-highlight);
   isolation: isolate;
+  /* 縦方向のページスクロールを残しつつ、横ドラッグをスライダー操作へ渡します。 */
+  touch-action: pan-y;
 }
 
 /* === ビフォー／アフターのラベル（:root[lang]による多言語連携） === */
@@ -1396,6 +1398,11 @@ main, .page { scroll-margin-top: var(--anchor-offset); }
   height: 100%;
   overflow: hidden;
   transition: width var(--duration-fast) var(--ease-standard);
+  will-change: width;
+}
+.compare-slider.is-dragging .img-overlay {
+  /* ポインター追従中はrequestAnimationFrameで描画するため、遅延を生む補間を止めます。 */
+  transition: none;
 }
 .img-overlay img {
   width: 100%;
@@ -1404,7 +1411,32 @@ main, .page { scroll-margin-top: var(--anchor-offset); }
   object-position: right center;
 }
 
-/* スライダーのハンドル */
+/* ネイティブrangeを透明な操作層として画像全体へ重ねます。 */
+.slider-range-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.slider-range {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: ew-resize;
+  touch-action: pan-y;
+}
+
+/* rangeが操作を担い、Liquid Glassハンドルは表示だけを担当します。 */
 .slider-handle {
   position: absolute;
   top: 0;
@@ -1416,12 +1448,12 @@ main, .page { scroll-margin-top: var(--anchor-offset); }
   border: 0;
   border-radius: 0;
   background: transparent;
-  cursor: ew-resize;
   box-shadow: none;
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 10;
+  pointer-events: none;
   transition: transform var(--duration-standard) var(--ease-glass);
 }
 .slider-handle::before {
@@ -1457,6 +1489,11 @@ main, .page { scroll-margin-top: var(--anchor-offset); }
   line-height: 1;
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.76);
   transform: translate(-50%, -50%);
+}
+
+.slider-range:focus-visible + .slider-handle::after {
+  outline: 3px solid var(--color-brand);
+  outline-offset: 4px;
 }
 
 /* === 問い合わせフォーム（余裕があり操作しやすい表示） === */

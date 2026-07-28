@@ -219,7 +219,19 @@
                     <div class="img-overlay">
                         <img id="img-after" src="" alt="After Image">
                     </div>
-                    <div class="slider-handle" id="slider-handle"></div>
+                    <label class="slider-range-label" for="slider-range" data-i18n="slider.control.label">
+                        ビフォー画像とアフター画像の比較位置
+                    </label>
+                    <input
+                        class="slider-range"
+                        id="slider-range"
+                        type="range"
+                        min="0"
+                        max="100"
+                        step="0.1"
+                        value="50"
+                    >
+                    <div class="slider-handle" id="slider-handle" aria-hidden="true"></div>
                 </div>
             </div>
             <div id="face-loading" style="display: none;" data-i18n="msg.loading">顔検出モデル読み込み中...</div>

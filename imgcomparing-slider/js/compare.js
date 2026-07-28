@@ -454,6 +454,7 @@ const imgBefore = document.getElementById('img-before');
 const imgAfter = document.getElementById('img-after');
 const overlayDiv = document.querySelector('.img-overlay');
 const sliderHandle = document.getElementById('slider-handle');
+const sliderRange = document.getElementById('slider-range');
 const sliderContainer = document.getElementById('slider-container');
 const resetBtn = document.getElementById('reset-btn');
 const faceCheckbox = document.getElementById('face-only');
@@ -543,6 +544,34 @@ function setGuide(key, fallback){
 }
 let beforeLoaded = false, afterLoaded = false;
 
+/**
+ * 比較画像の読み込みとデコードが終わるまで待機します。
+ *
+ * 画像を表示する前にデコードを済ませることで、最初のドラッグ操作中に
+ * ブラウザが画像の描画準備を始めることによる引っ掛かりを抑えます。
+ *
+ * @param {HTMLImageElement} image - 比較スライダーに表示する画像要素。
+ * @returns {Promise<void>} 画像が表示可能になった時点で解決するPromise。
+ */
+async function prepareSliderImage(image) {
+  if (!image?.src) return;
+
+  if (!image.complete) {
+    await new Promise((resolve) => {
+      image.addEventListener('load', resolve, { once: true });
+      image.addEventListener('error', resolve, { once: true });
+    });
+  }
+
+  if (typeof image.decode === 'function') {
+    try {
+      await image.decode();
+    } catch (_) {
+      // 画像エラー時も比較画面は表示し、ブラウザ標準の表示処理へ委ねます。
+    }
+  }
+}
+
 function resetSlider() {
   beforeInput.value = '';
   afterInput.value = '';
@@ -550,6 +579,7 @@ function resetSlider() {
   imgAfter.src = '';
   overlayDiv.style.width = '50%';
   sliderHandle.style.left = '50%';
+  sliderRange.value = '50';
   sliderContainer.style.display = 'none';
   const halfImg = document.getElementById('half-face-img');
   const halfWrap = document.getElementById('half-face-result');
@@ -692,23 +722,45 @@ if (startBtn){
       console.error(e);
       faceError.style.display = 'block';
     }
+    await Promise.all([
+      prepareSliderImage(imgBefore),
+      prepareSliderImage(imgAfter)
+    ]);
+
     sliderContainer.style.display = 'block';
     const halfWrap = document.getElementById('half-face-result');
     if (halfWrap) halfWrap.style.display = 'none';
     overlayDiv.style.width = '50%';
     sliderHandle.style.left = '50%';
-    setTimeout(() => {
+    sliderRange.value = '50';
+    sliderPercent = 50;
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    prepareSliderLayout();
+    requestAnimationFrame(() => {
       const y = sliderContainer.getBoundingClientRect().top + window.scrollY - 90;
       window.scrollTo({ top: y, behavior: 'smooth' });
-    }, 0);
+    });
   });
 }
 updateWizardUI();
 const compareSlider = document.querySelector('.compare-slider');
 let sliderPercent = 50;
 let sliderDragging = false;
-let sliderRect = null;
 let sliderRafPending = false;
+let activeSliderPointerId = null;
+
+/**
+ * 表示直後にスライダーのレイアウト計算を完了させます。
+ *
+ * 最初の操作より前に描画領域を確定し、操作開始時のレイアウト計算による
+ * 引っ掛かりを抑えます。
+ *
+ * @returns {void}
+ */
+function prepareSliderLayout() {
+  if (!compareSlider) return;
+  compareSlider.getBoundingClientRect();
+}
 
 /**
  * スライダーの見た目（ハンドル位置とオーバーレイ幅）を更新します。
@@ -720,11 +772,14 @@ function updateSliderDom() {
   sliderRafPending = false;
   overlayDiv.style.width = (100 - sliderPercent) + '%';
   sliderHandle.style.left = sliderPercent + '%';
+  if (Number(sliderRange.value) !== sliderPercent) {
+    sliderRange.value = String(sliderPercent);
+  }
 }
 
 /**
  * 次のアニメーションフレームでスライダーのDOM更新を予約します。
- * ポインターイベントごとの不要なレイアウト計算と再描画を防ぎます。
+ * rangeのinputイベントごとの不要な再描画を防ぎます。
  *
  * @returns {void}
  */
@@ -735,28 +790,67 @@ function scheduleSliderUpdate() {
 }
 
 /**
- * clientX座標を、スライダー左端を基準とした0〜100%の位置へ変換します。
- *
- * @param {number} clientX - ポインターのクライアントX座標。
- * @returns {number} 0〜100の範囲に収めた位置の割合。
- */
-function clientXToPercent(clientX) {
-  if (!sliderRect) return sliderPercent;
-  const rawX = clientX - sliderRect.left;
-  const clamped = Math.max(0, Math.min(rawX, sliderRect.width));
-  return (clamped / sliderRect.width) * 100;
-}
-
-/**
- * ドラッグ終了時に共通して行う後処理です。
- * ドラッグ中のフラグを解除し、カーソルを元へ戻します。
+ * rangeの値をLiquid Glassハンドルと画像の表示へ反映します。
  *
  * @returns {void}
  */
-function endSliderDrag() {
-  if (!sliderDragging) return;
+function syncSliderFromRange() {
+  const nextPercent = Number(sliderRange.value);
+  if (!Number.isFinite(nextPercent)) return;
+  sliderPercent = Math.max(0, Math.min(nextPercent, 100));
+  scheduleSliderUpdate();
+}
+
+/**
+ * rangeのポインター操作開始時に、描画用の操作中状態を設定します。
+ *
+ * @param {PointerEvent} e - range上で開始したポインターイベント。
+ * @returns {void}
+ */
+function startSliderDrag(e) {
+  if (sliderDragging || !e.isPrimary || (e.pointerType === 'mouse' && e.button !== 0)) return;
+  sliderDragging = true;
+  activeSliderPointerId = e.pointerId;
+  compareSlider.classList.add('is-dragging');
+  document.body.style.cursor = 'ew-resize';
+
+  if (sliderRange.setPointerCapture) {
+    sliderRange.setPointerCapture(e.pointerId);
+  }
+}
+
+/**
+ * rangeのポインター操作終了時に共通して行う後処理です。
+ *
+ * @param {PointerEvent} e - 終了、中止、または捕捉解除を通知するイベント。
+ * @returns {void}
+ */
+function endSliderDrag(e) {
+  if (!sliderDragging || (e && e.pointerId !== activeSliderPointerId)) return;
+  const pointerId = activeSliderPointerId;
   sliderDragging = false;
+  activeSliderPointerId = null;
+  compareSlider.classList.remove('is-dragging');
   document.body.style.cursor = '';
+
+  if (pointerId !== null && sliderRange.hasPointerCapture?.(pointerId)) {
+    sliderRange.releasePointerCapture(pointerId);
+  }
+}
+
+/**
+ * 左右矢印キーでは従来どおり5%ずつ比較位置を変更します。
+ * Home、Endなど、それ以外のrange標準操作はブラウザへ委ねます。
+ *
+ * @param {KeyboardEvent} e - range上で発生したキーボードイベント。
+ * @returns {void}
+ */
+function handleSliderRangeKeydown(e) {
+  if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+  const delta = e.key === 'ArrowLeft' ? -5 : 5;
+  sliderRange.value = String(Math.max(0, Math.min(Number(sliderRange.value) + delta, 100)));
+  syncSliderFromRange();
+  e.preventDefault();
 }
 
 /**
@@ -765,10 +859,10 @@ function endSliderDrag() {
  * ==============================================================
  *
  * 1. 画像比較スライダー
- * - マウス、タッチ、ペンのpointerdown／pointermove／pointerupを使ってドラッグを処理します。
- * - 左ボタンからのみ開始し、ポインターを捕捉してX座標を0〜100%へ変換します。
- * - requestAnimationFrameで滑らかに描画し、ドラッグ中はカーソルをew-resizeへ変更します。
- * - tabindex、role、aria-value属性を設定し、左右矢印キーで5%ずつ動かせるようにします。
+ * - 透明なinput[type="range"]を操作層にして、ブラウザ標準のタッチ・マウス・キーボード操作を使います。
+ * - Liquid Glassハンドルは表示層としてrangeの値へ追従し、操作と見た目の責務を分離します。
+ * - pointerup／pointercancel／lostpointercaptureで操作状態を一貫して解除します。
+ * - requestAnimationFrameで滑らかに描画し、左右矢印キーでは5%ずつ動かせるようにします。
  *
  * 2. 問い合わせフォームの添付UI
  * - ファイル選択とドラッグ＆ドロップによる複数ファイル追加に対応します。
@@ -784,44 +878,12 @@ function endSliderDrag() {
  *
  * @module SliderAndContactUI
  */
-sliderHandle.addEventListener('pointerdown', (e) => {
-  if (e.pointerType === 'mouse' && e.button !== 0) return;
-  sliderDragging = true;
-  sliderRect = compareSlider.getBoundingClientRect();
-  document.body.style.cursor = 'ew-resize';
-  if (sliderHandle.setPointerCapture) {
-    sliderHandle.setPointerCapture(e.pointerId);
-  }
-  sliderPercent = clientXToPercent(e.clientX);
-  scheduleSliderUpdate();
-  e.preventDefault();
-});
-window.addEventListener('pointermove', (e) => {
-  if (!sliderDragging) return;
-  sliderPercent = clientXToPercent(e.clientX);
-  if (sliderPercent < 0) sliderPercent = 0;
-  if (sliderPercent > 100) sliderPercent = 100;
-  scheduleSliderUpdate();
-});
-window.addEventListener('pointerup', endSliderDrag);
-window.addEventListener('pointercancel', endSliderDrag);
-sliderHandle.setAttribute('tabindex', '0');
-sliderHandle.setAttribute('role', 'slider');
-sliderHandle.setAttribute('aria-valuemin', '0');
-sliderHandle.setAttribute('aria-valuemax', '100');
-sliderHandle.setAttribute('aria-valuenow', String(Math.round(sliderPercent)));
-sliderHandle.addEventListener('keydown', (e) => {
-  let delta = 0;
-  if (e.key === 'ArrowLeft') delta = -5;
-  else if (e.key === 'ArrowRight') delta = 5;
-  else return;
-  sliderPercent += delta;
-  if (sliderPercent < 0) sliderPercent = 0;
-  if (sliderPercent > 100) sliderPercent = 100;
-  sliderHandle.setAttribute('aria-valuenow', String(Math.round(sliderPercent)));
-  scheduleSliderUpdate();
-  e.preventDefault();
-});
+sliderRange.addEventListener('input', syncSliderFromRange);
+sliderRange.addEventListener('pointerdown', startSliderDrag);
+sliderRange.addEventListener('pointerup', endSliderDrag);
+sliderRange.addEventListener('pointercancel', endSliderDrag);
+sliderRange.addEventListener('lostpointercapture', endSliderDrag);
+sliderRange.addEventListener('keydown', handleSliderRangeKeydown);
 scheduleSliderUpdate();
 
 /**
@@ -1081,6 +1143,7 @@ if (contactForm){
       'wizard.next': 'Next',
       'wizard.start': 'Start Comparison',
       'wizard.hint.reset': 'Use reset if you want to run the comparison again.',
+      'slider.control.label': 'Before and after comparison position',
 
       // 素材
       'materials.title': 'Ready-to-use Comparison Samples',
@@ -1236,6 +1299,7 @@ if (contactForm){
       'wizard.next': '次へ',
       'wizard.start': '比較を開始',
       'wizard.hint.reset': 'もう一度比較する場合はリセットボタンを押してください。',
+      'slider.control.label': 'ビフォー画像とアフター画像の比較位置',
 
       // 素材
       'materials.title': '比較用使用素材',

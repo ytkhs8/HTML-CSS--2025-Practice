@@ -57,8 +57,8 @@
     <link id="apple-touch-icon" rel="apple-touch-icon" href="/favicon/apple-touch-icon.png" sizes="180x180">
     <link id="site-manifest" rel="manifest" href="/favicon/site.webmanifest">
     <meta name="theme-color" content="#eaf6fc">
-  <script type="module" crossorigin src="/assets/index-edKfXiSU.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-BpEsexye.css">
+  <script type="module" crossorigin src="/assets/index-Bc8c2EM5.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-BEC3S0fE.css">
 </head>
 
 <body>
@@ -218,7 +218,19 @@
                     <div class="img-overlay">
                         <img id="img-after" src="" alt="After Image">
                     </div>
-                    <div class="slider-handle" id="slider-handle"></div>
+                    <label class="slider-range-label" for="slider-range" data-i18n="slider.control.label">
+                        ビフォー画像とアフター画像の比較位置
+                    </label>
+                    <input
+                        class="slider-range"
+                        id="slider-range"
+                        type="range"
+                        min="0"
+                        max="100"
+                        step="0.1"
+                        value="50"
+                    >
+                    <div class="slider-handle" id="slider-handle" aria-hidden="true"></div>
                 </div>
             </div>
             <div id="face-loading" style="display: none;" data-i18n="msg.loading">顔検出モデル読み込み中...</div>
@@ -251,14 +263,14 @@
               <div class="acc-content">
                 <div class="materials-grid">
                   <article class="material-set">
-                    <h4 data-i18n="materials.landscape.city.title">現在と昔の渋谷の変貌</h4>
+                    <h4 data-i18n="materials.landscape.city.title">現在と昔の銀座の変貌</h4>
                     <figure>
-                        <figcaption data-i18n="materials.landscape.city.before">現在の渋谷駅周辺</figcaption>
-                        <img src="/assets/city-before-DOjWIsBa.png" alt="現在の渋谷駅周辺の高層ビルと交差点">
+                        <figcaption data-i18n="materials.landscape.city.before">現在の銀座和光時計台周辺</figcaption>
+                        <img src="/assets/city-before-BKPu2r0N.png" alt="現在の銀座和光時計台周辺の高層ビルと交差点">
                     </figure>
                     <figure>
-                        <figcaption data-i18n="materials.landscape.city.after">昔の渋谷駅周辺</figcaption>
-                        <img src="/assets/city-after-B6lhb3Hl.png" alt="昔の渋谷駅周辺の街並み">
+                        <figcaption data-i18n="materials.landscape.city.after">昔の銀座和光時計台周辺</figcaption>
+                        <img src="/assets/city-after-CygYbpPe.png" alt="昔の銀座和光時計台周辺の街並み">
                     </figure>
                   </article>
                   <article class="material-set">
@@ -276,11 +288,11 @@
                     <h4 data-i18n="materials.landscape.resolution.title">アメリカのシリコンバレーと東京の街並みの対比</h4>
                     <figure>
                         <figcaption data-i18n="materials.landscape.town.before">アメリカのシリコンバレー</figcaption>
-                        <img src="/assets/landscape-before-B8nr1dS_.jpg" alt="アメリカのシリコンバレーの街並み">
+                        <img src="/assets/landscape-before-CJARNRfO.png" alt="アメリカのシリコンバレーの街並み">
                     </figure>
                     <figure>
                         <figcaption data-i18n="materials.landscape.town.after">日本の東京</figcaption>
-                        <img src="/assets/landscape-after-BYQj4RVt.jpg" alt="日本の東京の街並み">
+                        <img src="/assets/landscape-after-BKMdAGvh.png" alt="日本の東京の街並み">
                     </figure>
                   </article>
                 </div>
@@ -298,7 +310,7 @@
                 　<h4 data-i18n="materials.objects.iphone.title">iPhone3GとiPhone17 Proの外観の対比</h4>
                 　<figure>
                     <figcaption data-i18n="materials.objects.iphone.before">iPhone3Gの外観</figcaption>
-                    <img src="/assets/device-before-CdqsdN39.png" alt="黒いiPhone3G">
+                    <img src="/assets/device-before-Dm_ZK5qN.png" alt="黒いiPhone3G">
                   </figure>
                   <figure>
                     <figcaption data-i18n="materials.objects.iphone.after">iPhone16 Proの外観</figcaption>
@@ -342,11 +354,11 @@
                   <h4 data-i18n="materials.people.diet.title">ダイエット前とダイエット後の姿の対比</h4>
                   <figure>
                     <figcaption data-i18n="materials.people.diet.before">ダイエット前の姿</figcaption>
-                    <img src="/assets/diet-before-7YVa-HoF.jpeg" alt="ダイエット前の全身写真">
+                    <img src="/assets/diet-before-ulFm2Ecy.png" alt="ダイエット前の全身写真">
                   </figure>
                   <figure>
                     <figcaption data-i18n="materials.people.diet.after">ダイエット後の姿</figcaption>
-                    <img src="/assets/diet-after-DA0hCyYO.jpeg" alt="ダイエット後の全身写真">
+                    <img src="/assets/diet-after-CwOwDzNU.png" alt="ダイエット後の全身写真">
                   </figure>
                 </article>
                 <article class="material-set">
@@ -361,13 +373,13 @@
                   </figure>
                 </article>
                 <article class="material-set">
-                  <h4 data-i18n="materials.people.cosplay.title">普段の自分とハロウィンのコスプレをした自分の対比</h4>
+                  <h4 data-i18n="materials.people.cosplay.title">普段の姿とハロウィンのコスプレをした姿の対比</h4>
                   <figure>
-                    <figcaption data-i18n="materials.people.cosplay.before">普段着の自分</figcaption>
+                    <figcaption data-i18n="materials.people.cosplay.before">普段着の姿</figcaption>
                     <img src="/assets/cosplay-before-BvG6VGSk.png" alt="普段着の写真">
                   </figure>
                   <figure>
-                    <figcaption data-i18n="materials.people.cosplay.after">ハロウィンのコスプレ</figcaption>
+                    <figcaption data-i18n="materials.people.cosplay.after">ハロウィンのコスプレの姿</figcaption>
                     <img src="/assets/cosplay-after-DoW9gDdB.png" alt="ハロウィンコスプレの写真">
                   </figure>
                 </article>
@@ -411,8 +423,8 @@
                     <img src="/assets/age-before-aRvhoU65.png" alt="３歳頃の顔写真">
                   </figure>
                   <figure>
-                    <figcaption data-i18n="materials.face.age.after">２３歳の頃</figcaption>
-                    <img src="/assets/age-after-QRaHiQc2.png" alt="２３歳頃の顔写真">
+                    <figcaption data-i18n="materials.face.age.after">２０代中盤の顔</figcaption>
+                    <img src="/assets/age-after-QRaHiQc2.png" alt="20代中盤の顔写真">
                   </figure>
                 </article>
               </div>
