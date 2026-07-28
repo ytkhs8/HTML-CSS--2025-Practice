@@ -1456,6 +1456,21 @@ main, .page { scroll-margin-top: var(--anchor-offset); }
   pointer-events: none;
   transition: transform var(--duration-standard) var(--ease-glass);
 }
+
+/*
+ * マウス・トラックパッド中心の環境では、透明なrangeのポインター操作を止め、
+ * 見えているLiquid Glassハンドルを直接つかめるようにします。
+ * range自体はDOMに残るため、Tabキーと矢印キーによる操作は引き続き利用できます。
+ */
+.compare-slider[data-input-mode='fine'] .slider-range {
+  pointer-events: none;
+}
+
+.compare-slider[data-input-mode='fine'] .slider-handle {
+  pointer-events: auto;
+  cursor: ew-resize;
+  touch-action: pan-y;
+}
 .slider-handle::before {
   position: absolute;
   top: 0;

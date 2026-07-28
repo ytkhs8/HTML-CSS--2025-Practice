@@ -744,22 +744,75 @@ if (startBtn){
 }
 updateWizardUI();
 const compareSlider = document.querySelector('.compare-slider');
+const finePointerMedia = window.matchMedia('(pointer: fine) and (hover: hover)');
 let sliderPercent = 50;
 let sliderDragging = false;
 let sliderRafPending = false;
 let activeSliderPointerId = null;
+let activeSliderCaptureElement = null;
+let activeSliderDragKind = null;
+let sliderRect = null;
 
 /**
- * 表示直後にスライダーのレイアウト計算を完了させます。
+ * ポインター種別と端末の主要入力能力から、スライダーの入力方式を判定します。
+ *
+ * mouseはハンドルを直接操作するfine方式、touch／penは画像全体を操作できる
+ * coarse方式とし、ポインター種別が不明な場合はMedia Queriesの結果を使います。
+ *
+ * @param {string} [pointerType=''] - PointerEvent.pointerTypeの値。
+ * @returns {'fine'|'coarse'} 使用する入力方式。
+ */
+function resolveSliderInputMode(pointerType = '') {
+  if (pointerType === 'mouse') return 'fine';
+  if (pointerType === 'touch' || pointerType === 'pen') return 'coarse';
+  return finePointerMedia.matches ? 'fine' : 'coarse';
+}
+
+/**
+ * CSSへ現在の入力方式を伝え、操作対象となるレイヤーを切り替えます。
+ *
+ * @param {'fine'|'coarse'} mode - 適用する入力方式。
+ * @returns {void}
+ */
+function setSliderInputMode(mode) {
+  compareSlider.dataset.inputMode = mode;
+}
+
+setSliderInputMode(resolveSliderInputMode());
+
+/**
+ * 実際に使用されたポインター種別を次のスライダー操作へ反映します。
+ *
+ * @param {PointerEvent} e - ページ内で開始したポインターイベント。
+ * @returns {void}
+ */
+function rememberSliderPointerType(e) {
+  if (sliderDragging) return;
+  setSliderInputMode(resolveSliderInputMode(e.pointerType));
+}
+
+window.addEventListener('pointerdown', rememberSliderPointerType, {
+  capture: true,
+  passive: true
+});
+
+finePointerMedia.addEventListener?.('change', () => {
+  if (!sliderDragging) {
+    setSliderInputMode(resolveSliderInputMode());
+  }
+});
+
+/**
+ * 現在のスライダー位置と幅を保存します。
  *
  * 最初の操作より前に描画領域を確定し、操作開始時のレイアウト計算による
- * 引っ掛かりを抑えます。
+ * 引っ掛かりを抑えるとともに、fine方式の座標変換で再利用します。
  *
  * @returns {void}
  */
 function prepareSliderLayout() {
   if (!compareSlider) return;
-  compareSlider.getBoundingClientRect();
+  sliderRect = compareSlider.getBoundingClientRect();
 }
 
 /**
@@ -802,25 +855,106 @@ function syncSliderFromRange() {
 }
 
 /**
- * rangeのポインター操作開始時に、描画用の操作中状態を設定します。
+ * clientX座標を、スライダー左端を基準とする0〜100%へ変換します。
+ *
+ * @param {number} clientX - ポインターのクライアントX座標。
+ * @returns {number} 0〜100の範囲に収めた比較位置。
+ */
+function clientXToSliderPercent(clientX) {
+  if (!sliderRect || sliderRect.width <= 0) {
+    prepareSliderLayout();
+  }
+  if (!sliderRect || sliderRect.width <= 0) return sliderPercent;
+
+  const rawX = clientX - sliderRect.left;
+  const clampedX = Math.max(0, Math.min(rawX, sliderRect.width));
+  return (clampedX / sliderRect.width) * 100;
+}
+
+/**
+ * ポインター操作共通のドラッグ状態とPointer Captureを開始します。
+ *
+ * @param {PointerEvent} e - 操作を開始したポインターイベント。
+ * @param {HTMLElement} captureElement - ポインターを捕捉する要素。
+ * @param {'fine'|'range'} dragKind - fine方式またはネイティブrange方式。
+ * @returns {boolean} 操作を開始できた場合はtrue。
+ */
+function beginSliderDrag(e, captureElement, dragKind) {
+  if (sliderDragging || !e.isPrimary || (e.pointerType === 'mouse' && e.button !== 0)) {
+    return false;
+  }
+
+  sliderDragging = true;
+  activeSliderPointerId = e.pointerId;
+  activeSliderCaptureElement = captureElement;
+  activeSliderDragKind = dragKind;
+  compareSlider.classList.add('is-dragging');
+  document.body.style.cursor = 'ew-resize';
+
+  if (captureElement.setPointerCapture) {
+    captureElement.setPointerCapture(e.pointerId);
+  }
+
+  return true;
+}
+
+/**
+ * 透明なrangeを使うcoarse方式の操作を開始します。
  *
  * @param {PointerEvent} e - range上で開始したポインターイベント。
  * @returns {void}
  */
-function startSliderDrag(e) {
-  if (sliderDragging || !e.isPrimary || (e.pointerType === 'mouse' && e.button !== 0)) return;
-  sliderDragging = true;
-  activeSliderPointerId = e.pointerId;
-  compareSlider.classList.add('is-dragging');
-  document.body.style.cursor = 'ew-resize';
+function startRangeSliderDrag(e) {
+  const inputMode = resolveSliderInputMode(e.pointerType);
+  setSliderInputMode(inputMode);
 
-  if (sliderRange.setPointerCapture) {
-    sliderRange.setPointerCapture(e.pointerId);
+  if (inputMode !== 'coarse') {
+    e.preventDefault();
+    return;
   }
+
+  beginSliderDrag(e, sliderRange, 'range');
 }
 
 /**
- * rangeのポインター操作終了時に共通して行う後処理です。
+ * Liquid Glassハンドルを直接操作するfine方式を開始します。
+ *
+ * @param {PointerEvent} e - ハンドル上で開始したポインターイベント。
+ * @returns {void}
+ */
+function startFineSliderDrag(e) {
+  const inputMode = resolveSliderInputMode(e.pointerType);
+  setSliderInputMode(inputMode);
+  if (inputMode !== 'fine') return;
+  if (!beginSliderDrag(e, sliderHandle, 'fine')) return;
+
+  prepareSliderLayout();
+  sliderPercent = clientXToSliderPercent(e.clientX);
+  scheduleSliderUpdate();
+  e.preventDefault();
+}
+
+/**
+ * fine方式で、捕捉中のマウス・トラックパッド位置へハンドルを追従させます。
+ *
+ * @param {PointerEvent} e - ハンドルが捕捉しているpointermoveイベント。
+ * @returns {void}
+ */
+function moveFineSliderDrag(e) {
+  if (
+    !sliderDragging ||
+    activeSliderDragKind !== 'fine' ||
+    e.pointerId !== activeSliderPointerId
+  ) {
+    return;
+  }
+
+  sliderPercent = clientXToSliderPercent(e.clientX);
+  scheduleSliderUpdate();
+}
+
+/**
+ * fine／coarse両方式のポインター操作終了処理です。
  *
  * @param {PointerEvent} e - 終了、中止、または捕捉解除を通知するイベント。
  * @returns {void}
@@ -828,13 +962,16 @@ function startSliderDrag(e) {
 function endSliderDrag(e) {
   if (!sliderDragging || (e && e.pointerId !== activeSliderPointerId)) return;
   const pointerId = activeSliderPointerId;
+  const captureElement = activeSliderCaptureElement;
   sliderDragging = false;
   activeSliderPointerId = null;
+  activeSliderCaptureElement = null;
+  activeSliderDragKind = null;
   compareSlider.classList.remove('is-dragging');
   document.body.style.cursor = '';
 
-  if (pointerId !== null && sliderRange.hasPointerCapture?.(pointerId)) {
-    sliderRange.releasePointerCapture(pointerId);
+  if (pointerId !== null && captureElement?.hasPointerCapture?.(pointerId)) {
+    captureElement.releasePointerCapture(pointerId);
   }
 }
 
@@ -859,10 +996,11 @@ function handleSliderRangeKeydown(e) {
  * ==============================================================
  *
  * 1. 画像比較スライダー
- * - 透明なinput[type="range"]を操作層にして、ブラウザ標準のタッチ・マウス・キーボード操作を使います。
- * - Liquid Glassハンドルは表示層としてrangeの値へ追従し、操作と見た目の責務を分離します。
+ * - touch／penでは透明なinput[type="range"]を使い、画像全体を操作領域にします。
+ * - mouseではLiquid Glassハンドルを直接つかみ、clientXを比較位置へ変換して追従させます。
+ * - pointer／hover Media Queriesを初期判定に使い、実際のpointerTypeで入力方式を更新します。
  * - pointerup／pointercancel／lostpointercaptureで操作状態を一貫して解除します。
- * - requestAnimationFrameで滑らかに描画し、左右矢印キーでは5%ずつ動かせるようにします。
+ * - 描画、画像デコード、キーボード操作、アクセシビリティは両方式で共有します。
  *
  * 2. 問い合わせフォームの添付UI
  * - ファイル選択とドラッグ＆ドロップによる複数ファイル追加に対応します。
@@ -879,11 +1017,17 @@ function handleSliderRangeKeydown(e) {
  * @module SliderAndContactUI
  */
 sliderRange.addEventListener('input', syncSliderFromRange);
-sliderRange.addEventListener('pointerdown', startSliderDrag);
+sliderRange.addEventListener('pointerdown', startRangeSliderDrag);
 sliderRange.addEventListener('pointerup', endSliderDrag);
 sliderRange.addEventListener('pointercancel', endSliderDrag);
 sliderRange.addEventListener('lostpointercapture', endSliderDrag);
 sliderRange.addEventListener('keydown', handleSliderRangeKeydown);
+sliderHandle.addEventListener('pointerdown', startFineSliderDrag);
+sliderHandle.addEventListener('pointermove', moveFineSliderDrag);
+sliderHandle.addEventListener('pointerup', endSliderDrag);
+sliderHandle.addEventListener('pointercancel', endSliderDrag);
+sliderHandle.addEventListener('lostpointercapture', endSliderDrag);
+window.addEventListener('resize', prepareSliderLayout);
 scheduleSliderUpdate();
 
 /**
