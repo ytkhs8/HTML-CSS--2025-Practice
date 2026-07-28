@@ -53,7 +53,44 @@
 - **ローカル処理・プライバシーへの配慮**  
   すべての処理をブラウザ内で直接実行します。**サーバーへのアップロードやデータ保存は行いません**。
 - **多言語対応（i18n）**  
-  日本語／英語の切り替えメニューを備え、選択した言語をページ間で維持します（localStorageを使用）。
+  日本語を初期言語とし、日本語／英語の切り替えメニューを備えます。選択した言語はブラウザに保存され、次回以降も維持されます（localStorageを使用）。
+- **Light／Darkモード**
+  OSの配色設定を初期値として利用し、ヘッダーの切り替えボタンからいつでも変更できます。選択したテーマはブラウザに保存されます。
+
+---
+
+## ✨ 最近追加したUI・操作性の改善
+
+### Liquid Glass-inspiredデザイン
+
+透明感、控えめな反射、背景の光の層、読みやすい文字コントラストを組み合わせた
+Liquid Glass-inspiredのデザインへ更新しました。ヘッダー、主要ボタン、比較スライダー、
+フォーム、説明カード、比較素材グリッド、サイドメニューに一貫して適用しています。
+
+- Light／Darkの両テーマで、ガラス面・境界線・影・背景色を個別に調整
+- 比較スライダーは、透明なレールと浮遊感のあるガラスノブとして再設計
+- `prefers-reduced-motion`を尊重し、動きを抑えたい環境では不要なアニメーションを停止
+
+### テーマ・言語・アイコン
+
+- テーマを切り替えると、ヘッダーのアプリアイコン、ブラウザ用favicon、Apple Touch Icon、Web App Manifestもテーマに合わせて切り替わります。
+- Light／Darkそれぞれに、ブラウザ、Safari、iPhone／iPad、Android／Chrome向けのアイコン一式を用意しています。
+- 900px以下の画面では言語切り替えを翻訳アイコン中心の表示へ統一し、英語の`LANGUAGE`がヘッダー内のほかのボタンへ重ならないようにしています。見た目を短くしても、支援技術には言語名が伝わります。
+
+### ナビゲーションとアクセシビリティ
+
+- サイドメニューとオーバーレイを`body`直下の画面全体レイヤーとして表示します。
+- 丸い閉じるボタン、オーバーレイクリック、`Esc`キーでメニューを閉じられます。
+- メニュー表示中は背景操作を防ぎ、閉じた後はメニューを開いたボタンへフォーカスを戻します。
+- 比較スライダーはポインター操作に加え、左右矢印キーでも操作できます。
+
+### 要望・バグ報告フォーム
+
+- メールアドレス、件名、説明のクライアント側入力検証と、分かりやすいエラー表示を実装しています。
+- JPEG／PNG／WebPの画像を最大5枚、各5MBまで添付できます。ファイル選択、ドラッグ＆ドロップ、重複除外、一覧表示、個別削除に対応しています。
+- 小型タブレットやスマートフォンでは、フォームカード、入力欄、添付領域が表示幅に合わせて縮小し、横にはみ出さないレイアウトです。
+
+> **注意:** 現在の送信ボタンはUIと入力検証を確認するための仮動作です。入力内容や添付ファイルをメール・外部API・サーバーへ送信しません。実際にお問い合わせを受信する機能は、送信先とサーバー側の検証・セキュリティ対策を用意してから追加する予定です。
 
 ---
 
@@ -76,18 +113,73 @@ imgcomparing-slider/
 ├─ index.html
 ├─ css/
 │  └─ compare.css          # 画面全体と比較UIのスタイル
+├─ images/
+│  ├─ image-compare-slider-icon-liquid-glass.png
+│  └─ image-compare-slider-icon-liquid-glass-dark.png
+│                              # Light／Darkテーマ用のアプリアイコン
 ├─ js/
 │  ├─ compare.js          # UIと操作処理
 │  └─ faceUtils.js        # 顔検出と位置合わせのユーティリティ
 ├─ public/
+│  ├─ favicon/            # Lightテーマ用favicon・Manifest
+│  ├─ favicon/dark/       # Darkテーマ用favicon・Manifest
 │  ├─ mediapipe/wasm/     # MediaPipe の WebAssembly 関連ファイル
 │  └─ models/
 │     └─ face_landmarker.task  # Face Landmarker モデルファイル
+├─ dist/                  # Viteの本番ビルド出力（デプロイ対象）
 └─ package.json
 ```
 
 > `faceUtils.js`では、WebAssembly 関連ファイルを`/mediapipe/wasm`、モデルファイルを`/models/face_landmarker.task`から読み込みます。
 > `npm run dev`および`npm run build`は、実行前に`@mediapipe/tasks-vision`の WebAssembly ファイルを`public/mediapipe/wasm/`へコピーします。モデルファイルとあわせてローカルから配信することで、CDNに依存せずに動作します。
+
+---
+
+## 💻 ローカルでの起動
+
+Node.jsとnpmを用意したうえで、プロジェクト直下で次を実行します。
+
+```bash
+npm install
+npm run dev
+```
+
+本番ビルドを確認する場合は、次を実行します。
+
+```bash
+npm run build
+npm run preview
+```
+
+`npm run build`で生成される`dist/`が、本番公開用の成果物です。`dist/`を手動で編集せず、必ずソースを変更してから再ビルドしてください。
+
+---
+
+## ☁️ AWSへのデプロイ
+
+公開時は、リポジトリ直下ではなく`dist/`だけをS3へ同期します。`--delete`を使う前に、必ずdry-runで削除・追加対象を確認します。
+
+```bash
+# 1. 反映内容を確認する
+aws s3 sync dist/ s3://image-compare-slider.com/ \
+  --delete \
+  --exact-timestamps \
+  --exclude ".DS_Store" \
+  --dryrun
+
+# 2. 確認後に同期する
+aws s3 sync dist/ s3://image-compare-slider.com/ \
+  --delete \
+  --exact-timestamps \
+  --exclude ".DS_Store"
+
+# 3. CloudFrontのキャッシュを更新する
+aws cloudfront create-invalidation \
+  --distribution-id E2UM6MVXV0CXMN \
+  --paths "/*"
+```
+
+`dist/`にはMediaPipeのモデルとWebAssemblyファイルも含まれます。リポジトリ全体を同期すると不要なファイルを公開したり、必要なパスを崩したりするため、同期対象は`dist/`に限定します。
 
 ---
 
@@ -173,8 +265,6 @@ imgcomparing-slider/
 - [ ] ランドマーク検出失敗時の代替処理（位置合わせなしモードへの自動切り替え）
 - [ ] クライアント／サーバーUIの改善（[マイルストーン](https://github.com/ytkhs8/HTML-CSS--2025-Practice/imgcomparing-slider/Client+ServerUIImprovements/1)）
 - [ ] ユーザーアカウントとデータの永続化
-- [ ] ユーザーの明示的な同意に基づくクラウド位置合わせ機能（例：Google Vision API）
-- [ ] 位置合わせした比較結果の書き出し（横並び、または顔の左右合成）
 - [x] アクセシビリティ対応（キーボードでのスライダー操作、ARIAラベル）
 - [x] 多言語対応（英語・日本語）
 - [ ] フェーズ2：ユーザーアカウントと永続的なデータ保存の追加（[Issue #12](link-to-issue)）
