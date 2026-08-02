@@ -7,13 +7,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script>
       try {
-        const savedTheme = localStorage.getItem('image-compare-slider.theme');
-        const theme = savedTheme === 'light' || savedTheme === 'dark'
-          ? savedTheme
-          : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        const savedThemeMode = localStorage.getItem('image-compare-slider.theme');
+        const themeMode = savedThemeMode === 'light' || savedThemeMode === 'dark' || savedThemeMode === 'system'
+          ? savedThemeMode
+          : 'light';
+        const theme = themeMode === 'system'
+          ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+          : themeMode;
+        document.documentElement.dataset.themeMode = themeMode;
         document.documentElement.dataset.theme = theme;
+        document.documentElement.style.colorScheme = theme;
       } catch (_) {
+        document.documentElement.dataset.themeMode = 'light';
         document.documentElement.dataset.theme = 'light';
+        document.documentElement.style.colorScheme = 'light';
       }
     </script>
 
@@ -127,10 +134,39 @@
           </el-menu>
           </el-dropdown>
 
-          <button class="theme-toggle" id="theme-toggle" type="button" aria-pressed="false" aria-label="ダークモードに切り替える">
-            <i class="bi bi-sun-fill theme-icon theme-icon-sun" aria-hidden="true"></i>
-            <i class="bi bi-moon-stars-fill theme-icon theme-icon-moon" aria-hidden="true"></i>
-          </button>
+          <!-- Theme mode dropdown -->
+          <el-dropdown id="theme-dropdown" class="relative inline-block">
+            <button
+              class="theme-toggle"
+              id="theme-toggle"
+              type="button"
+              aria-haspopup="menu"
+              aria-controls="theme-menu"
+              aria-expanded="false"
+              aria-label="テーマメニューを開く"
+            >
+              <i class="bi bi-sun-fill theme-icon theme-icon-sun" aria-hidden="true"></i>
+              <i class="bi bi-moon-stars-fill theme-icon theme-icon-moon" aria-hidden="true"></i>
+              <i class="bi bi-circle-half theme-icon theme-icon-system" aria-hidden="true"></i>
+            </button>
+            <el-menu
+              id="theme-menu"
+              anchor="bottom end"
+              popover="manual"
+              role="menu"
+              aria-label="テーマモード"
+            >
+              <div class="py-1">
+                <button type="button" class="theme-item" role="menuitemradio" aria-checked="false" data-theme-mode="light" data-i18n="theme.mode.light">ライトモード</button>
+              </div>
+              <div class="py-1">
+                <button type="button" class="theme-item" role="menuitemradio" aria-checked="false" data-theme-mode="dark" data-i18n="theme.mode.dark">ダークモード</button>
+              </div>
+              <div class="py-1">
+                <button type="button" class="theme-item" role="menuitemradio" aria-checked="false" data-theme-mode="system" data-i18n="theme.mode.system">システム設定に合わせる</button>
+              </div>
+            </el-menu>
+          </el-dropdown>
 
           <!-- Hamburger Menu Button -->
           <button class="hamburger" id="hamburger-btn" aria-label="メニューを開く" aria-controls="side-menu" aria-expanded="false">
@@ -180,14 +216,14 @@
                 </div>
                 <div class="upload-area">
                     <label class="big-upload">
-                        <input type="file" id="before-img" accept="image/*" hidden>
+                        <input type="file" id="before-img" accept="image/*" hidden disabled aria-disabled="true">
                         <span data-i18n="upload.before">
                             <img src="https://cdn-icons-png.flaticon.com/128/1828/1828925.png" alt="" class="upload-icon">
                             ビフォー画像を選択
                         </span>
                     </label>
                     <label class="big-upload">
-                        <input type="file" id="after-img" accept="image/*" hidden>
+                        <input type="file" id="after-img" accept="image/*" hidden disabled aria-disabled="true">
                         <span data-i18n="upload.after">
                             <img src="https://cdn-icons-png.flaticon.com/128/1828/1828925.png" alt="" class="upload-icon">
                             アフター画像を選択
@@ -196,7 +232,7 @@
                 </div>
                 <div class="face-only-option">
                     <label>
-                        <input type="checkbox" id="face-only">
+                        <input type="checkbox" id="face-only" disabled aria-disabled="true">
                         <span data-i18n="face.only">顔だけ比較モード</span>
                     </label>
                 </div>

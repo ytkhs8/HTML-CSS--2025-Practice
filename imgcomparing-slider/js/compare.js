@@ -14,15 +14,15 @@ import darkAppIconUrl from '../images/image-compare-slider-icon-liquid-glass-dar
  * 1. ハンバーガーメニュー（サイドナビゲーション）
  *    - サイドメニューの開閉、オーバーレイの表示、背景スクロールの固定を行います。
  *    - アクセシビリティ属性（aria-expanded）を更新します。
- * 2. 言語ドロップダウン（Popover API）
+ * 2. 言語・テーマドロップダウン（Popover API）
  *    - サイドメニュー表示中の操作可否、ポインター操作による開閉を管理します。
  *    - 外側のクリックやEscapeキーで閉じ、ボタンを基準に表示位置を決めます。
- *    - i18nと連携して表示言語を切り替えます。
+ *    - i18nと連携して表示言語を切り替え、Light/Dark/Systemテーマを適用します。
  * 3. アクセシビリティと操作性
  *    - メニュー表示中の背景操作を防ぎ、キーボード操作を可能にします。
  *    - 操作中のUI状態に不整合が起きないようにします。
  *
- * 参照する要素：hamburgerBtn、sideMenu、menuOverlay、言語メニュー関連要素。
+ * 参照する要素：hamburgerBtn、sideMenu、menuOverlay、言語・テーマメニュー関連要素。
  *
  * @module UIControls
  */
@@ -32,29 +32,59 @@ const sideMenu = document.getElementById('side-menu');
 const menuOverlay = document.getElementById('menu-overlay');
 const sideMenuCloseBtn = document.getElementById('side-menu-close');
 const themeToggle = document.getElementById('theme-toggle');
+const themeDropdown = document.getElementById('theme-dropdown');
+const themeMenu = document.getElementById('theme-menu');
 let menuTriggerElement = null;
 
+const THEME_PREFERENCE_KEY = 'image-compare-slider.theme';
+const THEME_MODES = ['light', 'dark', 'system'];
+const systemThemeQuery = window.matchMedia('(prefers-color-scheme: dark)');
+
 /**
- * 表示テーマを切り替え、次回以降も同じ設定を利用します。
- * 保存済みの設定がない初回だけは端末の配色設定に合わせます。
+ * 保存済みのテーマモードを実際に表示するLight/Darkへ解決します。
+ * systemの場合はOSのprefers-color-schemeを使います。
  *
- * @param {'light'|'dark'} theme - 適用するテーマ。
+ * @param {'light'|'dark'|'system'} themeMode - 保存するテーマモード。
+ * @returns {'light'|'dark'} 実際に適用するテーマ。
+ */
+function resolveTheme(themeMode) {
+  if (themeMode === 'light' || themeMode === 'dark') return themeMode;
+  return systemThemeQuery.matches ? 'dark' : 'light';
+}
+
+/**
+ * テーマモードを表示へ反映し、次回以降も同じ設定を利用します。
+ * テーマボタン自体はメニューを開き、選択肢の適用はメニュー項目から行います。
+ *
+ * @param {'light'|'dark'|'system'} themeMode - 保存するテーマモード。
+ * @param {boolean} [persist=true] - localStorageへ保存するかどうか。
  * @returns {void}
  */
-function applyTheme(theme) {
+function applyTheme(themeMode, persist = true) {
+  const mode = THEME_MODES.includes(themeMode) ? themeMode : 'light';
+  const theme = resolveTheme(mode);
   const isDark = theme === 'dark';
   const isEnglish = document.documentElement.lang === 'en';
+  const modeLabels = isEnglish
+    ? { light: 'Light mode', dark: 'Dark mode', system: 'System mode' }
+    : { light: 'ライトモード', dark: 'ダークモード', system: 'システムモード' };
+  const currentLabel = mode === 'system'
+    ? `${modeLabels.system}（${modeLabels[theme]}）`
+    : modeLabels[mode];
   const toggleLabel = isEnglish
-    ? (isDark ? 'Switch to light mode' : 'Switch to dark mode')
-    : (isDark ? 'ライトモードに切り替える' : 'ダークモードに切り替える');
-  document.documentElement.dataset.theme = isDark ? 'dark' : 'light';
-  document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
+    ? `Current: ${currentLabel}. Open the theme menu to choose another mode.`
+    : `現在：${currentLabel}。テーマメニューを開いて別のモードを選択できます。`;
+
+  document.documentElement.dataset.themeMode = mode;
+  document.documentElement.dataset.theme = theme;
+  document.documentElement.style.colorScheme = theme;
 
   if (themeToggle) {
-    themeToggle.setAttribute('aria-pressed', String(isDark));
     themeToggle.setAttribute('aria-label', toggleLabel);
     themeToggle.setAttribute('title', toggleLabel);
+    themeToggle.dataset.themeMode = mode;
   }
+  updateThemeMenuUI(mode);
 
   const themeColor = document.querySelector('meta[name="theme-color"]');
   if (themeColor) themeColor.setAttribute('content', isDark ? '#101a2b' : '#eaf6fc');
@@ -77,14 +107,110 @@ function applyTheme(theme) {
     if (link) link.setAttribute('href', href);
   });
 
-  try { localStorage.setItem('image-compare-slider.theme', isDark ? 'dark' : 'light'); } catch (_) {}
+  if (persist) {
+    try { localStorage.setItem(THEME_PREFERENCE_KEY, mode); } catch (_) {}
+  }
 }
 
-const initialTheme = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
-applyTheme(initialTheme);
-themeToggle?.addEventListener('click', () => {
-  applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
-});
+const initialThemeMode = document.documentElement.dataset.themeMode || 'light';
+applyTheme(initialThemeMode, false);
+function setThemeDropdownEnabled(enabled) {
+  if (themeDropdown) themeDropdown.classList.toggle('is-disabled', !enabled);
+  if (themeDropdown) themeDropdown.setAttribute('aria-disabled', String(!enabled));
+  if (themeToggle) {
+    themeToggle.disabled = !enabled;
+    themeToggle.setAttribute('aria-disabled', String(!enabled));
+    if (!enabled) themeToggle.setAttribute('aria-expanded', 'false');
+  }
+  if (!enabled && typeof window.__closeThemeMenu === 'function') {
+    window.__closeThemeMenu();
+  }
+}
+
+function updateThemeMenuUI(currentMode = document.documentElement.dataset.themeMode || 'light') {
+  if (!themeMenu) return;
+  const isEnglish = document.documentElement.lang === 'en';
+  themeMenu.setAttribute('aria-label', isEnglish ? 'Theme mode' : 'テーマモード');
+  themeMenu.querySelectorAll('.theme-item[data-theme-mode]').forEach((item) => {
+    const isCurrent = item.getAttribute('data-theme-mode') === currentMode;
+    item.setAttribute('aria-checked', String(isCurrent));
+    item.setAttribute('aria-disabled', String(isCurrent));
+    item.disabled = isCurrent;
+    item.tabIndex = isCurrent ? -1 : 0;
+    item.classList.toggle('is-current-theme', isCurrent);
+  });
+}
+
+/** テーマメニューをPopoverとして開閉し、画面端からはみ出さない位置へ配置します。 */
+function initThemeDropdownClick() {
+  if (!themeDropdown || !themeToggle || !themeMenu) return;
+
+  const isOpen = () => {
+    try { return themeMenu.matches(':popover-open'); } catch { return false; }
+  };
+  const positionMenu = () => {
+    const rect = themeToggle.getBoundingClientRect();
+    const menuWidth = themeMenu.getBoundingClientRect().width || 224;
+    const left = Math.max(8, Math.min(rect.right - menuWidth, window.innerWidth - menuWidth - 8));
+    themeMenu.style.position = 'fixed';
+    themeMenu.style.left = `${left}px`;
+    themeMenu.style.top = `${rect.bottom + 8}px`;
+    themeMenu.style.margin = '0';
+    themeMenu.style.zIndex = '4000';
+  };
+  const close = () => {
+    try { themeMenu.hidePopover(); } catch (_) {}
+    themeToggle.setAttribute('aria-expanded', 'false');
+    themeMenu.style.position = '';
+    themeMenu.style.left = '';
+    themeMenu.style.top = '';
+    themeMenu.style.margin = '';
+    themeMenu.style.zIndex = '';
+  };
+  const open = () => {
+    if (themeToggle.disabled) return;
+    try { themeMenu.showPopover(); } catch (_) {}
+    themeToggle.setAttribute('aria-expanded', 'true');
+    requestAnimationFrame(positionMenu);
+  };
+
+  window.__closeThemeMenu = close;
+  themeToggle.addEventListener('click', (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (isOpen()) close(); else open();
+  });
+  themeDropdown.addEventListener('click', (event) => event.stopPropagation());
+  themeMenu.addEventListener('pointerdown', (event) => event.stopPropagation());
+  document.addEventListener('pointerdown', (event) => {
+    if (isOpen() && !themeDropdown.contains(event.target)) close();
+  });
+  window.addEventListener('scroll', () => { if (isOpen()) positionMenu(); }, true);
+  window.addEventListener('resize', () => { if (isOpen()) positionMenu(); });
+  themeMenu.querySelectorAll('.theme-item[data-theme-mode]').forEach((item) => {
+    item.addEventListener('click', (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (item.disabled) { close(); return; }
+      applyTheme(item.getAttribute('data-theme-mode'));
+      close();
+    });
+  });
+  updateThemeMenuUI();
+  close();
+}
+
+document.addEventListener('DOMContentLoaded', initThemeDropdownClick);
+const handleSystemThemeChange = () => {
+  if (document.documentElement.dataset.themeMode === 'system') {
+    applyTheme('system', false);
+  }
+};
+if (typeof systemThemeQuery.addEventListener === 'function') {
+  systemThemeQuery.addEventListener('change', handleSystemThemeChange);
+} else if (typeof systemThemeQuery.addListener === 'function') {
+  systemThemeQuery.addListener(handleSystemThemeChange);
+}
 function setLangDropdownEnabled(enabled) {
   const dropdown = document.getElementById('lang-dropdown');
   const btn = document.getElementById('lang-menu-btn');
@@ -303,6 +429,7 @@ function openMenu(){
   hamburgerBtn.setAttribute('aria-expanded', 'true');
   document.body.classList.add('menu-open');
   setLangDropdownEnabled(false);
+  setThemeDropdownEnabled(false);
 
   sideMenuCloseBtn?.focus({ preventScroll: true });
 }
@@ -319,6 +446,7 @@ function closeMenu(){
   hamburgerBtn.setAttribute('aria-expanded', 'false');
   document.body.classList.remove('menu-open');
   setLangDropdownEnabled(true);
+  setThemeDropdownEnabled(true);
 
   if (wasOpen && menuTriggerElement?.isConnected) {
     menuTriggerElement.focus({ preventScroll: true });
@@ -384,7 +512,7 @@ sideMenu?.addEventListener('click', (e) => {
  * 全体UI操作、画面移動、画像比較ウィザードの状態管理
  * =====================================================
  *
- * 1. Escapeキー：サイドメニュー、言語メニューの順で閉じます。Popover APIと旧方式の両方に対応します。
+ * 1. Escapeキー：サイドメニュー、言語メニュー、テーマメニューの順で閉じます。Popover APIと旧方式の両方に対応します。
  * 2. ヘッダー移動：アプリ名のクリックでホームへ戻し、レイアウトや添付ファイルを初期状態へ戻します。
  * 3. ウィザード要素：画像入力、プレビュー、スライダー、顔検出表示、各ボタン、案内文への参照を用意します。
  * 4. 手順管理：ビフォー選択から比較開始準備までの6段階を管理し、ボタン表示を切り替えます。
@@ -408,11 +536,19 @@ document.addEventListener('keydown', (e) => {
 
   // 2) 言語ドロップダウンが開いていれば閉じます
   const menu = document.getElementById('lang-menu');
-  if (!menu) return;
+  const themeMenuElement = document.getElementById('theme-menu');
+  if (!menu && !themeMenuElement) return;
 
-  const isPopoverOpen = !!menu.matches?.(':popover-open');
-  const isLegacyOpen = !menu.hasAttribute('hidden');
+  const isPopoverOpen = !!menu?.matches?.(':popover-open');
+  const isLegacyOpen = !!menu && !menu.hasAttribute('hidden');
   const isOpen = isPopoverOpen || isLegacyOpen;
+
+  const isThemeOpen = !!themeMenuElement?.matches?.(':popover-open');
+  if (!isOpen && isThemeOpen) {
+    e.preventDefault();
+    window.__closeThemeMenu?.();
+    return;
+  }
 
   if (!isOpen) return;
 
@@ -469,11 +605,35 @@ const startBtn = document.getElementById('start-compare-btn');
 
 let currentStep = 1;
 let allowRender = false;
+
+/**
+ * ウィザードの進行状況に応じて入力コントロールの操作可否を同期します。
+ * ファイル選択欄は対応するステップだけ、顔比較チェックボックスは
+ * 両画像が選択された後だけ有効にすることで、操作順を強制します。
+ * @param {HTMLElement|null} control 対象のフォームコントロール
+ * @param {boolean} enabled 操作を許可するかどうか
+ */
+function setWizardControlEnabled(control, enabled) {
+  if (!control) return;
+  control.disabled = !enabled;
+  control.setAttribute('aria-disabled', String(!enabled));
+
+  const parentLabel = control.closest('label');
+  if (parentLabel) {
+    parentLabel.classList.toggle('is-disabled', !enabled);
+    parentLabel.setAttribute('aria-disabled', String(!enabled));
+  }
+}
+
 function updateWizardUI(){
   if (nextBtn1) nextBtn1.style.display = 'none';
   if (nextBtn2) nextBtn2.style.display = 'none';
   if (nextBtn3) nextBtn3.style.display = 'none';
   if (startBtn) startBtn.disabled = true;
+
+  setWizardControlEnabled(beforeInput, currentStep === 1);
+  setWizardControlEnabled(afterInput, currentStep === 3);
+  setWizardControlEnabled(faceCheckbox, currentStep === 5 || currentStep === 6);
 
   switch(currentStep){
     case 1:
@@ -577,7 +737,7 @@ function resetSlider() {
   afterInput.value = '';
   imgBefore.src = '';
   imgAfter.src = '';
-  overlayDiv.style.width = '50%';
+  overlayDiv.style.clipPath = 'inset(0 0 0 50%)';
   sliderHandle.style.left = '50%';
   sliderRange.value = '50';
   sliderContainer.style.display = 'none';
@@ -626,6 +786,7 @@ function resetAll() {
   allowRender = false;
   beforeFileRef = null; afterFileRef = null;
   beforeLoaded = false; afterLoaded = false;
+  if (faceCheckbox) faceCheckbox.checked = false;
   currentStep = 1;
   resetSlider();
   updateWizardUI();
@@ -663,11 +824,11 @@ function handleImageWizard(input, imgEl, which) {
   });
 }
 faceCheckbox.addEventListener('change', async () => {
+  if (faceCheckbox.disabled || (currentStep !== 5 && currentStep !== 6)) {
+    return;
+  }
   faceError.style.display = 'none';
   clearPreload();
-  if (currentStep < 5) {
-    currentStep = 5;
-  }
   updateWizardUI();
   if (canPreloadFaces()) {
     preloadFacesIfPossible();
@@ -699,6 +860,10 @@ if (startBtn){
   startBtn.addEventListener('click', async () => {
     if (!(beforeFileRef && afterFileRef)) return;
     allowRender = true;
+    setWizardControlEnabled(beforeInput, false);
+    setWizardControlEnabled(afterInput, false);
+    setWizardControlEnabled(faceCheckbox, false);
+    startBtn.disabled = true;
     try {
       if (faceCheckbox.checked) {
         if (precomputedFaces) {
@@ -730,7 +895,7 @@ if (startBtn){
     sliderContainer.style.display = 'block';
     const halfWrap = document.getElementById('half-face-result');
     if (halfWrap) halfWrap.style.display = 'none';
-    overlayDiv.style.width = '50%';
+    overlayDiv.style.clipPath = 'inset(0 0 0 50%)';
     sliderHandle.style.left = '50%';
     sliderRange.value = '50';
     sliderPercent = 50;
@@ -816,14 +981,14 @@ function prepareSliderLayout() {
 }
 
 /**
- * スライダーの見た目（ハンドル位置とオーバーレイ幅）を更新します。
+ * スライダーの見た目（ハンドル位置とafter画像の表示範囲）を更新します。
  * 滑らかに描画するため、DOMへの書き込みはrequestAnimationFrame内でまとめて行います。
  *
  * @returns {void}
  */
 function updateSliderDom() {
   sliderRafPending = false;
-  overlayDiv.style.width = (100 - sliderPercent) + '%';
+  overlayDiv.style.clipPath = `inset(0 0 0 ${sliderPercent}%)`;
   sliderHandle.style.left = sliderPercent + '%';
   if (Number(sliderRange.value) !== sliderPercent) {
     sliderRange.value = String(sliderPercent);
@@ -1262,6 +1427,9 @@ if (contactForm){
       // ヘッダーとメニュー
       'header.title': 'Image Compare Slider',
       'language.label': 'LANGUAGE',
+      'theme.mode.light': 'Light mode',
+      'theme.mode.dark': 'Dark mode',
+      'theme.mode.system': 'Use system setting',
       'menu.materials': 'Comparison Samples',
       'menu.info': 'Guide & Notes',
       'menu.about': 'About the Developer',
@@ -1418,6 +1586,9 @@ if (contactForm){
       // ヘッダーとメニュー
       'header.title': '画像比較スライダー',
       'language.label': '言語',
+      'theme.mode.light': 'ライトモード',
+      'theme.mode.dark': 'ダークモード',
+      'theme.mode.system': 'システム設定に合わせる',
       'menu.materials': '比較用使用素材',
       'menu.info': '利用案内・注意事項',
       'menu.about': '開発者・当サイト紹介',
@@ -1682,7 +1853,7 @@ if (contactForm){
       }
 
       document.documentElement.setAttribute('lang', lang);
-      applyTheme(document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light');
+      applyTheme(document.documentElement.dataset.themeMode || 'light', false);
       try { localStorage.setItem(LANGUAGE_PREFERENCE_KEY, lang); } catch(e){}
       currentLang = lang;
     }
