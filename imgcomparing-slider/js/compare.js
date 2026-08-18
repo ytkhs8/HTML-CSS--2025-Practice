@@ -309,7 +309,7 @@ function initLangDropdownClick() {
    *
    * Popover APIの初期設定と配置処理を行った後の、言語メニュー操作を管理します。
    *
-   * 1. 開閉：手動Popoverを開閉し、仮のインライン配置を解除してaria-expandedを更新します。
+   * 1. 開閉：手動Popoverを開閉し、表示中の配置を維持したままaria-expandedを更新します。
    * 2. 外部からの終了：window.__closeLangMenuを公開し、サイドメニューなどから閉じられるようにします。
    * 3. ポインター操作：pointerdownで開閉し、イベント伝播による即時終了を防ぎます。
    * 4. 外側のクリック：composedPath()も利用してメニュー外の操作を検出します。
@@ -317,28 +317,32 @@ function initLangDropdownClick() {
    * 6. キーボード：Escapeキーで閉じます。
    * 7. 言語選択：選択中の無効項目を除き、window.appI18n.apply()で言語を適用して閉じます。
    * 8. 初期化：初期状態を閉じた状態にし、DOMContentLoaded後に操作を初期化します。
-   *
-   * 実行される処理内容には変更を加えていません。
-   *
    * @module LanguageDropdownPopoverControls
    */
   const open = () => {
     if (btn.disabled) return;
-    try { menu.showPopover(); } catch {}
-    btn.setAttribute('aria-expanded', 'true');
-    requestAnimationFrame(() => {
+    // Popoverを表示してから位置を決めるまでの一瞬を隠し、
+    // 最上位レイヤーの既定位置（画面左端）が描画されるのを防ぎます。
+    menu.classList.add('is-positioning');
+    try {
+      // 非表示中は既定幅で仮配置し、表示直後に実寸で補正します。
       positionMenu();
-    });
+      menu.showPopover();
+      positionMenu();
+      btn.setAttribute('aria-expanded', 'true');
+    } catch (_) {
+      btn.setAttribute('aria-expanded', 'false');
+    } finally {
+      menu.classList.remove('is-positioning');
+    }
   };
 
   const close = () => {
     try { menu.hidePopover(); } catch {}
     btn.setAttribute('aria-expanded', 'false');
-    menu.style.left = '';
-    menu.style.top = '';
-    menu.style.position = '';
-    menu.style.margin = '';
-    menu.style.zIndex = '';
+    // 終了アニメーションやブラウザの最終描画が完了するまでは、
+    // 最後に計算した座標を保持して画面左端への移動を防ぎます。
+    // 次回open時にpositionMenu()が最新の座標へ上書きします。
   };
 
   window.__closeLangMenu = close;
@@ -377,20 +381,22 @@ function initLangDropdownClick() {
   });
 
   menu.querySelectorAll('.lang-item[data-lang]').forEach((item) => {
-  item.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (item.getAttribute('aria-disabled') === 'true' || item.disabled) {
-      close();
-      return;
-    }
+    item.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (item.getAttribute('aria-disabled') === 'true' || item.disabled) {
+        close();
+        return;
+      }
 
-    const code = item.getAttribute('data-lang');
-    if (code && window.appI18n && typeof window.appI18n.apply === 'function') {
-      window.appI18n.apply(code);
-    }
-    close();
-  });
+      const code = item.getAttribute('data-lang');
+      // 翻訳によってヘッダー幅や文書レイアウトが変化する前に閉じます。
+      // 開いたまま全体を再描画すると、Popoverの位置が一瞬既定位置へ戻るためです。
+      close();
+      if (code && window.appI18n && typeof window.appI18n.apply === 'function') {
+        window.appI18n.apply(code);
+      }
+    });
   });
 
   close();

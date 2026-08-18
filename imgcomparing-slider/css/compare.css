@@ -353,6 +353,11 @@ body::after {
   gap: 4px;
 }
 
+/* Popoverを最上位レイヤーへ出して位置を計算する間は描画しません。 */
+.lang-menu.is-positioning {
+  visibility: hidden;
+}
+
 /* hidden属性でメニューが確実に非表示になるようにします。
 +   .lang-menuのdisplay:flexがブラウザ標準の[hidden]{display:none}を上書きする可能性があるため、
 +   ここで明示的に処理します。
